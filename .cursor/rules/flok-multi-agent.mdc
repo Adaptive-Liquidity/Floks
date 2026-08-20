@@ -7,17 +7,29 @@ alwaysApply: true
 
 Lead agent owns planning, commits, and PRs. Parallelize only independent streams. Prefer existing skills `multi-agent` / `swarm` for orchestration patterns — do not paste their full text here.
 
-## Subagent map
+## Model routing
 
-| Work | Subagent |
-|------|----------|
-| Broad codebase map | `explore` / `repo-analyst` |
-| Ambiguous design / multi-layer | `architect` then implement |
-| API / DB / auth / tokens | `backend-engineer` |
-| UI / OG / pages | `frontend-engineer` |
-| After non-trivial change | `verifier` |
-| Auth / secrets / seed / tokens | `security-auditor` then `verifier` |
-| High-risk (OG rewrite, payments) | `verifier` + `red-team` |
+Use the cheapest capable model. Keep routine hands-on work on the Composer parent; reserve expensive thinking models for architecture, independent verification, and high-stakes review.
+
+| Role / task | `subagent_type` | `model` | Why |
+|---|---|---|---|
+| Lead routine implementation | parent / `inherit` | `inherit` | The parent uses Composer for efficient routine coding. |
+| Broad map / scout | `explore` | `composer-2.5-fast` | Cheap, fast repository discovery. |
+| Ambiguous design / Grade API | `architect` | `claude-opus-5-thinking-high` | Strongest fit for architecture and trade-offs. |
+| Backend / API / tokens / Grade read | `backend-engineer` | `gpt-5.6-sol-medium` | Strong systems and difficult backend reasoning. |
+| Frontend / OG / tiles | `frontend-engineer` | `kimi-k2.7-code` | Strong UI implementation without architecture-model cost. |
+| Verifier after change | `verifier` | `claude-opus-5-thinking-high` | Independent, high-quality verification; must differ from the implementer. |
+| Security: secrets / OG / auth | `security-auditor` | `claude-opus-5-thinking-high` | High-stakes trust-boundary review. |
+| High-risk adversarial challenge | `red-team` | `claude-fable-5-thinking-high` | Independent challenge with a distinct reasoning model. |
+| Large-volume repository analysis | `repo-analyst` | `gemini-3.1-pro` | Broad-context analysis at lower cost than Opus. |
+| External docs and prior art | `researcher` | `gemini-3.1-pro` | Strong research synthesis and broad context. |
+
+Do not spend Opus, Sol, or Fable on trivial work. A verifier must use a different model from the implementation agent.
+
+## Wave recipes
+
+1. **Grok debt / harness fix:** `explore` (`composer-2.5-fast`) → implement on parent (`inherit`, Composer) → `security-auditor` (`claude-opus-5-thinking-high`) → `verifier` (`claude-opus-5-thinking-high`, different from implementer).
+2. **S1 Grade:** `architect` (`claude-opus-5-thinking-high`) → `backend-engineer` (`gpt-5.6-sol-medium`) ∥ `frontend-engineer` (`kimi-k2.7-code`) → `verifier` (`claude-opus-5-thinking-high`) → `flok-ship`.
 
 ## Ownership
 
