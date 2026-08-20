@@ -122,12 +122,10 @@ Gaps to build in Flok: real bids, AEON escrow, `OC_*` Grade, node states `racing
 ```bash
 npm install
 npm run dev          # 0.0.0.0:8080
-npm run typecheck
-npm test
+npm run verify       # format + lint + typecheck + tests + vite build (no migrate)
 bash scripts/smoke.sh
 ```
 
-`npm run verify` lands in Phase 3. Until then: typecheck + test + smoke.
 
 ---
 
