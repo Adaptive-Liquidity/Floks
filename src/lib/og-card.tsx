@@ -1,4 +1,5 @@
 import { eyesStill } from "@/lib/node-state";
+import type { GradeSnapshot } from "@/lib/grade";
 import type { ClusterFace, Flock, OgCluster } from "@/lib/types";
 
 /**
@@ -184,17 +185,19 @@ function OgClusterTile({ cluster }: { cluster: OgCluster }) {
 export function OgCardMarkup({
   flock,
   clusters,
+  grade,
   nodeCount,
   host,
 }: {
   flock: Flock;
   clusters: OgCluster[];
+  grade: GradeSnapshot;
   nodeCount: number;
   host: string;
 }) {
   const shown = clusters.slice(0, 4);
   const extra = clusters.length - shown.length;
-  const subtitle = `${clusters.length} ${clusters.length === 1 ? "cluster" : "clusters"} · ${nodeCount} ${nodeCount === 1 ? "node" : "nodes"} · SPX404`;
+  const subtitle = `${clusters.length} ${clusters.length === 1 ? "cluster" : "clusters"} · ${nodeCount} ${nodeCount === 1 ? "node" : "nodes"}`;
 
   return (
     <div
@@ -263,13 +266,30 @@ export function OgCardMarkup({
       <div
         style={{
           display: "flex",
+          alignItems: "center",
+          gap: 12,
           fontFamily: "IBM Plex Sans",
           fontSize: 22,
           color: "#98A2AD",
           marginTop: 8,
         }}
       >
-        {subtitle}
+        <div style={{ display: "flex" }}>{subtitle}</div>
+        <div
+          style={{
+            display: "flex",
+            border: `1px ${grade.outlined ? "dashed" : "solid"} ${
+              grade.outlined ? "#5C646E" : "#C6F84E"
+            }`,
+            borderRadius: 999,
+            padding: "3px 10px",
+            color: grade.outlined ? "#98A2AD" : "#C6F84E",
+            backgroundColor: grade.outlined ? "transparent" : "rgba(198,248,78,0.08)",
+            fontSize: 17,
+          }}
+        >
+          {grade.grade}
+        </div>
       </div>
 
       <div
