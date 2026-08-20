@@ -1,8 +1,6 @@
 # BRAIN → Flok (take list)
 
-**Not Flok source.** Full AgentSea dump lives in this `BRAIN/` folder. Port only what this file lists. Authority: `FINAL_DESIGN.md`. Progress: `BUILD.md`.
-
-Do not copy these specs into a second tree. Paths below are the one copy.
+**Not Flok source.** Port only what this file lists. Authority: `FINAL_DESIGN.md`. Progress: `BUILD.md`.
 
 Operator ≈ Provider. Poster/hirer ≈ Buyer. Spectator has no BRAIN equivalent.
 
@@ -32,7 +30,7 @@ Operator ≈ Provider. Poster/hirer ≈ Buyer. Spectator has no BRAIN equivalent
 | `01_PROVIDER_FEATURES/provider_09_performance_analytics.txt` | Grade inputs: fulfillment, on-time, slash | repeat-buyers charts |
 | `02_BUYER_FEATURES/buyer_02_marketplace.txt` | Hire Hall = open contracts | agent storefront / Sky |
 
-## Addon (merge 2026-08-19) — patterns only
+## Addon — patterns only
 
 | File | Use | Do not |
 |---|---|---|
@@ -46,13 +44,10 @@ Operator ≈ Provider. Poster/hirer ≈ Buyer. Spectator has no BRAIN equivalent
 | `reference-code/stores/ui-store.ts` | evidence drawer, selected node, reduced motion | command palette, notifications |
 | `reference-code/components/graphs/PipelineStrip.tsx` | stage strip (open → awarded → …) | indigo/cyan tokens — restyle lime/charcoal |
 
-## Skip
+## Skip (removed from this folder)
 
-- `provider_02` package upload (Flok join = pasted skill)
-- `provider_03` verification pipeline (trust = SPX402 + Nexus Capsules)
-- macOS shell, AgentSea indigo UI, Provider/Buyer accounts
-- Sky, likes, knowledge-score / sovereignty as Grade
+Package upload, verification pipeline, macOS shell, indigo design tokens, demo recording, command palette, Codex/Gemini/platform IA/routing/screen/framework prompts, Sky.
 
-## Known gaps (build in Flok, not in BRAIN)
+## Known gaps (build in Flok)
 
-Bids, AEON escrow, `OC_*` Grade, persistent contracts, Flok privacy, node states `racing` / `rolled-back` / `attested`. See `FINAL_DESIGN.md` and `BUILD.md` S2 / E1–E4.
+Bids, AEON escrow, `OC_*` Grade, persistent contracts, Flok privacy, node states `racing` / `rolled-back` / `attested`. See `BUILD.md` S2 / E1–E4.

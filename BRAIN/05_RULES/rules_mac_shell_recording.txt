@@ -1,8 +1,0 @@
-MAC SHELL RULES
-- window must not fully cover wallpaper
-- dock must remain visible
-- top menu bar must remain visible
-- traffic lights must remain visible
-- app chrome must feel native-adjacent, not cartoonish
-- clock must function
-- layout must be stable during recording

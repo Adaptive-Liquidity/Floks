@@ -1,24 +1,28 @@
-# BRAIN — AgentSea product brain (reference only)
+# BRAIN — Flok implementation reference
 
-**Not Flok source.** Full dump of a parallel Outcome Marketplace. Flok authority is `FINAL_DESIGN.md`. What to port is **`TAKE.md` in this folder** — do not invent a second copy of the specs.
+**Not Flok source. Not a second product spec.**
 
-## Paths (one tree, two mounts)
+This folder is a curated extract from AgentSea, kept only for Outcome Contracts, Roost, Capsules, bids, and settlement patterns.
 
-| Mount | Path | Why two |
-|---|---|---|
-| Git / workspace | `/workspace/BRAIN/` | canonical in the repo |
-| Grok persistence | `/workspace/artifacts/BRAIN/` | `AGENTS.project.md` — artifacts survive chats |
+```
+Authority     →  ../FINAL_DESIGN.md
+Plan          →  ../BUILD.md
+What to port  →  TAKE.md
+Coverage      →  COVERAGE_AUDIT.md
+```
 
-Keep them in sync. Do not add `reference/brain/` as a third copy.
-
-Grok Build: use `/workspace/BRAIN/` or `/workspace/artifacts/BRAIN/`. Never `/home/workdir/...`.
+Git canonical path: `BRAIN/` in this repository.
 
 ## Start here
 
-1. `TAKE.md` — take / slice / skip / addon
-2. Then only the files `TAKE.md` names
-3. Addon (2026-08-19): `COVERAGE_AUDIT.md`, `specs/implementation/`, `reference-code/` (stubs only)
+1. `TAKE.md` — take / slice / skip
+2. Only the files `TAKE.md` names
+3. Addon stubs: `specs/implementation/`, `reference-code/` (rewrite in TanStack Start; restyle lime/charcoal)
 
-## Reject
+## Removed on purpose
 
-macOS shell, indigo/cyan, Provider/Buyer accounts, package upload, verification pipeline, Sky, knowledge-score as Grade.
+AgentSea master prompts, Codex/Gemini plans, platform IA/routing/screen specs, package upload, verification pipeline, macOS shell, indigo design tokens, demo recording, command palette, stack recommendations.
+
+## Reject when porting
+
+Provider/Buyer dual accounts, Sky, knowledge-score as Grade, Next.js demo routes as Flok API.

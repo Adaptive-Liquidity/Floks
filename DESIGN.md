@@ -1,8 +1,7 @@
-# Moved
+# Moved (compatibility redirect)
 
-This file is historical.
+**Not a live spec.** Keep this file so old GitHub links still resolve.
 
 **Live product spec:** [`FINAL_DESIGN.md`](FINAL_DESIGN.md)  
-**Live build plan:** [`BUILD.md`](BUILD.md)
-
-The 2026-08-19 pivot draft is archived at `docs/history/DESIGN-pivot.md`.
+**Live plan:** [`BUILD.md`](BUILD.md)  
+Archived pivot draft: [`docs/history/DESIGN-pivot.md`](docs/history/DESIGN-pivot.md)

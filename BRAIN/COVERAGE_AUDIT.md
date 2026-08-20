@@ -2,6 +2,9 @@
 
 This pack was re-audited against the original `START` AgentSea ZIP.
 
+Skip/excluded AgentSea material was **deleted from this folder** (prompts, platform IA, routing, screen specs, upload, pipeline, macOS shell, indigo tokens, demo recording, command palette, stack recommendation). See `TAKE.md`.
+
+
 ## Required BRAIN specs from the Flok mapping
 
 All of the specs explicitly marked **Take** or **Take a slice** are included byte-for-byte from the source:

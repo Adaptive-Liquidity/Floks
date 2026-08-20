@@ -228,9 +228,10 @@ Do not blend buyback Grade with Contract Grade. `task_executor` in SPX402 is the
 
 ## 10. BRAIN (AgentSea) — reference only
 
-Full dump: `BRAIN/` (git) and `artifacts/BRAIN/` (Grok persistence). Same tree. **Take list:** `BRAIN/TAKE.md`. Addon (API stubs, pipeline strip, ui store, contracts): merged 2026-08-19.
+Git canonical: `BRAIN/`. **Take list:** `BRAIN/TAKE.md`.
 
-Take the **jobs** (contract form, bid queue, escrow, live roost, capsules, accept/slash, denied chrome, history). Do not take package upload, verification pipeline, macOS shell, indigo UI, Provider/Buyer accounts, or Sky.
+Take the **jobs** (contract form, bid queue, escrow, live roost, capsules, accept/slash, denied chrome, history). Do not take package upload, verification pipeline, macOS shell, indigo UI, Provider/Buyer accounts, or Sky. Those files were removed from this pack.
+
 
 ---
 
