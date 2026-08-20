@@ -1,65 +1,12 @@
-import { eyesStill } from "@/lib/node-state";
 import type { ClusterFace, Flock, OgCluster } from "@/lib/types";
 
-/**
- * Renders a stylized pair of eyes based on gaze direction and face state.
- *
- * @param looking - Horizontal gaze direction, with vertical movement derived from its magnitude
- * @param closed - Whether to render closed eyes
- * @param racing - Whether to render the racing-eye state
- * @returns The rendered eye pair
- */
-function EyePair({
-  looking = 0,
-  closed = false,
-  racing = false,
-}: {
-  looking?: number;
-  closed?: boolean;
-  racing?: boolean;
-}) {
+function EyePair({ looking = 0, closed = false }: { looking?: number; closed?: boolean }) {
   const shift = looking * 2;
   if (closed) {
     return (
       <div style={{ display: "flex", gap: 10 }}>
         <div style={{ width: 14, height: 4, borderRadius: 999, backgroundColor: "#0A0B0D" }} />
         <div style={{ width: 14, height: 4, borderRadius: 999, backgroundColor: "#0A0B0D" }} />
-      </div>
-    );
-  }
-  if (racing) {
-    return (
-      <div style={{ display: "flex", gap: 10, position: "relative" }}>
-        <div
-          style={{
-            width: 10,
-            height: 22,
-            borderRadius: 999,
-            backgroundColor: "#0A0B0D",
-            transform: "rotate(-18deg) translate(-6px, 1px)",
-          }}
-        />
-        <div
-          style={{
-            width: 10,
-            height: 22,
-            borderRadius: 999,
-            backgroundColor: "#0A0B0D",
-            transform: "rotate(-18deg) translate(6px, -1px)",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            top: -14,
-            right: -2,
-            display: "flex",
-            gap: 4,
-          }}
-        >
-          <div style={{ width: 5, height: 13, borderRadius: 1.2, backgroundColor: "#0A0B0D" }} />
-          <div style={{ width: 5, height: 13, borderRadius: 1.2, backgroundColor: "#0A0B0D" }} />
-        </div>
       </div>
     );
   }
@@ -95,11 +42,6 @@ function EyePair({
 
 const STUB: ClusterFace = { name: "", color: "#16191F", state: "offline" };
 
-/**
- * Renders a cluster tile with up to four faces and the cluster name.
- *
- * @param cluster - The cluster whose faces and name are displayed.
- */
 function OgClusterTile({ cluster }: { cluster: OgCluster }) {
   const faces = [...cluster.faces];
   while (faces.length < 4) faces.push(STUB);
@@ -119,7 +61,6 @@ function OgClusterTile({ cluster }: { cluster: OgCluster }) {
           <div
             key={`${cluster.name}-${i}`}
             style={{
-              position: "relative",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -128,40 +69,9 @@ function OgClusterTile({ cluster }: { cluster: OgCluster }) {
               borderRadius: 24,
               backgroundColor: face.color,
               opacity: face.name ? 1 : 0.55,
-              overflow: "hidden",
-              boxShadow:
-                face.state === "attested"
-                  ? "0 0 0 2px #C6F84E"
-                  : face.state === "working"
-                    ? "0 0 0 1px rgba(198,248,78,0.45)"
-                    : face.state === "racing"
-                      ? "0 0 0 1px rgba(198,248,78,0.4)"
-                      : face.state === "denied"
-                        ? "0 0 0 1px rgba(247,179,61,0.55)"
-                        : face.state === "bound"
-                          ? "0 0 0 2px rgba(92,100,110,0.7)"
-                          : "none",
             }}
           >
-            <EyePair
-              racing={face.state === "racing"}
-              looking={eyesStill(face.state) ? 0 : face.state === "racing" ? 0 : (i % 3) - 1}
-              closed={!face.name || face.state === "offline" || face.state === "rolled_back"}
-            />
-            {face.state === "denied" && (
-              <svg
-                width="107"
-                height="107"
-                viewBox="0 0 107 107"
-                style={{ position: "absolute", top: 0, left: 0 }}
-              >
-                <g stroke="rgba(247,179,61,0.55)" strokeWidth="3.2">
-                  <line x1="16" y1="81" x2="90" y2="21" />
-                  <line x1="26" y1="94" x2="97" y2="36" />
-                  <line x1="6" y1="66" x2="78" y2="10" />
-                </g>
-              </svg>
-            )}
+            <EyePair looking={(i % 3) - 1} closed={!face.name || face.state === "offline"} />
           </div>
         ))}
       </div>

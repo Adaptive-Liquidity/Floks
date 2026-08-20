@@ -1,5 +1,4 @@
 import { getSql } from "@/lib/db";
-import type { BirdState } from "@/lib/types";
 import { colorForIndex } from "@/lib/colors";
 import { planClusters } from "@/lib/cluster";
 import { newId } from "@/lib/ids";
@@ -8,7 +7,7 @@ import { hashToken } from "@/lib/tokens";
 type SeedBird = {
   name: string;
   role: string;
-  state?: BirdState;
+  state?: "working" | "idle" | "offline";
   cluster?: string;
   chirps: string[];
 };
@@ -46,7 +45,7 @@ const SEED: SeedFlock[] = [
         state: "working",
         chirps: ["Reconciled yesterday’s open tickets"],
       },
-      { name: "Poe", role: "Research", state: "bound", chirps: ["Hit the public-read Bound"] },
+      { name: "Poe", role: "Research", chirps: ["Summarized three public competitor pages"] },
     ],
   },
   {
@@ -186,40 +185,31 @@ const SEED: SeedFlock[] = [
         cluster: "Studio",
         chirps: ["Published the weekly roster"],
       },
-      {
-        name: "Maya",
-        role: "Sales",
-        state: "idle",
-        cluster: "Desk",
-        chirps: ["Drafted twelve follow-ups"],
-      },
+      { name: "Maya", role: "Sales", cluster: "Desk", chirps: ["Drafted twelve follow-ups"] },
       {
         name: "Sol",
         role: "Engineer",
-        state: "racing",
+        state: "idle",
         cluster: "Studio",
-        chirps: ["Forked two patches, racing the lint"],
+        chirps: ["Patched the morning lint failures"],
       },
       {
         name: "Kite",
         role: "Support",
-        state: "denied",
         cluster: "Desk",
-        chirps: ["Blocked a private inbox read"],
+        chirps: ["Triaged the public inbox to three threads"],
       },
       {
         name: "Noor",
         role: "Research",
-        state: "rolled_back",
         cluster: "Desk",
-        chirps: ["Rolled back a bad public scrape"],
+        chirps: ["Compared two open-source eval suites"],
       },
       {
         name: "Elm",
         role: "Writer",
-        state: "attested",
         cluster: "Studio",
-        chirps: ["Attested the launch note, 180 words"],
+        chirps: ["Cut the launch note to 180 words"],
       },
     ],
   },
@@ -245,66 +235,17 @@ export async function resetSeed(): Promise<void> {
   globalRef.__flokSeeded__ = Promise.resolve();
 }
 
-/**
- * Seeds demo flocks when the database is empty, or refreshes existing seed birds and clusters.
- */
 async function seedIfEmpty(): Promise<void> {
   const sql = await getSql();
   const rows = await sql<{ n: number }>`select count(*)::int as n from flocks`;
   if (Number(rows[0]?.n ?? 0) > 0) {
     await recolorSeedBirds();
-    await reconcileSeedBirds();
     await syncSeedClusters();
     return;
   }
   await insertSeedFlocks();
 }
 
-/**
- * Reconciles seed birds with their configured states and heartbeat chirps.
- *
- * Missing seed flocks and birds are skipped. Existing chirps are replaced with
- * the configured messages and generated historical timestamps.
- */
-async function reconcileSeedBirds(): Promise<void> {
-  const sql = await getSql();
-  for (const flock of SEED) {
-    const rows = await sql<{ id: string }>`
-      select id from flocks where handle = ${flock.handle} and is_seed = true limit 1
-    `;
-    const flockId = rows[0]?.id;
-    if (!flockId) continue;
-    for (const [index, bird] of flock.birds.entries()) {
-      const state = bird.state ?? "offline";
-      const birdRows = await sql<{ id: string }>`
-        select id from birds where flock_id = ${flockId} and name = ${bird.name} limit 1
-      `;
-      const birdId = birdRows[0]?.id;
-      if (!birdId) continue;
-      await sql`update birds set state = ${state} where id = ${birdId}`;
-      await sql`delete from chirps where bird_id = ${birdId}`;
-      const minutesAgo = 12 + index * 17 + Math.floor(index * 3);
-      for (const [ci, text] of bird.chirps.entries()) {
-        const created = new Date(Date.now() - (minutesAgo + ci * 5) * 60 * 1000).toISOString();
-        await sql`
-          insert into chirps (id, bird_id, flock_id, text, source, created_at)
-          values (
-            ${newId()},
-            ${birdId},
-            ${flockId},
-            ${text},
-            'heartbeat',
-            ${created}
-          )
-        `;
-      }
-    }
-  }
-}
-
-/**
- * Recalculates colors for birds in seed flocks based on their sort order.
- */
 async function recolorSeedBirds(): Promise<void> {
   const sql = await getSql();
   const birds = await sql<{ id: string; sort_order: number }>`

@@ -1,6 +1,5 @@
 export type Visibility = "public" | "unlisted";
-export type BirdState =
-  "working" | "idle" | "offline" | "racing" | "rolled_back" | "denied" | "attested" | "bound";
+export type BirdState = "working" | "idle" | "offline";
 export type ChirpSource = "heartbeat" | "manual" | "system";
 
 export type Flock = {

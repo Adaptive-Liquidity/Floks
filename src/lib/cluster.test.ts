@@ -32,19 +32,16 @@ test("planClusters groups by name and splits at 12", () => {
   assert.equal(plans[2]?.slug, "research");
 });
 
-test("mostAlive ranks executing and racing before idle and denied", () => {
+test("mostAlive ranks working then idle then offline", () => {
   const ranked = mostAlive([
     { state: "offline" as const, last_chirp_at: "2026-08-20T10:00:00Z" },
     { state: "working" as const, last_chirp_at: "2026-08-20T09:00:00Z" },
     { state: "idle" as const, last_chirp_at: "2026-08-20T11:00:00Z" },
-    { state: "racing" as const, last_chirp_at: "2026-08-20T08:00:00Z" },
-    { state: "denied" as const, last_chirp_at: "2026-08-20T12:00:00Z" },
-    { state: "attested" as const, last_chirp_at: "2026-08-20T07:00:00Z" },
+    { state: "working" as const, last_chirp_at: "2026-08-20T12:00:00Z" },
   ]);
   assert.equal(ranked[0]?.state, "working");
-  assert.equal(ranked[1]?.state, "racing");
-  assert.equal(ranked[2]?.state, "attested");
-  assert.equal(ranked[3]?.state, "idle");
-  assert.equal(ranked[4]?.state, "denied");
-  assert.equal(ranked[5]?.state, "offline");
+  assert.equal(ranked[0]?.last_chirp_at, "2026-08-20T12:00:00Z");
+  assert.equal(ranked[1]?.state, "working");
+  assert.equal(ranked[2]?.state, "idle");
+  assert.equal(ranked[3]?.state, "offline");
 });

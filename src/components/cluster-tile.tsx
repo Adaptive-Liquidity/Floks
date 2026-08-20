@@ -1,17 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import { BirdFace } from "@/components/bird-face";
-import { isLiveNode } from "@/lib/node-state";
 import { isSleeping, relativeTime } from "@/lib/time";
 import type { ClusterCard, ClusterFace } from "@/lib/types";
 
 const STUB: ClusterFace = { name: "", color: "#16191F", state: "offline" };
 
-/**
- * Renders a linked tile summarizing a cluster and its nodes.
- *
- * @param handle - The handle used to build the cluster link
- * @param cluster - The cluster data displayed in the tile
- */
 export function ClusterTile({ handle, cluster }: { handle: string; cluster: ClusterCard }) {
   const faces = [...cluster.faces];
   while (faces.length < 4) faces.push(STUB);
@@ -30,7 +23,7 @@ export function ClusterTile({ handle, cluster }: { handle: string; cluster: Clus
             <BirdFace
               color={face.color}
               state={face.state}
-              sleeping={empty || !face.name || (asleep && !isLiveNode(face.state))}
+              sleeping={empty || asleep || face.state === "offline" || !face.name}
               name={face.name || "stub"}
               size="lg"
               className="h-full w-full !size-full"

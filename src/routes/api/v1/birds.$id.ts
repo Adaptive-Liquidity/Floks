@@ -2,11 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { requireFlockAuth } from "@/lib/api-auth";
 import { jsonError, jsonOk, logRequest } from "@/lib/http";
-import { BIRD_STATES } from "@/lib/node-state";
 import { getBirdById, updateBirdState } from "@/lib/queries";
 
 const bodySchema = z.object({
-  state: z.enum(BIRD_STATES),
+  state: z.enum(["working", "idle", "offline"]),
 });
 
 export const Route = createFileRoute("/api/v1/birds/$id")({
@@ -32,11 +31,7 @@ export const Route = createFileRoute("/api/v1/birds/$id")({
         const parsed = bodySchema.safeParse(json);
         if (!parsed.success) {
           logRequest("PUT", "/api/v1/birds/:id", 400);
-          return jsonError(
-            400,
-            "State must be working, racing, attested, idle, rolled_back, denied, bound, or offline.",
-            "invalid_body",
-          );
+          return jsonError(400, "State must be working, idle, or offline.", "invalid_body");
         }
         const existing = await getBirdById(params.id);
         if (!existing || existing.flock_id !== auth.flock.id) {

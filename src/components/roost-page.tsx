@@ -3,19 +3,9 @@ import { BirdTile } from "@/components/bird-tile";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { CLUSTER_CAP } from "@/lib/cluster";
-import { isLiveNode } from "@/lib/node-state";
 import { isSleeping, relativeTime } from "@/lib/time";
 import type { BirdWithChirp, Chirp, ClusterCard, Flock } from "@/lib/types";
 
-/**
- * Renders a flock cluster page with its latest activity and bird nodes.
- *
- * @param flock - The flock containing the cluster
- * @param cluster - The cluster to display
- * @param birds - The birds associated with the cluster
- * @param latest - The latest cluster chirp, if available
- * @returns The rendered cluster page
- */
 export function RoostPageView({
   flock,
   cluster,
@@ -79,7 +69,7 @@ export function RoostPageView({
                     role={bird.role}
                     color={bird.color}
                     state={bird.state}
-                    sleeping={sleeping && !isLiveNode(bird.state)}
+                    sleeping={sleeping && bird.state !== "working"}
                     chirp={bird.last_chirp}
                     at={bird.last_chirp_at}
                     size="md"
