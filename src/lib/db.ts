@@ -105,7 +105,6 @@ function createNeonSql(): Promise<Sql> {
         const result = await callback(txSql);
         await client.query("COMMIT");
         return result;
-      } catch (error) {
         try {
           await client.query("ROLLBACK");
         } catch {
@@ -113,6 +112,7 @@ function createNeonSql(): Promise<Sql> {
         }
         throw error;
       } finally {
+        client.release();
         client.release();
       }
     });
