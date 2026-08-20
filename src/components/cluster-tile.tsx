@@ -1,7 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { BirdFace } from "@/components/bird-face";
+import { GradeBadge } from "@/components/grade-badge";
 import { isLiveNode } from "@/lib/node-state";
 import { isSleeping, relativeTime } from "@/lib/time";
+import type { GradeSnapshot } from "@/lib/grade";
 import type { ClusterCard, ClusterFace } from "@/lib/types";
 
 const STUB: ClusterFace = { name: "", color: "#16191F", state: "offline" };
@@ -12,7 +14,15 @@ const STUB: ClusterFace = { name: "", color: "#16191F", state: "offline" };
  * @param handle - The handle used to build the cluster link
  * @param cluster - The cluster data displayed in the tile
  */
-export function ClusterTile({ handle, cluster }: { handle: string; cluster: ClusterCard }) {
+export function ClusterTile({
+  handle,
+  cluster,
+  grade,
+}: {
+  handle: string;
+  cluster: ClusterCard;
+  grade: GradeSnapshot;
+}) {
   const faces = [...cluster.faces];
   while (faces.length < 4) faces.push(STUB);
   const asleep = isSleeping(cluster.last_chirp_at);
@@ -48,9 +58,7 @@ export function ClusterTile({ handle, cluster }: { handle: string; cluster: Clus
             {cluster.last_chirp_at ? ` · ${relativeTime(cluster.last_chirp_at)}` : " · quiet"}
           </p>
         </div>
-        <span className="shrink-0 rounded-full border border-border px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-fg-subtle uppercase">
-          SPX404
-        </span>
+        <GradeBadge snapshot={grade} />
       </div>
     </Link>
   );

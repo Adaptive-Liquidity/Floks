@@ -4,7 +4,9 @@ import { CopyButton } from "@/components/copy-button";
 import { RackTile } from "@/components/rack-tile";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { UNGRADED } from "@/lib/grade";
 import { isSleeping } from "@/lib/time";
+import type { GradeSnapshot } from "@/lib/grade";
 import type { Chirp, ClusterCard, Flock, RackCard } from "@/lib/types";
 
 export function FlockPageView({
@@ -14,6 +16,7 @@ export function FlockPageView({
   latest,
   nodeCount,
   pageUrl,
+  clusterGrades,
 }: {
   flock: Flock;
   clusters: ClusterCard[];
@@ -21,6 +24,7 @@ export function FlockPageView({
   latest: Chirp | null;
   nodeCount: number;
   pageUrl: string;
+  clusterGrades: Record<string, GradeSnapshot>;
 }) {
   const last =
     [latest?.created_at, ...clusters.map((c) => c.last_chirp_at)]
@@ -111,7 +115,11 @@ export function FlockPageView({
             <ul className="mt-6 grid gap-3 sm:grid-cols-2">
               {clusters.map((cluster) => (
                 <li key={cluster.id}>
-                  <ClusterTile handle={flock.handle} cluster={cluster} />
+                  <ClusterTile
+                    handle={flock.handle}
+                    cluster={cluster}
+                    grade={clusterGrades[cluster.id] ?? UNGRADED}
+                  />
                 </li>
               ))}
             </ul>
