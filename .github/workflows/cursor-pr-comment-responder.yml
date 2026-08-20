@@ -94,7 +94,7 @@ jobs:
           # by the shell and never inlined via a ${{ }} expansion.
           full_prompt="$(printf '%s\n\nPull request: #%s\nComment by @%s:\n%s\n' \
             "$instructions" "$PR_NUMBER" "$COMMENT_AUTHOR" "$COMMENT_BODY")"
-          agent -p "$full_prompt" --model gpt-5 > cursor-reply.md
+          agent -p "$full_prompt" --model gpt-5 --mode=ask --sandbox > cursor-reply.md
           # Fail loudly rather than posting an empty comment.
           test -s cursor-reply.md
 
