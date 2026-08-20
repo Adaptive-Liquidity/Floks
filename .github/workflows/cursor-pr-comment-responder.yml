@@ -70,7 +70,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-          ref: refs/pull/${{ github.event.issue.number }}/merge
+          ref: refs/pull/${{ github.event.issue.number }}/head
 
       - name: Install Cursor CLI
         if: steps.guard.outputs.skip == 'false'
