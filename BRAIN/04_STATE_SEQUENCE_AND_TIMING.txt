@@ -1,0 +1,25 @@
+GLOBAL STATES:
+- idle
+- ingesting
+- decomposing
+- executing
+- aggregating
+- scoring
+- decision_ready
+- completed
+- error
+
+TRANSITIONS:
+idle → ingesting → decomposing → executing → aggregating → scoring → decision_ready → completed
+
+NODE STATES:
+- pending → running → success | failure
+
+TIMING:
+- decomposition < 300ms
+- node start stagger 50ms
+- evidence emit on completion
+- scoring after aggregation
+
+STREAMING:
+- partial updates pushed continuously

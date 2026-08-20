@@ -1,0 +1,142 @@
+PURPOSE
+This file is for Codex. Build in phases. Do not skip phase gates. Each phase must produce working output before continuing.
+
+PHASE 0 — REPO FOUNDATION
+Goal:
+- Create app shell, routing, type system, design tokens, mock backend/data layer, and demo seed loading.
+Deliver:
+- working app boot
+- route map
+- theme tokens
+- seeded demo store
+Exit Criteria:
+- app launches
+- routes resolve
+- demo seed loads
+- mac shell visible
+
+PHASE 1 — MAC PRESENTATION SHELL
+Goal:
+- Build believable macOS recording wrapper
+Tasks:
+1. top menu bar with live clock
+2. top-left traffic lights
+3. wallpaper background
+4. visible dock
+5. nearly-fullscreen window
+6. subtle motion on hover/focus
+Exit Criteria:
+- app visually reads as macOS recording
+- clock updates in real time
+- dock visible
+- window chrome works
+
+PHASE 2 — GLOBAL APP CHROME
+Goal:
+- Build main app layout, side nav, top subnav, command palette, notifications
+Tasks:
+1. left rail
+2. top header
+3. panel layout
+4. keyboard shortcuts
+Exit Criteria:
+- navigation complete
+- command palette works
+- chrome consistent across routes
+
+PHASE 3 — SHARED DESIGN SYSTEM
+Goal:
+- Build reusable components
+Tasks:
+1. glass cards
+2. metric cards
+3. badges
+4. drawers
+5. tabs
+6. graph canvas container
+7. timeline rail
+8. evidence cards
+9. score rings
+10. decision summary block
+Exit Criteria:
+- all shared components story-ready
+- consistent spacing / typography / hover / focus rules
+
+PHASE 4 — PROVIDER CORE FLOW
+Goal:
+- Build upload -> verification -> identity
+Tasks:
+1. submission page
+2. verification pipeline page
+3. identity card page
+4. score explanations
+Exit Criteria:
+- provider can ingest seeded package
+- verification resolves deterministically
+- identity card fully rendered
+
+PHASE 5 — PROVIDER OPERATIONS FLOW
+Goal:
+- Build mission control, runtime view, contracts, analytics, settlement
+Tasks:
+1. orchestration graph
+2. run monitor
+3. contract queue
+4. analytics
+5. payout overview
+Exit Criteria:
+- provider flow complete
+- seeded runs visible
+- graph interactive
+
+PHASE 6 — BUYER PROCUREMENT FLOW
+Goal:
+- Build marketplace -> agent profile -> contract builder
+Tasks:
+1. marketplace cards
+2. filters
+3. agent profile
+4. fit-for-task system
+5. contract builder
+Exit Criteria:
+- buyer can select agent and create seeded contract
+
+PHASE 7 — BUYER EXECUTION VISIBILITY FLOW
+Goal:
+- Build live run, trace explorer, evidence, governance, result handling
+Tasks:
+1. live execution graph
+2. evidence feed
+3. trace explorer
+4. governance panel
+5. accept / dispute / revise result
+Exit Criteria:
+- full run visible end to end
+- replay works
+- decision logic visible
+
+PHASE 8 — REPORTING / EXPORT / POLISH
+Goal:
+- Build exports, reporting, demo mode, cinematic transitions
+Tasks:
+1. report viewer
+2. JSON / PDF export hooks
+3. demo mode quick navigation
+4. polished loading and transition states
+Exit Criteria:
+- demo is recording-ready
+- all major flows accessible
+- no unfinished states
+
+PHASE 9 — QA / DEMO HARDENING
+Goal:
+- Eliminate inconsistencies
+Tasks:
+1. cross-check naming
+2. verify deterministic data
+3. validate no broken routes
+4. validate motion
+5. verify UI does not jitter in recording
+Exit Criteria:
+- stable demo build
+- zero obvious placeholder behavior

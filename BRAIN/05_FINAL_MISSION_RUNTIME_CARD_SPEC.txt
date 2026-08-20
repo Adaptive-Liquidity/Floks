@@ -1,0 +1,19 @@
+DISPLAY:
+- Task name
+- Status
+- Duration
+- Cost
+- Confidence
+
+SUBSECTIONS:
+- Node summary
+- Evidence count
+- Decision
+
+INTERACTIONS:
+- click → expand details
+- hover → metrics breakdown
+
+UPDATES:
+- real-time during execution
+- locks after completion

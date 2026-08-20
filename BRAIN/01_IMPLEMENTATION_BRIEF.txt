@@ -1,0 +1,29 @@
+PURPOSE:
+Implement the Outcome Execution + Visibility feature.
+
+SYSTEM RESPONSIBILITIES:
+- Accept task (outcome contract)
+- Decompose into parallel tasks
+- Execute via multi-agent orchestration
+- Enforce sandbox constraints
+- Generate evidence artifacts
+- Compute scores
+- Produce decision + report
+
+NON-FUNCTIONAL:
+- Deterministic outputs
+- Low latency updates (<200ms per node update)
+- Progressive rendering
+- Full auditability
+
+TECH STACK (GUIDANCE):
+- Frontend: React (functional components), state via Zustand or Redux Toolkit
+- Graph: D3/Canvas/WebGL for performance
+- Streaming: SSE or WebSockets
+- Backend: Python services, containerized execution
+- Data: JSON schemas with strict typing
+
+PERFORMANCE TARGETS:
+- First paint < 1.5s
+- Graph init < 300ms
+- Node update latency < 150ms

@@ -1,0 +1,14 @@
+DO:
+- enforce sandbox boundaries visibly
+- log every action
+- show denied actions
+
+DO NOT:
+- allow hidden execution
+- fake confidence scores
+- skip evidence generation
+
+SECURITY:
+- no outbound network unless allowed
+- filesystem isolation
+- strict command allowlist

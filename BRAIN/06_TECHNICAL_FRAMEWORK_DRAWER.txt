@@ -1,0 +1,14 @@
+SECTIONS:
+- Runtime Environment (container details)
+- Sandbox Rules
+- Resource Usage
+- Execution Logs
+
+DETAILS:
+- CPU, memory usage
+- command allowlist
+- network status
+
+INTERACTION:
+- expandable sections
+- copy logs

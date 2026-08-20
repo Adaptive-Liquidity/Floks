@@ -1,0 +1,30 @@
+COMPONENTS:
+- LeadAgentController
+- TaskDecomposer
+- AgentRegistry
+- ExecutionScheduler
+- ResultAggregator
+
+FLOW:
+1) Input task
+2) Decompose into subtasks
+3) Assign to agents
+4) Execute in parallel
+5) Collect outputs
+6) Aggregate
+
+PARALLELISM:
+- Independent tasks execute concurrently
+- Dependencies enforce ordering
+
+FAILURES:
+- Retry policy (max 2)
+- Fallback agent
+- Escalation event
+
+DATA:
+Task:
+- id, input, dependencies, status, output, confidence
+
+Agent:
+- id, capability, latency_avg, reliability_score

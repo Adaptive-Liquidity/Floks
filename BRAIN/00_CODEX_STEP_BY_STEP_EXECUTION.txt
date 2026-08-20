@@ -1,0 +1,83 @@
+FOR CODEX
+
+STEP 1
+Create project structure:
+- app/
+- components/
+- features/
+- systems/
+- data/
+- styles/
+- hooks/
+- lib/
+- types/
+
+STEP 2
+Create shared theme tokens and mac shell frame first. Do not start feature pages before shell exists.
+
+STEP 3
+Implement seeded data loader and central store:
+- agents
+- runs
+- evidence
+- contracts
+- scores
+- decisions
+- timeline events
+- notifications
+
+STEP 4
+Implement reusable components before feature pages:
+- AppWindow
+- MenuBar
+- Dock
+- GlassPanel
+- MetricCard
+- ScoreRing
+- TimelineRail
+- ExecutionGraph
+- EvidenceCard
+- DecisionBlock
+- TraceDrawer
+- CommandPalette
+
+STEP 5
+Implement provider pages in this order:
+- submission
+- verification
+- identity
+- mission control
+- runtime
+- analytics
+- settlement
+
+STEP 6
+Implement buyer pages in this order:
+- marketplace
+- profile
+- contract builder
+- live run
+- trace explorer
+- evidence
+- governance
+- result
+- history
+
+STEP 7
+Bind all pages to common state contracts and seeded data.
+
+STEP 8
+Implement replay and deterministic animation timing.
+
+STEP 9
+Implement demo mode with one-click navigation between “hero moments”.
+
+STEP 10
+Polish motion, empty states, failures, hover explanations, and clock/menu behavior.
+
+RULES
+- Keep all primary trust signals above the fold
+- Never hide causal links
+- Never use random data
+- Never use loading spinners where skeletons or streaming placeholders are better
+- Preserve visible desktop edges for recording
