@@ -1,0 +1,11 @@
+RUN STORE ACTIONS
+- loadRun(runId)
+- startReplay()
+- stopReplay()
+- setReplayIndex(index)
+- selectNode(nodeId)
+- resolveNode(nodeId)
+- blockNode(nodeId, reason)
+- finalizeScores()
+- issueDecision()
+- resetRunToSeed()

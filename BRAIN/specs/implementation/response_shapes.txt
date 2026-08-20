@@ -1,0 +1,9 @@
+STANDARD RESPONSE SHAPE
+{
+  "ok": true,
+  "data": {},
+  "meta": {
+    "demoMode": true,
+    "seedVersion": "1.0.0"
+  }
+}

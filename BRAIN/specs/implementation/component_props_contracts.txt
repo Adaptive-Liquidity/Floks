@@ -1,0 +1,25 @@
+METRIC CARD PROPS
+- label
+- value
+- sublabel
+- statusTone
+- onClick
+- helperText
+
+EXECUTION GRAPH PROPS
+- nodes
+- edges
+- selectedNodeId
+- onSelectNode
+- onHoverNode
+- onReplayIndexChange
+- showStatusLegend
+
+EVIDENCE CARD PROPS
+- title
+- type
+- confidence
+- source
+- summary
+- whyItMatters
+- onOpen

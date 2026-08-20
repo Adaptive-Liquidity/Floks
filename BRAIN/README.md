@@ -1,36 +1,24 @@
 # BRAIN — AgentSea product brain (reference only)
 
-**Not Flok source code.** This is a complete product brain for a parallel concept (Outcome Marketplace / multi-agent execution platform). Use it as reference when redesigning Flok Outcome Contracts, Roost, Night Tape, Capsules, Grades, and settlement.
+**Not Flok source.** Full dump of a parallel Outcome Marketplace. Flok authority is `FINAL_DESIGN.md`. What to port is **`TAKE.md` in this folder** — do not invent a second copy of the specs.
 
-## Paths
+## Paths (one tree, two mounts)
 
-| Environment | Path |
-|---|---|
-| Project artifacts (this folder) | `/home/workdir/artifacts/BRAIN/` |
-| **Grok Build sandbox (use this)** | `/workspace/artifacts/BRAIN/` |
-| GitHub mirror | `https://github.com/Adaptive-Liquidity/Floks/tree/main/BRAIN` |
+| Mount | Path | Why two |
+|---|---|---|
+| Git / workspace | `/workspace/BRAIN/` | canonical in the repo |
+| Grok persistence | `/workspace/artifacts/BRAIN/` | `AGENTS.project.md` — artifacts survive chats |
 
-Grok Build must **not** look for `/home/workdir/...` — that path does not exist in the Build sandbox. Always use `/workspace/artifacts/BRAIN/`.
+Keep them in sync. Do not add `reference/brain/` as a third copy.
 
-## Start reading order
+Grok Build: use `/workspace/BRAIN/` or `/workspace/artifacts/BRAIN/`. Never `/home/workdir/...`.
 
-1. `00_PLATFORM_MASTER_INDEX.txt`
-2. `03_SHARED_SYSTEMS/shared_04_data_models.txt`
-3. `03_SHARED_SYSTEMS/shared_03_global_state_models.txt`
-4. `02_BUYER_FEATURES/buyer_04_contract_builder.txt`
-5. `02_BUYER_FEATURES/buyer_05_live_execution_visibility.txt`
-6. `01_PROVIDER_FEATURES/provider_05_mission_control.txt`
-7. `01_PROVIDER_FEATURES/provider_07_contract_queue.txt`
-8. `05_RULES/rules_scoring_logic.txt` + `rules_evidence_logic.txt`
-9. `03_SHARED_SYSTEMS/shared_07_motion_system.txt`
+## Start here
 
-## Flok redesign constraints (must filter)
+1. `TAKE.md` — take / slice / skip / addon
+2. Then only the files `TAKE.md` names
+3. Addon (2026-08-19): `COVERAGE_AUDIT.md`, `specs/implementation/`, `reference-code/` (stubs only)
 
-- Industrial terms only: Node, Cluster, Roost, Rack, Pulse, Tape, Capsule, Bound, Contract, Grade
-- Night Tape is the only social surface
-- Cluster scaling: Index → Roost (≤12) → Rack
-- Outcome Contracts = AEON escrow + SPX402 bids + Nexus Capsules
-- Visual: cream-on-charcoal, lime signals, animated oval eyes
-- Reject: macOS shell, indigo/cyan palette, Provider/Buyer dual accounts, high-volume Sky feed
+## Reject
 
-See repo `DESIGN.md` for the Flok-native pivot that already maps these concepts.
+macOS shell, indigo/cyan, Provider/Buyer accounts, package upload, verification pipeline, Sky, knowledge-score as Grade.

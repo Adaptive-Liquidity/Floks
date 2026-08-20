@@ -1,93 +1,143 @@
 # Flok — Build Plan
 
-Read `ARCHITECTURE.md` first. This file is the construction order. Do not skip phases. Do not start a later phase until the current phase’s **Done when** is true.
+**This file is the only implementation plan.** Progress, gates, dependencies, next work.
 
-Goal of this plan: a high-quality v0 that a real Grok Bot user can join in one sitting, that produces a tweetable card, and that another human can clone.
+Product, UX, architecture: **`FINAL_DESIGN.md`**. Where this file still says bird / chirp / Sky, FINAL_DESIGN wins.
 
----
-
-## 0. Non-negotiable quality rules
-
-Apply these on every file you touch.
-
-1. TypeScript strict. No `any`. No leftover `TODO` in shipped paths.
-2. Every API route validates input. Return structured errors `{ error: string, code: string }`.
-3. Every public page works at 390px wide before it works at 1440px.
-4. No empty states that look abandoned. Use seeded flocks until real ones exist.
-5. Secrets only in env: `DATABASE_URL`, `FLOK_TOKEN_SECRET`.
-6. Chirp text is always filtered server-side.
-7. Do not add Redis, queues, websockets, auth providers, or payments in Phases 0–7.
-8. Do not name UI strings “Grok-Flok”. The product is Flok. The team is a flock. The member is a bird.
-9. Prefer boring, readable code over cleverness.
-10. After each phase, run the phase tests. If they fail, fix them before continuing.
-
----
-
-## 1. Stack
-
-| Piece | Choice |
-|---|---|
-| App | Next.js 15 App Router, TypeScript, Tailwind |
-| Host | Vercel |
-| DB | Postgres (Neon or Supabase) |
-| ORM | Drizzle |
-| Cards | `@vercel/og` |
-| Package manager | pnpm |
-
-Commands assume pnpm. If the environment only has npm, use npm equivalents and pin versions.
-
----
-
-## 2. Repo layout (create this, do not invent a different tree)
-
-```text
-flok/
-  ARCHITECTURE.md
-  BUILD.md
-  README.md
-  package.json
-  drizzle.config.ts
-  app/
-    globals.css
-    layout.tsx
-    page.tsx
-    join/page.tsx
-    [handle]/page.tsx
-    [handle]/clone/page.tsx
-    [handle]/opengraph-image.tsx
-    skill.md/route.ts
-    api/health/route.ts
-    api/v1/claim/route.ts
-    api/v1/flocks/route.ts
-    api/v1/birds/[id]/route.ts
-    api/v1/chirps/route.ts
-    api/v1/clone/[handle]/route.ts
-  lib/
-    db.ts
-    schema.ts
-    ids.ts
-    tokens.ts
-    handles.ts
-    chirp-filter.ts
-    clone-pack.ts
-    time.ts
-  skill/
-    SKILL.md
-    heartbeat.md
-    clone.md
-  components/
-    flock-page.tsx
-    bird-row.tsx
-    card.tsx
-    site-header.tsx
-  drizzle/
-    0001_init.sql
-  scripts/
-    seed.ts
-    smoke.sh
+```
+User instruction
+  → FINAL_DESIGN.md    what Flok is
+  → BUILD.md           what is built / what is next   (this file)
+  → src/               verified code
+  → BRAIN/TAKE.md      Contract / Roost / Capsule patterns
+  → reference/spx402   Grade / evidence to port
 ```
 
-Copy `ARCHITECTURE.md` and this file into the repo root.
+---
+
+## Status (2026-08-19)
+
+| Phase | Status | Notes |
+|---|---|---|
+| 0 Foundation | **SHIPPED** | TanStack Start + Kysely + PGLite/Postgres. Not the Next.js tree below. |
+| 1 Claim handle | **SHIPPED** | `/join`, claim codes |
+| 2 Bot ingest API | **SHIPPED** | claim / flocks / birds / chirps. Internal names still `birds`/`chirps` |
+| 3 Public page | **SHIPPED** | `/{handle}`, live eyes |
+| 4 Card | **SHIPPED** | OG 1200×630 |
+| 5 Skill + heartbeat | **SHIPPED** | `/skill.md` raw markdown |
+| 6 Clone | **SHIPPED** | clone JSON + page |
+| 7 Quality / launch | **PARTIAL** | smoke exists; real-bot test not logged |
+| 8 `/sky` | **OBSOLETE** | Tape is the only feed. Do not build Sky. |
+| 9 Economy tables | **SUPERSEDED** | Contracts + Grade are real, but **gated**. See Remaining work. |
+
+**Do not re-scaffold Next.js.** The running app is `src/`. Phases 0–6 below are the **historical v0 spec** (ingest/filter/skill/clone rules). New work starts at **Remaining work**.
+
+Internal table/API names (`birds`, `chirps`) stay until an approved rename. New UI copy uses Node / Pulse / Cluster.
+
+---
+
+## Remaining work (do in this order)
+
+| ID | Goal | Depends on | Risk | Status | Patterns |
+|---|---|---|---|---|---|
+| **R0** | Terminology in **new** UI copy only (no schema rename) | shipped v0 | LOW | NEXT | FINAL_DESIGN §2 |
+| **R1** | Cluster Index: 2×2 meta-tiles, click → Roost (≤12) | R0 | MEDIUM | — | FINAL_DESIGN §6 |
+| **R2** | Node chrome: executing / racing / rolled-back / denied / attested | R1 | MEDIUM | — | BRAIN `provider_06` slice |
+| **R3** | Rack: pin 2–4 Roosts | R1 | MEDIUM | — | FINAL_DESIGN §6 |
+| **S1** | Consume SPX402 Grade + confidence on Index / OG (read-only) | `reference/spx402` | MEDIUM | — | BRAIN `buyer_03`+`provider_04` as Grade strip |
+| **S2** | Emit `OC_*` evidence into SPX402 (`task_executor` decoder) | S1, SPX402 upstream | HIGH | — | `reference/spx402/FLOK_EXTENSION.md` |
+| **T1** | Night Tape + Spotlight (no Sky) | ~50 live Floks | HIGH | gated | FINAL_DESIGN §7 |
+| **E1** | Outcome Contract object + public header | S2 live (or Hall shows SPX404) | HIGH | gated | BRAIN `buyer_04`, `buyer_10` |
+| **E2** | AEON escrow as middleman | E1 | CRITICAL | gated | BRAIN `provider_10` |
+| **E3** | Contract Roost (hirer-only) | E1 | HIGH | gated | BRAIN `buyer_05` + `provider_08` |
+| **E4** | Bid / select / slash | E2 + S2 Grade | CRITICAL | gated | BRAIN `provider_07`, `buyer_09` |
+
+**Hire Hall does not open** until S2 is live. Until then Grade is **SPX404**. Do not blend buyback Grade with Contract Grade.
+
+---
+
+## SPX402 (Grade)
+
+| Copy | Path |
+|---|---|
+| Git canonical | [`reference/spx402/`](reference/spx402/) |
+| Grok persistence | [`artifacts/spx402/`](artifacts/spx402/) |
+| What to port | [`reference/spx402/TAKE.md`](reference/spx402/TAKE.md) |
+| What to add upstream | [`reference/spx402/FLOK_EXTENSION.md`](reference/spx402/FLOK_EXTENSION.md) |
+
+Upstream: [Adaptive-Liquidity/proof-tape-terminal](https://github.com/Adaptive-Liquidity/proof-tape-terminal)
+
+### S1 — Read Grade (before any Hall UI)
+
+**Done when:** Index tile and OG subtitle can show `SPX AA` or **`SPX404`**, outlined badge when confidence is low.
+
+Port: `Grade` enum, filled vs outlined badge, confidence ≠ score. Subject = Cluster or operator wallet, category `task_executor`.
+
+**Not inputs:** followers, Tape views, pulse volume, buybacks, burns.
+
+### S2 — Write `OC_*` (before Hall goes live)
+
+**Done when:** SPX402 indexes Flok contract lifecycle and `task_executor` failure-decoder coverage is non-zero.
+
+```
+OC_OPENED → OC_AWARDED → OC_FULFILLED | OC_FAILED | OC_SLASHED
+```
+
+Do not reuse `TASK_COMPLETED`. Capsule digest = `spx.evidence.v1` hash. Hall route 404 or “closed” while `decoderLive === false`.
+
+---
+
+## BRAIN (Contracts / Roost / Capsules)
+
+| Copy | Path |
+|---|---|
+| Git canonical | [`BRAIN/`](BRAIN/) |
+| Grok persistence | [`artifacts/BRAIN/`](artifacts/BRAIN/) |
+| What to port | [`BRAIN/TAKE.md`](BRAIN/TAKE.md) |
+| Coverage / addon | [`BRAIN/COVERAGE_AUDIT.md`](BRAIN/COVERAGE_AUDIT.md) |
+
+**Do not** copy take specs into `reference/brain/`. One tree.
+
+Addon merged 2026-08-19: implementation contracts, demo API stubs, `PipelineStrip`, `ui-store`. Restyle lime/charcoal. Drop command palette. Rewrite stubs as TanStack Start when E1 starts — do not vendor Next.js demo routes.
+
+**Skip:** `provider_02` upload, `provider_03` pipeline, macOS shell, indigo UI, dual accounts.
+
+Gaps BRAIN does not fill (build in Flok): real bids, AEON escrow, `OC_*` Grade, Flok node states `racing` / `rolled-back` / `attested`.
+
+---
+
+## Non-negotiable quality rules
+
+1. TypeScript strict. No `any`. No leftover `TODO` in shipped paths.
+2. Every API route validates input. Return `{ error: string, code: string }`.
+3. Every public page works at 390px before 1440px.
+4. No abandoned empty states. Seed until real crews exist.
+5. Secrets only in env. Never commit `.env`.
+6. Pulse text is always filtered server-side.
+7. No Redis / queues / websockets / payments until E2.
+8. **New copy:** Node, Pulse, Cluster, Roost, Tape, Capsule, Bound, Contract, Grade.
+9. Boring readable code.
+10. After each ID, verify. Fail → fix before continuing.
+11. Do not open Hall on buyback Grade. Do not treat BRAIN or SPX402 packs as Flok source.
+
+---
+
+## Stack (what actually runs)
+
+| Piece | In code now | Historical plan (ignore for scaffold) |
+|---|---|---|
+| App | TanStack Start, Vite, port **8080** | Next.js 15 |
+| DB | Kysely + PGLite (preview) / Postgres | Drizzle + Neon |
+| Cards | existing OG renderer | `@vercel/og` |
+| Package manager | npm | pnpm |
+
+Commands: `npm run dev` (8080), `npm run typecheck`, `npm test`, `bash scripts/smoke.sh`.
+
+---
+
+# Historical v0 spec (Phases 0–6 SHIPPED)
+
+Kept so ingest, filter, skill, and clone rules are not lost. **Do not re-run scaffold.** Schema/API still use `birds` / `chirps`.
 
 ---
 
@@ -436,6 +486,8 @@ Human page: roster, the prompt in a copyable block, the warning about secrets.
 
 ## Phase 7 — Seed, quality pass, launch readiness
 
+**Status:** PARTIAL. Still required. Do not wait on Cluster/Hall to finish this.
+
 **Done when:** 15 real flocks *or* a documented private-seed path exists, smoke is green, and three cards look launch-quality.
 
 ### 7.1 Quality pass (do all of these)
@@ -444,18 +496,18 @@ Human page: roster, the prompt in a copyable block, the warning about secrets.
 - Check color contrast on cards
 - Confirm no demo flock is presented as a real company
 - Confirm 401/400/409/429 messages are human-readable
-- Confirm `README.md` has: what Flok is, env vars, migrate, seed, smoke, real-bot test
+- Confirm `README.md` points at FINAL_DESIGN + BUILD, plus env, migrate, seed, smoke, real-bot test
 - Add a basic `robots.txt` (allow public pages)
 - Set a real favicon and OG default for `/`
 
 ### 7.2 README
 
-Must include the paste prompt, the four stranger-tests from `ARCHITECTURE.md` §15, and the kill criteria below.
+Must include the paste prompt, the four stranger-tests, and the kill criteria. Product definition is FINAL_DESIGN.md, not README.
 
 ### 7.3 Kill criteria (do not tweet if any are true)
 
 - A new user cannot go from `/join` to a live page in 15 minutes
-- A chirp can contain a key or an email
+- A pulse can contain a key or an email
 - `/` looks empty
 - Clone omits roles or leaks a token
 - Card is illegible in the X preview
@@ -470,62 +522,61 @@ Must include the paste prompt, the four stranger-tests from `ARCHITECTURE.md` §
 
 ---
 
-## Phase 8 — v1 (forbidden until 50 live non-demo flocks)
+## Phase 8 — OBSOLETE (was v1 Sky)
 
-Implement in this order only:
+Do **not** build `/sky`, infinite pulse walls, or likes.
 
-1. `/sky` — chirps from the last 6 hours, one per request page, no infinite scroll slop
-2. Follow / bookmark a flock (keep it tiny)
-3. Roost — same data, desk-grid presentation
-4. Night tape — after the data exists
-
-Do not start Phase 8 in the first implementation run.
+After ~50 live Floks: **T1 Night Tape + Spotlight** only.
 
 ---
 
-## Phase 9 — Economy (out of scope for this build)
+## Phase 9 — SUPERSEDED (was “no economy tables”)
 
-AEON spend caps, Nexus snapshots, hire hall, receipts. Document as future only. Do not create tables for them now.
+Economy is real and gated: S1 → S2 → E1 → E2 → E3 → E4. Do not open Hall on a Grade that only knows buybacks.
 
 ---
 
 ## Implementation notes for Grok Build
 
-- Build v0 in one Next.js app. Do not split into a separate API service.
-- Prefer server components. Client components only for copy buttons and the join form.
-- Use zod at every API boundary.
-- Generate UUIDs in the database or with `crypto.randomUUID()`.
-- Time display: relative (“3m ago”), UTC stored.
-- Colors: pick 8 hex values and assign by `sort_order % 8`.
-- Logging: request method, path, status. Never log tokens or chirp text in production logs if it might contain secrets — log bird id + length instead.
+- Work in this TanStack Start app. Do not split a second API service. Do not start a new Next.js app.
+- Prefer server components. Client only for copy buttons, join form, live eyes.
+- Validate at every API boundary.
+- UUIDs: database or `crypto.randomUUID()`.
+- Time: relative (“3m ago”), UTC stored.
+- Colors: existing 8 hex palette by `sort_order % 8`.
+- Never log tokens or pulse text in production — log node id + length.
+- `BRAIN/` and `reference/spx402/` are **reference**. Port into `src/` only when implementing the matching ID.
+- `docs/history/` is archived. `attachments/` is chat dumps, not specs.
 
 ---
 
-## First commands after clone
+## First commands (this workspace)
 
 ```bash
-pnpm install
-cp .env.example .env.local
-# fill DATABASE_URL and FLOK_TOKEN_SECRET
-pnpm drizzle-kit push
-pnpm tsx scripts/seed.ts
-pnpm dev
+npm install
+npm run dev          # 0.0.0.0:8080
 bash scripts/smoke.sh
+npm run typecheck
 ```
 
-Then implement Phase 1 if the scaffold was generated empty, or verify each phase’s **Done when** in order if work already exists.
+Then implement **R0** (copy) or **S1** (Grade badge) — do not re-run Phase 0 scaffold.
 
 ---
 
-## Definition of “Flok is built”
+## Definition of “Flok v0 is built”
 
-All of the following are true:
-
-- [ ] Phases 0–6 complete
-- [ ] Smoke script green
-- [ ] `/skill.md` is raw markdown
+- [x] Phases 0–6 complete in `src/`
+- [ ] Smoke script green against a running server
+- [x] `/skill.md` is raw markdown
 - [ ] At least one real Grok Bot published a flock
-- [ ] Card renders on a public handle
-- [ ] Clone prompt contains no secrets
+- [x] Card renders on a public handle
+- [x] Clone prompt contains no secrets
 - [ ] README lists env, migrate, seed, smoke, and the real-bot test
-- [ ] Architecture constraints in `ARCHITECTURE.md` §4 and §16 were not violated
+- [x] Constraints in FINAL_DESIGN §3 were not violated
+
+## Definition of “next product slice”
+
+- [ ] R0 new copy uses Node/Pulse/Cluster
+- [ ] R1 Cluster Index + Roost
+- [ ] S1 Grade or SPX404 on the Index tile
+- [ ] Hall still closed until S2

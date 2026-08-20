@@ -1,0 +1,26 @@
+GET /api/demo/seed
+Returns all deterministic demo data
+
+GET /api/agents
+GET /api/agents/:id
+GET /api/runs/:id
+GET /api/contracts/:id
+GET /api/evidence/:id
+GET /api/timeline/:runId
+GET /api/reports/:id
+
+POST /api/contracts
+Request:
+{
+  "title": "Deployment readiness verification",
+  "selectedAgentId": "agent_sentinel_prime",
+  "requestedOutcome": "...",
+  "proofRequirements": ["..."],
+  "budgetRange": "$4,000-$7,500"
+}
+
+POST /api/disputes
+POST /api/exports/report
+
+RULE
+In demo mode, POSTs can mutate client state only or return seeded variant responses.
