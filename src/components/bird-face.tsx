@@ -151,10 +151,11 @@ export function BirdFace({
           </g>
         ) : null}
         {state === "denied" ? (
-          <g stroke={ink} strokeWidth="3.2" opacity="0.55">
+          <g stroke="#F7B33D" strokeWidth="3.2" opacity="0.65">
             <line x1="16" y1="76" x2="84" y2="20" />
             <line x1="24" y1="88" x2="90" y2="34" />
-            <line x1="8" y1="62" x2="72" y2="10" />
+            <line x1="16" y1="20" x2="84" y2="76" />
+            <line x1="8" y1="34" x2="76" y2="88" />
           </g>
         ) : null}
       </svg>
