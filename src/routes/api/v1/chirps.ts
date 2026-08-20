@@ -3,11 +3,7 @@ import { z } from "zod";
 import { requireFlockAuth } from "@/lib/api-auth";
 import { filterChirp } from "@/lib/chirp-filter";
 import { jsonError, jsonOk, logRequest } from "@/lib/http";
-import {
-  findBirdInFlock,
-  insertChirp,
-  recentChirpForBird,
-} from "@/lib/queries";
+import { findBirdInFlock, insertChirp, recentChirpForBird } from "@/lib/queries";
 
 const bodySchema = z.object({
   bird: z.string().trim().min(1).max(32),
@@ -26,11 +22,7 @@ export const Route = createFileRoute("/api/v1/chirps")({
         }
         if (!auth.flock) {
           logRequest("POST", "/api/v1/chirps", 400);
-          return jsonError(
-            400,
-            "Publish the flock roster before chirping.",
-            "flock_missing",
-          );
+          return jsonError(400, "Publish the flock roster before chirping.", "flock_missing");
         }
         let json: unknown;
         try {
@@ -57,11 +49,7 @@ export const Route = createFileRoute("/api/v1/chirps")({
         const limited = await recentChirpForBird(bird.id, 10 * 60 * 1000);
         if (limited) {
           logRequest("POST", "/api/v1/chirps", 429);
-          return jsonError(
-            429,
-            "One chirp per bird every 10 minutes.",
-            "chirp_rate",
-          );
+          return jsonError(429, "One chirp per bird every 10 minutes.", "chirp_rate");
         }
         const chirp = await insertChirp({
           bird,

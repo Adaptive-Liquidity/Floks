@@ -162,8 +162,8 @@ test("legacy png under budget with custom wiring still requires og:type for canv
 test("legacy png + og:type game still needs the X feed card", () => {
   const root = makeWorkspace({
     rootTsx:
-      'const ogImage = host ? `https://${host}/og.png` : undefined;\n'
-      + '{ property: "og:type", content: "x:game" }',
+      "const ogImage = host ? `https://${host}/og.png` : undefined;\n" +
+      '{ property: "og:type", content: "x:game" }',
     cardFile: "og.png",
   });
   const warnings = computeBrandWarnings({ hasCanvas: true, workspaceRoot: root });
@@ -172,18 +172,9 @@ test("legacy png + og:type game still needs the X feed card", () => {
 });
 
 test("rootDeclaresOgTypeGame accepts property/content order variants", () => {
-  assert.equal(
-    rootDeclaresOgTypeGame('{ property: "og:type", content: "x:game" }'),
-    true,
-  );
-  assert.equal(
-    rootDeclaresOgTypeGame("{ property: 'og:type', content: 'x:game' }"),
-    true,
-  );
-  assert.equal(
-    rootDeclaresOgTypeGame('{ content: "x:game", property: "og:type" }'),
-    true,
-  );
+  assert.equal(rootDeclaresOgTypeGame('{ property: "og:type", content: "x:game" }'), true);
+  assert.equal(rootDeclaresOgTypeGame("{ property: 'og:type', content: 'x:game' }"), true);
+  assert.equal(rootDeclaresOgTypeGame('{ content: "x:game", property: "og:type" }'), true);
   assert.equal(rootDeclaresOgTypeGame('{ property: "og:type", content: "website" }'), false);
   // Bare "game" is not accepted — product contract is the namespaced x:game value.
   assert.equal(rootDeclaresOgTypeGame('{ property: "og:type", content: "game" }'), false);
@@ -195,25 +186,25 @@ test("rootDeclaresOgTypeGame ignores comment-only scaffold examples", () => {
   // AGENTS.md first-scaffold style: pattern only in a line comment.
   assert.equal(
     rootDeclaresOgTypeGame(
-      '      // Games only: { property: "og:type", content: "x:game" } — X uses this to\n'
-        + "      // present the share card as a game.\n"
-        + "      ...(ogImage ? [{ property: \"og:image\", content: ogImage }] : []),\n",
+      '      // Games only: { property: "og:type", content: "x:game" } — X uses this to\n' +
+        "      // present the share card as a game.\n" +
+        '      ...(ogImage ? [{ property: "og:image", content: ogImage }] : []),\n',
     ),
     false,
   );
   // Block comment only.
   assert.equal(
     rootDeclaresOgTypeGame(
-      '/* { property: "og:type", content: "x:game" } */\n'
-        + "export const Route = createRootRoute({});\n",
+      '/* { property: "og:type", content: "x:game" } */\n' +
+        "export const Route = createRootRoute({});\n",
     ),
     false,
   );
   // Live meta still counts when a comment also mentions the pattern.
   assert.equal(
     rootDeclaresOgTypeGame(
-      '      // Games only: { property: "og:type", content: "x:game" }\n'
-        + '      { property: "og:type", content: "x:game" },\n',
+      '      // Games only: { property: "og:type", content: "x:game" }\n' +
+        '      { property: "og:type", content: "x:game" },\n',
     ),
     true,
   );
@@ -222,9 +213,9 @@ test("rootDeclaresOgTypeGame ignores comment-only scaffold examples", () => {
 test("canvas app with comment-only og:type still warns", () => {
   const root = makeWorkspace({
     rootTsx:
-      `${CUSTOM_ROOT}\n`
-      + '// Games only: { property: "og:type", content: "x:game" }\n'
-      + "meta: [],\n",
+      `${CUSTOM_ROOT}\n` +
+      '// Games only: { property: "og:type", content: "x:game" }\n' +
+      "meta: [],\n",
     cardFile: "og.jpg",
   });
   const warnings = computeBrandWarnings({ hasCanvas: true, workspaceRoot: root });
@@ -232,25 +223,16 @@ test("canvas app with comment-only og:type still warns", () => {
 });
 
 test("rootDeclaresGameImage requires a live x:game:image property", () => {
-  assert.equal(
-    rootDeclaresGameImage('{ property: "x:game:image", content: xBanner }'),
-    true,
-  );
-  assert.equal(
-    rootDeclaresGameImage('{ property: "og:image", content: ogImage }'),
-    false,
-  );
-  assert.equal(
-    rootDeclaresGameImage('// { property: "x:game:image", content: xBanner }'),
-    false,
-  );
+  assert.equal(rootDeclaresGameImage('{ property: "x:game:image", content: xBanner }'), true);
+  assert.equal(rootDeclaresGameImage('{ property: "og:image", content: ogImage }'), false);
+  assert.equal(rootDeclaresGameImage('// { property: "x:game:image", content: xBanner }'), false);
 });
 
 test("rootUsesCardPlaceholder ignores banner-only og.grok.me URLs", () => {
   assert.equal(
     rootUsesCardPlaceholder(
-      'const ogImage = host ? `https://${host}/og.jpg` : undefined;\n'
-        + 'const xBanner = `https://og.grok.me/v1/banner.png?host=demo.grok.me`;\n',
+      "const ogImage = host ? `https://${host}/og.jpg` : undefined;\n" +
+        "const xBanner = `https://og.grok.me/v1/banner.png?host=demo.grok.me`;\n",
     ),
     false,
   );

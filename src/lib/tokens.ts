@@ -3,8 +3,7 @@ import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 const globalRef = globalThis as typeof globalThis & { __flokTokenSecret__?: string };
 
 function tokenSecret(): string {
-  const fromEnv =
-    typeof process !== "undefined" ? process.env.FLOK_TOKEN_SECRET : undefined;
+  const fromEnv = typeof process !== "undefined" ? process.env.FLOK_TOKEN_SECRET : undefined;
   if (fromEnv && fromEnv.trim()) return fromEnv.trim();
   globalRef.__flokTokenSecret__ ??= randomBytes(32).toString("hex");
   return globalRef.__flokTokenSecret__;
@@ -15,7 +14,9 @@ export function generateFlockToken(): string {
 }
 
 export function hashToken(token: string): string {
-  return createHash("sha256").update(token + tokenSecret()).digest("hex");
+  return createHash("sha256")
+    .update(token + tokenSecret())
+    .digest("hex");
 }
 
 export function tokensEqual(a: string, b: string): boolean {

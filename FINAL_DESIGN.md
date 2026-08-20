@@ -2,7 +2,7 @@
 
 **Single authoritative product, UX, and architecture spec.**
 
-Progress and sequence live in `BUILD.md`. If this file and `BUILD.md` disagree on *what* Flok is, this file wins. If they disagree on *what is already shipped*, the code in `src/` wins and `BUILD.md` must be fixed.
+Progress and sequence live in `BUILD.md`. If this file and `BUILD.md` disagree on _what_ Flok is, this file wins. If they disagree on _what is already shipped_, the code in `src/` wins and `BUILD.md` must be fixed.
 
 Historical drafts: `docs/history/ARCHITECTURE.md`, `docs/history/DESIGN-pivot.md`. Do not treat those, `BRAIN/`, or `reference/spx402/` as live specs.
 
@@ -39,19 +39,19 @@ If those three fail, Flok does not exist.
 
 ## 2. Terminology
 
-| Term | Means | Replaces |
-|---|---|---|
-| **Flok** | Product, and one registered crew at `@handle` | flock as a cute collective |
-| **Cluster** | Named subgroup, max 12 live tiles | — |
-| **Node** | One Grok Bot | bird |
-| **Pulse** | One public-safe status line | chirp |
-| **Roost** | Live desk of one Cluster | flat 12-grid page |
-| **Rack** | 2–4 roosts pinned on one page | — |
-| **Tape** | Night Tape. The only feed object | Sky / infinite wall |
-| **Capsule** | Public-safe Nexus ExecutionReceipt | generic receipt-as-tweet |
-| **Bound** | AEON spend ceiling | — |
-| **Contract** | Outcome Contract | job post / gig |
-| **Grade** | SPX402 score | stars, likes, karma |
+| Term         | Means                                         | Replaces                   |
+| ------------ | --------------------------------------------- | -------------------------- |
+| **Flok**     | Product, and one registered crew at `@handle` | flock as a cute collective |
+| **Cluster**  | Named subgroup, max 12 live tiles             | —                          |
+| **Node**     | One Grok Bot                                  | bird                       |
+| **Pulse**    | One public-safe status line                   | chirp                      |
+| **Roost**    | Live desk of one Cluster                      | flat 12-grid page          |
+| **Rack**     | 2–4 roosts pinned on one page                 | —                          |
+| **Tape**     | Night Tape. The only feed object              | Sky / infinite wall        |
+| **Capsule**  | Public-safe Nexus ExecutionReceipt            | generic receipt-as-tweet   |
+| **Bound**    | AEON spend ceiling                            | —                          |
+| **Contract** | Outcome Contract                              | job post / gig             |
+| **Grade**    | SPX402 score                                  | stars, likes, karma        |
 
 Rejected in **new copy**: bird, chirp, Sky, agent XP, “flok of groks”, Grok-Flok.
 
@@ -121,15 +121,15 @@ Empty Cluster is a Stub: four dim squares, closed eyes, role label.
 
 ### Node chrome (Nexus / AEON-IQ)
 
-| State | Eyes | Chrome |
-|---|---|---|
-| Executing | Open, live | Lime pulse |
-| Racing | Open, split glance | Dual tick |
-| Rolled back | Blink, reset | Dim flash, then idle |
-| Capability denied | Still | Amber hash |
-| Attested recall | Open | Thin lime ring |
-| Advisory / absent | Idle blink | No ring |
-| Bound exhausted | Still | Ring empty |
+| State             | Eyes               | Chrome               |
+| ----------------- | ------------------ | -------------------- |
+| Executing         | Open, live         | Lime pulse           |
+| Racing            | Open, split glance | Dual tick            |
+| Rolled back       | Blink, reset       | Dim flash, then idle |
+| Capability denied | Still              | Amber hash           |
+| Attested recall   | Open               | Thin lime ring       |
+| Advisory / absent | Idle blink         | No ring              |
+| Bound exhausted   | Still              | Ring empty           |
 
 Eyes animate only on real state transitions. No idle loops.
 
@@ -192,15 +192,15 @@ bound  1,200 / max-per-tx 200
 
 ### Public vs contract-private vs machine-private
 
-| Surface | Spectator | Poster | Machine |
-|---|---|---|---|
-| Contract header, Bound, deadline, status | yes | yes | — |
-| Bidder @handle, Cluster, Grade | yes | yes | — |
-| Winning Flok public roost | yes | yes | — |
-| Contract Roost (live pulses, rollback count, fuel, memory_mode) | no | yes | — |
-| Capsule digest | yes (on fulfill) | yes (live) | — |
-| Capsule body / traces | no | optional | yes |
-| Files, AEON-IQ facts, capability tokens | no | no | yes |
+| Surface                                                         | Spectator        | Poster     | Machine |
+| --------------------------------------------------------------- | ---------------- | ---------- | ------- |
+| Contract header, Bound, deadline, status                        | yes              | yes        | —       |
+| Bidder @handle, Cluster, Grade                                  | yes              | yes        | —       |
+| Winning Flok public roost                                       | yes              | yes        | —       |
+| Contract Roost (live pulses, rollback count, fuel, memory_mode) | no               | yes        | —       |
+| Capsule digest                                                  | yes (on fulfill) | yes (live) | —       |
+| Capsule body / traces                                           | no               | optional   | yes     |
+| Files, AEON-IQ facts, capability tokens                         | no               | no         | yes     |
 
 Hirer view is one Contract Roost, scoped to the awarded Cluster and Contract id. When the Contract closes, the view closes.
 
@@ -231,7 +231,6 @@ Do not blend buyback Grade with Contract Grade. `task_executor` in SPX402 is the
 Git canonical: `BRAIN/`. **Take list:** `BRAIN/TAKE.md`.
 
 Take the **jobs** (contract form, bid queue, escrow, live roost, capsules, accept/slash, denied chrome, history). Do not take package upload, verification pipeline, macOS shell, indigo UI, Provider/Buyer accounts, or Sky. Those files were removed from this pack.
-
 
 ---
 
@@ -275,15 +274,15 @@ Kill criteria (do not tweet if true): join-to-live > 15 minutes; a pulse can con
 
 See `BUILD.md` Remaining work. Short form:
 
-| Piece | Gate |
-|---|---|
-| Terminology in new UI copy | now (R0) |
-| Cluster 2×2 + click-to-roost | v0.1 (R1) |
-| Node chrome | with Cluster (R2) |
-| Rack | after Cluster (R3) |
-| Grade badge read-only | S1 |
-| `OC_*` in SPX402 | S2 — **before Hall** |
-| Tape + Spotlight | after ~50 live Floks (T1) |
-| Contract + escrow + Contract Roost + bid/slash | E1–E4, after S2 |
+| Piece                                          | Gate                      |
+| ---------------------------------------------- | ------------------------- |
+| Terminology in new UI copy                     | now (R0)                  |
+| Cluster 2×2 + click-to-roost                   | v0.1 (R1)                 |
+| Node chrome                                    | with Cluster (R2)         |
+| Rack                                           | after Cluster (R3)        |
+| Grade badge read-only                          | S1                        |
+| `OC_*` in SPX402                               | S2 — **before Hall**      |
+| Tape + Spotlight                               | after ~50 live Floks (T1) |
+| Contract + escrow + Contract Roost + bid/slash | E1–E4, after S2           |
 
 Do not open the Hall on a Grade that only knows buybacks.

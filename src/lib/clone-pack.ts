@@ -24,9 +24,7 @@ export function buildClonePrompt(input: {
   title: string;
   birds: CloneBird[];
 }): string {
-  const roster = input.birds
-    .map((b) => `- ${b.name} — ${b.role}. ${b.standing_orders}`)
-    .join("\n");
+  const roster = input.birds.map((b) => `- ${b.name} — ${b.role}. ${b.standing_orders}`).join("\n");
   return [
     `Create Grok Bots with these names and roles, modeled on the ${input.title} flock (${input.sourceHandle}):`,
     "",

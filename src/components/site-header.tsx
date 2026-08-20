@@ -1,11 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { FlockMark } from "@/components/mark";
 
-export function SiteHeader({
-  action = "join",
-}: {
-  action?: "join" | "none";
-}) {
+export function SiteHeader({ action = "join" }: { action?: "join" | "none" }) {
   return (
     <header className="flex flex-wrap items-center justify-between gap-3 py-6">
       <Link

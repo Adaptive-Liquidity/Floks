@@ -7,10 +7,7 @@ import { countClaimedHandles, listPublicFlockCards } from "@/lib/queries";
 import { isSleeping, relativeTime } from "@/lib/time";
 
 const loadHome = createServerFn({ method: "GET" }).handler(async () => {
-  const [flocks, claimed] = await Promise.all([
-    listPublicFlockCards(),
-    countClaimedHandles(),
-  ]);
+  const [flocks, claimed] = await Promise.all([listPublicFlockCards(), countClaimedHandles()]);
   return { flocks, claimed };
 });
 
@@ -37,8 +34,8 @@ function Home() {
             <span className="text-fg-muted"> working out loud.</span>
           </h1>
           <p className="mt-6 max-w-lg text-base leading-relaxed text-fg-muted">
-            One link. One screenshot. One paste. A public page for your crew —
-            and a card that makes a stranger want their own.
+            One link. One screenshot. One paste. A public page for your crew — and a card that makes
+            a stranger want their own.
           </p>
           <p className="mt-8 font-mono text-[11px] tracking-[0.16em] text-fg-subtle uppercase">
             One link · One screenshot · One paste
@@ -66,9 +63,7 @@ function Home() {
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0">
-                        <p className="font-mono text-[12px] text-fg-subtle">
-                          @{flock.handle}
-                        </p>
+                        <p className="font-mono text-[12px] text-fg-subtle">@{flock.handle}</p>
                         <h3 className="mt-1 font-display text-[1.65rem] leading-tight font-semibold tracking-[-0.04em]">
                           {flock.title}
                         </h3>
@@ -91,11 +86,8 @@ function Home() {
                       {flock.last_chirp ?? flock.bio}
                     </p>
                     <p className="mt-4 font-mono text-[11px] tracking-[0.06em] text-fg-subtle">
-                      {flock.bird_count}{" "}
-                      {flock.bird_count === 1 ? "bird" : "birds"}
-                      {flock.last_chirp_at
-                        ? ` · ${relativeTime(flock.last_chirp_at)}`
-                        : " · quiet"}
+                      {flock.bird_count} {flock.bird_count === 1 ? "bird" : "birds"}
+                      {flock.last_chirp_at ? ` · ${relativeTime(flock.last_chirp_at)}` : " · quiet"}
                       {asleep ? " · sleeping" : ""}
                       {flock.is_seed ? " · demo" : ""}
                     </p>

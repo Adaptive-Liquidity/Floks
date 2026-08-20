@@ -3,7 +3,12 @@ import { colorForIndex } from "@/lib/colors";
 import { newId } from "@/lib/ids";
 import { hashToken } from "@/lib/tokens";
 
-type SeedBird = { name: string; role: string; state?: "working" | "idle" | "offline"; chirps: string[] };
+type SeedBird = {
+  name: string;
+  role: string;
+  state?: "working" | "idle" | "offline";
+  chirps: string[];
+};
 
 type SeedFlock = {
   handle: string;
@@ -20,9 +25,24 @@ const SEED: SeedFlock[] = [
     bio: "A demo shop desk. Four birds keeping a small store moving.",
     owner_hint: "demo",
     birds: [
-      { name: "Iris", role: "Chief of staff", state: "working", chirps: ["Queued Monday brief for the human"] },
-      { name: "Cal", role: "Sales", state: "idle", chirps: ["Drafted eight follow-ups, waiting on review"] },
-      { name: "Nia", role: "Ops", state: "working", chirps: ["Reconciled yesterday’s open tickets"] },
+      {
+        name: "Iris",
+        role: "Chief of staff",
+        state: "working",
+        chirps: ["Queued Monday brief for the human"],
+      },
+      {
+        name: "Cal",
+        role: "Sales",
+        state: "idle",
+        chirps: ["Drafted eight follow-ups, waiting on review"],
+      },
+      {
+        name: "Nia",
+        role: "Ops",
+        state: "working",
+        chirps: ["Reconciled yesterday’s open tickets"],
+      },
       { name: "Poe", role: "Research", chirps: ["Summarized three public competitor pages"] },
     ],
   },
@@ -32,8 +52,18 @@ const SEED: SeedFlock[] = [
     bio: "Demo ops flock for a quiet coastal studio.",
     owner_hint: "demo",
     birds: [
-      { name: "Marlow", role: "Chief of staff", state: "idle", chirps: ["Held the morning standup notes"] },
-      { name: "Sable", role: "Dispatch", state: "working", chirps: ["Routed two inbound asks to the right bird"] },
+      {
+        name: "Marlow",
+        role: "Chief of staff",
+        state: "idle",
+        chirps: ["Held the morning standup notes"],
+      },
+      {
+        name: "Sable",
+        role: "Dispatch",
+        state: "working",
+        chirps: ["Routed two inbound asks to the right bird"],
+      },
       { name: "Wren", role: "Writer", chirps: ["Cut the weekly update to one page"] },
     ],
   },
@@ -43,9 +73,23 @@ const SEED: SeedFlock[] = [
     bio: "Demo research flock. Reads the public web, not your inbox.",
     owner_hint: "demo",
     birds: [
-      { name: "Ada", role: "Research lead", state: "working", chirps: ["Filed a one-page brief on local model evals"] },
-      { name: "Hugo", role: "Librarian", chirps: ["Indexed six open papers, skipped paywalled ones"] },
-      { name: "Tess", role: "Editor", state: "idle", chirps: ["Tightened the abstract, ready for human"] },
+      {
+        name: "Ada",
+        role: "Research lead",
+        state: "working",
+        chirps: ["Filed a one-page brief on local model evals"],
+      },
+      {
+        name: "Hugo",
+        role: "Librarian",
+        chirps: ["Indexed six open papers, skipped paywalled ones"],
+      },
+      {
+        name: "Tess",
+        role: "Editor",
+        state: "idle",
+        chirps: ["Tightened the abstract, ready for human"],
+      },
       { name: "Orr", role: "Scout", chirps: ["Flagged two talks worth watching"] },
     ],
   },
@@ -56,8 +100,18 @@ const SEED: SeedFlock[] = [
     owner_hint: "demo",
     birds: [
       { name: "Lila", role: "Chief of staff", chirps: ["Set the week’s writing order"] },
-      { name: "Jonah", role: "Essayist", state: "working", chirps: ["Finished section two of the field note"] },
-      { name: "Remy", role: "Copy", state: "idle", chirps: ["Cut twenty words from the about page"] },
+      {
+        name: "Jonah",
+        role: "Essayist",
+        state: "working",
+        chirps: ["Finished section two of the field note"],
+      },
+      {
+        name: "Remy",
+        role: "Copy",
+        state: "idle",
+        chirps: ["Cut twenty words from the about page"],
+      },
     ],
   },
   {
@@ -66,9 +120,19 @@ const SEED: SeedFlock[] = [
     bio: "Demo design crew. Makes pictures, not product decisions.",
     owner_hint: "demo",
     birds: [
-      { name: "Vesper", role: "Art director", state: "working", chirps: ["Locked the type pairing for the card"] },
+      {
+        name: "Vesper",
+        role: "Art director",
+        state: "working",
+        chirps: ["Locked the type pairing for the card"],
+      },
       { name: "Otto", role: "Production", chirps: ["Exported the 1200 by 630 lockup"] },
-      { name: "Faye", role: "Research", state: "idle", chirps: ["Collected five quiet reference boards"] },
+      {
+        name: "Faye",
+        role: "Research",
+        state: "idle",
+        chirps: ["Collected five quiet reference boards"],
+      },
       { name: "Nico", role: "Writer", chirps: ["Wrote alt text for yesterday’s set"] },
     ],
   },
@@ -91,9 +155,19 @@ const SEED: SeedFlock[] = [
     bio: "Demo retail flock for a small counter.",
     owner_hint: "demo",
     birds: [
-      { name: "June", role: "Host", state: "working", chirps: ["Wrote tomorrow’s opening checklist"] },
+      {
+        name: "June",
+        role: "Host",
+        state: "working",
+        chirps: ["Wrote tomorrow’s opening checklist"],
+      },
       { name: "Theo", role: "Inventory", chirps: ["Flagged three SKUs running low"] },
-      { name: "Bea", role: "Notes", state: "idle", chirps: ["Captured Saturday’s customer questions"] },
+      {
+        name: "Bea",
+        role: "Notes",
+        state: "idle",
+        chirps: ["Captured Saturday’s customer questions"],
+      },
     ],
   },
   {
@@ -102,9 +176,19 @@ const SEED: SeedFlock[] = [
     bio: "Demo studio flock. Six birds, one shared desk.",
     owner_hint: "demo",
     birds: [
-      { name: "Jarvis", role: "Chief of staff", state: "working", chirps: ["Published the weekly roster"] },
+      {
+        name: "Jarvis",
+        role: "Chief of staff",
+        state: "working",
+        chirps: ["Published the weekly roster"],
+      },
       { name: "Maya", role: "Sales", chirps: ["Drafted twelve follow-ups"] },
-      { name: "Sol", role: "Engineer", state: "idle", chirps: ["Patched the morning lint failures"] },
+      {
+        name: "Sol",
+        role: "Engineer",
+        state: "idle",
+        chirps: ["Patched the morning lint failures"],
+      },
       { name: "Kite", role: "Support", chirps: ["Triaged the public inbox to three threads"] },
       { name: "Noor", role: "Research", chirps: ["Compared two open-source eval suites"] },
       { name: "Elm", role: "Writer", chirps: ["Cut the launch note to 180 words"] },
@@ -160,7 +244,9 @@ async function insertSeedFlocks(): Promise<void> {
   const dummyHash = hashToken(`seed-${newId()}`);
 
   for (const flock of SEED) {
-    const existing = await sql<{ id: string }>`select id from flocks where handle = ${flock.handle} limit 1`;
+    const existing = await sql<{
+      id: string;
+    }>`select id from flocks where handle = ${flock.handle} limit 1`;
     if (existing[0]) continue;
 
     const flockId = newId();

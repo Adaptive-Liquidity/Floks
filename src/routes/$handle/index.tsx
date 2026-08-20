@@ -3,11 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { FlockPageView } from "@/components/flock-page";
 import { RESERVED_HANDLES } from "@/lib/handles";
 import { getAppOrigin } from "@/lib/origin.server";
-import {
-  getBirdsForFlock,
-  getFlockByHandle,
-  getLatestChirp,
-} from "@/lib/queries";
+import { getBirdsForFlock, getFlockByHandle, getLatestChirp } from "@/lib/queries";
 
 const loadFlockPage = createServerFn({ method: "GET" })
   .validator((handle: string) => handle)
@@ -38,8 +34,7 @@ export const Route = createFileRoute("/$handle/")({
     if (!loaderData) return { meta: [{ title: "Flok" }] };
     const { flock, origin } = loaderData;
     const title = `${flock.title} · ${flock.handle}`;
-    const description =
-      flock.bio || `A flock of Grok Bots published on Flok.`;
+    const description = flock.bio || `A flock of Grok Bots published on Flok.`;
     const image = `${origin}/${flock.handle}/opengraph-image`;
     return {
       meta: [

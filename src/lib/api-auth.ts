@@ -3,7 +3,9 @@ import { resolveAuthToken } from "@/lib/queries";
 import { hashToken } from "@/lib/tokens";
 import type { Flock } from "@/lib/types";
 
-export async function requireFlockAuth(request: Request): Promise<
+export async function requireFlockAuth(
+  request: Request,
+): Promise<
   | { ok: true; flock: Flock | null; handle: string; tokenHash: string }
   | { ok: false; response: Response }
 > {

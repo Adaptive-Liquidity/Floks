@@ -1,11 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { jsonError, logRequest } from "@/lib/http";
 import { getAppOrigin, publicHost } from "@/lib/origin.server";
-import {
-  getBirdsForFlock,
-  getFlockByHandle,
-  getLatestChirp,
-} from "@/lib/queries";
+import { getBirdsForFlock, getFlockByHandle, getLatestChirp } from "@/lib/queries";
 import { renderFlockCardPng } from "@/lib/render-og.server";
 
 export const Route = createFileRoute("/$handle/opengraph-image")({

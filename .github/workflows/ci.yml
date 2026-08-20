@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build:ci
+        env:
+          # Pure compile. migrate.mjs is not invoked.
+          DATABASE_URL: ""
+
+  smoke:
+    name: Integration smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Start Flok (PGLite)
+        run: |
+          npm run dev > /tmp/flok-dev.log 2>&1 &
+          echo $! > /tmp/flok-dev.pid
+          for i in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:8080/api/health | grep -q '"ok":true'; then
+              echo "ready after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "server failed to start"
+          cat /tmp/flok-dev.log
+          exit 1
+      - name: Smoke
+        env:
+          FLOK_APP_URL: http://127.0.0.1:8080
+        run: bash scripts/smoke.sh
+      - name: Stop server
+        if: always()
+        run: |
+          if [ -f /tmp/flok-dev.pid ]; then
+            kill "$(cat /tmp/flok-dev.pid)" || true
+          fi

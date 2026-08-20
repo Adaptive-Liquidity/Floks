@@ -30,9 +30,7 @@ export const MAX_CARD_BYTES = 600 * 1024;
  */
 export function stripJsComments(src) {
   if (!src) return "";
-  return src
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/\/\/[^\n\r]*/g, "");
+  return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n\r]*/g, "");
 }
 
 /**
@@ -97,25 +95,25 @@ export function computeBrandWarnings({ hasCanvas, workspaceRoot = "/workspace" }
   if (cardPath !== undefined) {
     if (rootUsesCardPlaceholder(rootTsx)) {
       warnings.push(
-        `BRAND WARNING: ${cardPath} exists but src/routes/__root.tsx still points og:image `
-          + 'at the og.grok.me placeholder. Wire og:image to "https://${host}/og.jpg" per '
-          + `${skillPath}.`,
+        `BRAND WARNING: ${cardPath} exists but src/routes/__root.tsx still points og:image ` +
+          'at the og.grok.me placeholder. Wire og:image to "https://${host}/og.jpg" per ' +
+          `${skillPath}.`,
       );
     } else if (statSync(cardPath).size > MAX_CARD_BYTES) {
       warnings.push(
-        `BRAND WARNING: ${cardPath} is over 600 KB — link scrapers (X card previews included) `
-          + "time out or skip images this heavy, so the card silently fails to unfurl. "
-          + `Re-encode as JPEG (public/og.jpg, ffmpeg -q:v 4) per ${skillPath}.`,
+        `BRAND WARNING: ${cardPath} is over 600 KB — link scrapers (X card previews included) ` +
+          "time out or skip images this heavy, so the card silently fails to unfurl. " +
+          `Re-encode as JPEG (public/og.jpg, ffmpeg -q:v 4) per ${skillPath}.`,
       );
     }
   } else if (hasCanvas) {
     // No card. Canvas is a high-confidence game signal — hard warning.
     warnings.push(
-      `BRAND WARNING: this looks like a game/canvas app but ${workspaceRoot}/public/og.jpg `
-        + "is missing. Games and visually rich apps must ship a custom 1200x630 share card "
-        + "built from the app's own art — the default og.grok.me placeholder card is not "
-        + `acceptable for them. You are not done: open ${skillPath} and finish the `
-        + "brand-asset pass.",
+      `BRAND WARNING: this looks like a game/canvas app but ${workspaceRoot}/public/og.jpg ` +
+        "is missing. Games and visually rich apps must ship a custom 1200x630 share card " +
+        "built from the app's own art — the default og.grok.me placeholder card is not " +
+        `acceptable for them. You are not done: open ${skillPath} and finish the ` +
+        "brand-asset pass.",
     );
   } else if (rootUsesCardPlaceholder(rootTsx)) {
     // No canvas but the placeholder is wired: custom cards are the DEFAULT
@@ -123,11 +121,11 @@ export function computeBrandWarnings({ hasCanvas, workspaceRoot = "/workspace" }
     // plain utilities keep the placeholder. Softer prefix: for a genuine
     // utility this note is correctly dismissed, not acted on.
     warnings.push(
-      "BRAND NOTE: og:image is still the og.grok.me placeholder. Custom public/og.jpg "
-        + "cards are the default for games of every kind (DOM board/word games included), "
-        + "whimsical apps, creative tools, and brand-forward pages — only plain utilities "
-        + "(converters, CRUD trackers, admin dashboards) keep the placeholder. If this app "
-        + `is not a plain utility, finish the brand-asset pass per ${skillPath}.`,
+      "BRAND NOTE: og:image is still the og.grok.me placeholder. Custom public/og.jpg " +
+        "cards are the default for games of every kind (DOM board/word games included), " +
+        "whimsical apps, creative tools, and brand-forward pages — only plain utilities " +
+        "(converters, CRUD trackers, admin dashboards) keep the placeholder. If this app " +
+        `is not a plain utility, finish the brand-asset pass per ${skillPath}.`,
     );
   }
 
@@ -136,11 +134,11 @@ export function computeBrandWarnings({ hasCanvas, workspaceRoot = "/workspace" }
   // docs; this gate only fires on the high-confidence canvas signal.
   if (hasCanvas && !rootDeclaresOgTypeGame(rootTsx)) {
     warnings.push(
-      'BRAND WARNING: this looks like a game/canvas app but src/routes/__root.tsx is missing '
-        + 'og:type="x:game". X uses this meta tag to present the unfurl as a game card — set '
-        + `{ property: "og:type", content: "x:game" } in the root head meta (always, not only `
-        + `when a host exists) per ${skillPath}. Do not invent x:type or overload twitter:card `
-        + "as the game signal.",
+      "BRAND WARNING: this looks like a game/canvas app but src/routes/__root.tsx is missing " +
+        'og:type="x:game". X uses this meta tag to present the unfurl as a game card — set ' +
+        `{ property: "og:type", content: "x:game" } in the root head meta (always, not only ` +
+        `when a host exists) per ${skillPath}. Do not invent x:type or overload twitter:card ` +
+        "as the game signal.",
     );
   }
 
@@ -153,34 +151,34 @@ export function computeBrandWarnings({ hasCanvas, workspaceRoot = "/workspace" }
     const bannerPath = join(workspaceRoot, "public/x-banner.jpg");
     if (!existsSync(bannerPath)) {
       warnings.push(
-        `BRAND WARNING: this looks like a game/canvas app but ${bannerPath} is missing. `
-          + "Games need a 50:11 X feed card (1200×264 JPEG via Imagine) declared as "
-          + `x:game:image — open ${skillPath} and finish the brand-asset pass. Non-games `
-          + "keep the og.grok.me/v1/banner.png placeholder.",
+        `BRAND WARNING: this looks like a game/canvas app but ${bannerPath} is missing. ` +
+          "Games need a 50:11 X feed card (1200×264 JPEG via Imagine) declared as " +
+          `x:game:image — open ${skillPath} and finish the brand-asset pass. Non-games ` +
+          "keep the og.grok.me/v1/banner.png placeholder.",
       );
     } else if (statSync(bannerPath).size > MAX_CARD_BYTES) {
       // Same scraper budget as og.jpg: an oversized banner validates locally
       // but silently fails to unfurl on X.
       warnings.push(
-        `BRAND WARNING: ${bannerPath} is over 600 KB — link scrapers (X card previews `
-          + "included) time out or skip images this heavy, so the feed card silently fails "
-          + `to unfurl. Re-encode as JPEG (ffmpeg -q:v 4) per ${skillPath}.`,
+        `BRAND WARNING: ${bannerPath} is over 600 KB — link scrapers (X card previews ` +
+          "included) time out or skip images this heavy, so the feed card silently fails " +
+          `to unfurl. Re-encode as JPEG (ffmpeg -q:v 4) per ${skillPath}.`,
       );
     } else if (rootUsesBannerPlaceholder(rootTsx)) {
       warnings.push(
-        `BRAND WARNING: ${bannerPath} exists but src/routes/__root.tsx still points `
-          + "x:game:image at the og.grok.me/v1/banner.png placeholder. Wire x:game:image "
-          + 'to "https://${host}/x-banner.jpg" per '
-          + `${skillPath}.`,
+        `BRAND WARNING: ${bannerPath} exists but src/routes/__root.tsx still points ` +
+          "x:game:image at the og.grok.me/v1/banner.png placeholder. Wire x:game:image " +
+          'to "https://${host}/x-banner.jpg" per ' +
+          `${skillPath}.`,
       );
     }
     if (!rootDeclaresGameImage(rootTsx)) {
       warnings.push(
-        'BRAND WARNING: this looks like a game/canvas app but src/routes/__root.tsx is missing '
-          + 'x:game:image. Set { property: "x:game:image", content: xBanner } pointing at '
-          + `"https://\${host}/x-banner.jpg" with x:game:image:width/height 1200/264 `
-          + `(same host guard as og:image) per ${skillPath}. Every app wires this tag; `
-          + "games point it at the custom file after Imagine.",
+        "BRAND WARNING: this looks like a game/canvas app but src/routes/__root.tsx is missing " +
+          'x:game:image. Set { property: "x:game:image", content: xBanner } pointing at ' +
+          `"https://\${host}/x-banner.jpg" with x:game:image:width/height 1200/264 ` +
+          `(same host guard as og:image) per ${skillPath}. Every app wires this tag; ` +
+          "games point it at the custom file after Imagine.",
       );
     }
   }
