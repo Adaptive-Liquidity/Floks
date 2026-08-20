@@ -9,27 +9,43 @@ Lead agent owns planning, commits, and PRs. Parallelize only independent streams
 
 ## Model routing
 
-Use the cheapest capable model. Keep routine hands-on work on the Composer parent; reserve expensive thinking models for architecture, independent verification, and high-stakes review.
+**Default child agents = Composer.** Maximize parallel Composer workers for throughput. Expensive models are thin gates only — never bulk coding.
+
+### Default (Composer workers)
 
 | Role / task | `subagent_type` | `model` | Why |
 |---|---|---|---|
-| Lead routine implementation | parent / `inherit` | `inherit` | The parent uses Composer for efficient routine coding. |
-| Broad map / scout | `explore` | `composer-2.5-fast` | Cheap, fast repository discovery. |
-| Ambiguous design / Grade API | `architect` | `claude-opus-5-thinking-high` | Strongest fit for architecture and trade-offs. |
-| Backend / API / tokens / Grade read | `backend-engineer` | `gpt-5.6-sol-medium` | Strong systems and difficult backend reasoning. |
-| Frontend / OG / tiles | `frontend-engineer` | `kimi-k2.7-code` | Strong UI implementation without architecture-model cost. |
-| Verifier after change | `verifier` | `claude-opus-5-thinking-high` | Independent, high-quality verification; must differ from the implementer. |
-| Security: secrets / OG / auth | `security-auditor` | `claude-opus-5-thinking-high` | High-stakes trust-boundary review. |
-| High-risk adversarial challenge | `red-team` | `claude-fable-5-thinking-high` | Independent challenge with a distinct reasoning model. |
-| Large-volume repository analysis | `repo-analyst` | `gemini-3.1-pro` | Broad-context analysis at lower cost than Opus. |
-| External docs and prior art | `researcher` | `gemini-3.1-pro` | Strong research synthesis and broad context. |
+| Lead routine implementation | parent | `inherit` | Composer parent plans, commits, synthesizes. |
+| Broad map / scout | `explore` | `composer-2.5-fast` | Fast repo discovery. |
+| Backend / API / tokens / Grade | `backend-engineer` | `inherit` | Composer — parent or spawned child. |
+| Frontend / OG / tiles | `frontend-engineer` | `inherit` | Composer — parent or spawned child. |
+| Shell / mechanical ops | `shell` | `composer-2.5-fast` | Terminal and mechanical work. |
+| Large-volume repo analysis | `repo-analyst` | `inherit` | Only if huge; prefer `inherit` for coherence. |
+| Parallel file-split workers | any | `inherit` | Spawn 2–4 Composer children when files do not overlap. |
 
-Do not spend Opus, Sol, or Fable on trivial work. A verifier must use a different model from the implementation agent.
+### Expensive gates only
+
+| Role / task | `subagent_type` | `model` | When |
+|---|---|---|---|
+| Ambiguous design / Grade API | `architect` | `claude-opus-5-thinking-high` | Design is ambiguous; skip for mechanical work. |
+| Security: secrets / OG / auth | `security-auditor` | `claude-opus-5-thinking-high` | Secrets, auth, OG, high risk only. |
+| Verifier after wave | `verifier` | `claude-opus-5-thinking-high` | After non-trivial work; **one** verifier, not many. |
+| High-risk adversarial challenge | `red-team` | `claude-fable-5-thinking-high` | High-impact only. |
+| External docs and prior art | `researcher` | `gemini-3.1-pro` | External docs only. |
+
+Do not spawn Opus, Sol, Fable, or Kimi for routine explore/implement — that kills throughput. Verifier must differ from implementer model family.
+
+## Parallelism rules
+
+- Prefer **2–4 Composer Task children in parallel** when file ownership does not overlap.
+- One ownership matrix per wave; **no two children edit the same file**.
+- Lead synthesizes parallel output; **only then** run ONE verifier (and security-auditor if needed).
+- Do not spawn multiple verifiers or architects for the same wave.
 
 ## Wave recipes
 
-1. **Grok debt / harness fix:** `explore` (`composer-2.5-fast`) → implement on parent (`inherit`, Composer) → `security-auditor` (`claude-opus-5-thinking-high`) → `verifier` (`claude-opus-5-thinking-high`, different from implementer).
-2. **S1 Grade:** `architect` (`claude-opus-5-thinking-high`) → `backend-engineer` (`gpt-5.6-sol-medium`) ∥ `frontend-engineer` (`kimi-k2.7-code`) → `verifier` (`claude-opus-5-thinking-high`) → `flok-ship`.
+1. **Grok debt / harness fix:** `explore` (`composer-2.5-fast`) → implement on parent (`inherit`) → `security-auditor` (`claude-opus-5-thinking-high`) if trust-boundary touched → **one** `verifier` (`claude-opus-5-thinking-high`).
+2. **S1 Grade:** short `architect` (`claude-opus-5-thinking-high`) brief if design ambiguous → `backend-engineer` (`inherit`) ∥ `frontend-engineer` (`inherit`) → **one** `verifier` (`claude-opus-5-thinking-high`) → `flok-ship`.
 
 ## Ownership
 
@@ -37,3 +53,4 @@ Do not spend Opus, Sol, or Fable on trivial work. A verifier must use a differen
 - Subagent prompts are self-contained: objective, files, constraints, acceptance criteria.
 - Never merge a PR without explicit user approval.
 - Do not treat BRAIN or `reference/spx402/` as the product spec.
+- Hire Hall stays closed until SPX402 `OC_*` (S2). See `AGENTS.md`.
