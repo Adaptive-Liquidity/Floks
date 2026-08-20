@@ -27,6 +27,7 @@ test("rolled back is closed; flock sleep does not close live nodes", () => {
   assert.equal(eyesClosed("idle", true), true);
   assert.equal(eyesClosed("working", true), false);
   assert.equal(eyesClosed("racing", true), false);
+  assert.equal(eyesClosed("attested", true), false);
 });
 
 test("aliveRank prefers executing and racing", () => {
