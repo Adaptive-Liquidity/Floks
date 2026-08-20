@@ -34,7 +34,7 @@ jobs:
   smoke:
     name: Integration smoke
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -44,6 +44,8 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - name: Playwright Chromium
+        run: npx playwright install --with-deps chromium
       - name: Start Flok (PGLite)
         run: |
           npm run dev > /tmp/flok-dev.log 2>&1 &
@@ -62,6 +64,11 @@ jobs:
         env:
           FLOK_APP_URL: http://127.0.0.1:8080
         run: bash scripts/smoke.sh
+      - name: Browser smoke
+        env:
+          FLOK_APP_URL: http://127.0.0.1:8080
+          CI: true
+        run: node scripts/browser-smoke.mjs
       - name: Stop server
         if: always()
         run: |

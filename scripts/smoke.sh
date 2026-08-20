@@ -10,6 +10,13 @@ echo "smoke against $BASE handle=$HANDLE"
 health="$(curl -sf "$BASE/api/health")"
 echo "$health" | grep -q '"ok":true'
 
+health_legacy="$(curl -s -o /dev/null -w "%{http_code}" "$BASE/health")"
+test "$health_legacy" = "404"
+
+seed_status="$(curl -s -o /tmp/flok-seed.json -w "%{http_code}" -X POST "$BASE/api/v1/seed")"
+test "$seed_status" = "403"
+grep -q seed_disabled /tmp/flok-seed.json
+
 join="$(curl -sf -X POST "$BASE/api/v1/join" \
   -H 'content-type: application/json' \
   -d "{\"handle\":\"$HANDLE\"}")"
@@ -40,6 +47,15 @@ page_file="$(mktemp)"
 curl -sf "$BASE/$HANDLE" -o "$page_file"
 grep -a -q "Maya" "$page_file"
 rm -f "$page_file"
+
+og_code="$(curl -s -o /tmp/flok-og.png -w "%{http_code}" "$BASE/$HANDLE/opengraph-image")"
+test "$og_code" = "200"
+python3 - <<'PY'
+from pathlib import Path
+p = Path("/tmp/flok-og.png").read_bytes()[:8]
+assert p == bytes.fromhex("89504e470d0a1a0a"), p
+print("og png ok")
+PY
 
 status="$(curl -s -o /tmp/flok-bad.json -w "%{http_code}" -X POST "$BASE/api/v1/chirps" \
   -H "authorization: Bearer $token" \
