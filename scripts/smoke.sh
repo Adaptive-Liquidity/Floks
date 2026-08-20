@@ -52,6 +52,15 @@ curl -sf "$BASE/$HANDLE/c/crew" -o "$page_file"
 grep -a -q "Maya" "$page_file"
 grep -a -q "Roost" "$page_file"
 
+jarvis_id="$(python3 -c 'import json; from pathlib import Path; birds=json.loads(Path("/tmp/flok-flock.json").read_text()).get("birds") or []; print(next(b["id"] for b in birds if b.get("name")=="Jarvis"))')"
+test -n "$jarvis_id"
+curl -sf -X PUT "$BASE/api/v1/birds/$jarvis_id" \
+  -H "authorization: Bearer $token" \
+  -H 'content-type: application/json' \
+  -d '{"state":"racing"}' >/dev/null
+curl -sf "$BASE/$HANDLE/c/crew" -o "$page_file"
+grep -a -q "racing" "$page_file"
+
 curl -sf -X POST "$BASE/api/v1/flocks" \
   -H "authorization: Bearer $token" \
   -H 'content-type: application/json' \
