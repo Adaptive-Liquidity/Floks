@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.output/
+.vercel/
+.nitro/
+.tanstack/
+.project_id
+.github_repo
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
