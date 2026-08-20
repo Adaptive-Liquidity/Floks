@@ -1,0 +1,27 @@
+ROLES
+- provider
+- buyer
+- shared_admin_demo_mode
+
+PROVIDER CAN
+- upload packages
+- run verification
+- inspect own runtime
+- accept contracts
+- monitor mission control
+- view analytics
+- settle payouts
+
+BUYER CAN
+- browse marketplace
+- inspect verified agents
+- create contracts
+- watch live execution
+- inspect trace/evidence/governance
+- accept / dispute results
+
+SHARED ADMIN DEMO MODE CAN
+- jump across any route
+- toggle seeded states
+- replay runs
+- switch roles instantly

@@ -1,0 +1,41 @@
+FEATURE
+Verification Pipeline
+
+PURPOSE
+Resolve trust status through deterministic multi-stage verification.
+
+CAPABILITIES
+- parse manifest
+- analyze package
+- run sandbox suite
+- apply policy reasoning
+- compute scores
+- issue governance decision
+
+UI STRUCTURE
+Top:
+- pipeline strip: INGEST -> ANALYZE -> SANDBOX -> SCORE -> GOVERN
+Center:
+- selected stage detail
+Right:
+- score resolution panel
+Bottom:
+- timeline of verification events
+
+MICRO INTERACTIONS
+- active stage glows softly
+- score cards transition from calculating to resolved
+- clicking a stage loads details without route change
+
+STATE MACHINE
+uploaded -> parsing -> analyzed -> sandboxing -> scored -> governing -> verified
+alternate:
+-> restricted
+-> rejected
+
+OUTPUTS
+- knowledge score
+- risk status
+- sovereignty
+- sandbox pass rate
+- evidence links

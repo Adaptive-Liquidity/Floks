@@ -1,0 +1,27 @@
+FEATURE
+Provider Home Dashboard
+
+PURPOSE
+Give providers a high-level command surface for agents, contracts, active runs, verification status, and earnings.
+
+PRIMARY PANELS
+- active agents summary
+- verification status summary
+- contracts queue
+- active runs
+- performance snapshot
+- payout snapshot
+
+ABOVE THE FOLD
+- provider welcome
+- quick metrics
+- urgent actions
+- one-click navigation to verification and mission control
+
+KEY INTERACTIONS
+- click active run -> runtime view
+- click verification issue -> verification page
+- click contract -> contract queue detail
+
+SUCCESS CONDITION
+Provider can understand current workload and move to action in under 5 seconds.

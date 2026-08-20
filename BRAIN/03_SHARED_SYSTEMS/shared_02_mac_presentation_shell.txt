@@ -1,0 +1,41 @@
+PURPOSE
+Simulate a believable macOS recording environment.
+
+REQUIRED ELEMENTS
+1. Wallpaper background visible around window edges
+2. Top mac menu bar:
+   - Apple logo placeholder
+   - app name
+   - menu items
+   - wifi/battery placeholder icons
+   - live clock at right
+3. Centered almost-fullscreen app window:
+   - rounded corners
+   - glass header
+   - traffic-light controls at top left
+4. Visible dock at bottom:
+   - small icon row
+   - slight magnification on hover
+5. Window should leave narrow margins so user still sees the desktop
+
+WINDOW DIMENSIONS
+- width: 92vw to 95vw
+- height: 86vh to 89vh
+- centered
+- slight top gap under menu bar
+- slight bottom reveal above dock
+
+CLOCK
+- must function in real time
+- format: Mon 9:41 AM style
+- update every minute or second depending implementation
+
+DESKTOP WALLPAPER
+- use high-quality mountain / gradient wallpaper
+- warm top tones, cooler base tones acceptable
+- no distracting detail
+
+INTERACTION
+- traffic lights animate subtly on hover
+- dock icons magnify on hover
+- window shadow reacts slightly to focus

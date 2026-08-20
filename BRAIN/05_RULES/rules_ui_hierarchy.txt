@@ -1,0 +1,17 @@
+ABOVE THE FOLD
+- route identity
+- trust strip
+- primary action or decision
+- main graph or main list
+
+SECONDARY
+- evidence
+- metrics
+- detailed explanations
+
+TERTIARY
+- raw logs
+- low-priority metadata
+
+RULE
+Never force the user to scroll to understand trust posture or next action.

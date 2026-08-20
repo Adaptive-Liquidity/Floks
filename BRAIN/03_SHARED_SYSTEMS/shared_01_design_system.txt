@@ -1,0 +1,48 @@
+DESIGN TOKENS
+
+COLORS
+- bg/base: #0B1020
+- bg/elevated: rgba(18, 24, 44, 0.78)
+- glass/fill: rgba(255, 255, 255, 0.08)
+- glass/stroke: rgba(255, 255, 255, 0.14)
+- text/primary: #F5F7FF
+- text/secondary: #A9B3D1
+- accent/indigo: #6F7CFF
+- accent/cyan: #5DD8FF
+- success: #45D483
+- warning: #FFB648
+- danger: #FF667A
+- neutral: #94A3B8
+
+TYPOGRAPHY
+- display: 32 / 40 / semibold
+- h1: 24 / 32 / semibold
+- h2: 18 / 26 / semibold
+- h3: 15 / 22 / semibold
+- body: 13 / 20 / regular
+- label: 11 / 16 / medium
+- micro: 10 / 14 / medium
+
+SPACING
+- 4, 8, 12, 16, 20, 24, 32, 40
+
+RADIUS
+- 10, 14, 18, 24
+
+SHADOW / GLOW
+- soft panel shadow
+- subtle cyan/indigo ambient edge glow only on focus/active
+- never heavy neon
+
+MOTION
+- hover 120ms
+- panel open 220ms
+- graph node pulse 180ms
+- route transition 260ms
+- timeline scrub 100ms response
+
+SURFACE RULES
+- glass on primary chrome
+- slightly more opaque panels for content-heavy regions
+- thin borders
+- blur only where it helps hierarchy

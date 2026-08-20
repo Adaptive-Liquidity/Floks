@@ -1,0 +1,29 @@
+FEATURE
+Private Execution / Secure Deployment
+
+PURPOSE
+Let providers run sensitive logic inside visible boundaries without exposing internals.
+
+MODE OPTIONS
+- Public Execution
+- Private Contained Execution
+
+UI
+- mode selector
+- boundary card
+- runtime resource panel
+- allowed/blocked capabilities summary
+
+KEY MESSAGES
+- private
+- contained
+- verifiable
+
+DO NOT OVEREXPLAIN
+Do not flood the UI with cryptographic jargon. Show business-meaningful trust signals.
+
+BLOCKED ACTION VIEW
+When an action is denied, show:
+- what was attempted
+- which rule denied it
+- why it matters

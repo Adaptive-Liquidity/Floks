@@ -1,0 +1,24 @@
+FEATURE
+Performance Analytics
+
+PURPOSE
+Show provider-level outcomes and operational efficiency.
+
+METRICS
+- completed contracts
+- success rate
+- repeat buyers
+- average confidence
+- average completion time
+- parallel execution savings
+- revenue
+- settlement time
+
+VISUALS
+- metric cards
+- trend strips
+- segment filters
+- top agent / top outcome categories
+
+SUCCESS CONDITION
+Provider understands where performance and earnings come from.

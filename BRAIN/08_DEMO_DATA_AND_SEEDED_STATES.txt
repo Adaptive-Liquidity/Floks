@@ -1,0 +1,29 @@
+PACKAGE:
+sentinel-prime-agent.pkg
+
+RUNTIME:
+Python / Containerized
+
+DOMAIN:
+Verification + Infrastructure Intelligence
+
+CAPABILITIES:
+- repository analysis
+- structured code review
+- policy reasoning
+- secure bounded execution
+- verification reporting
+
+SANDBOX:
+5/5 passed
+
+SCORES:
+knowledge: 92
+risk: Cleared
+sovereignty: Granted
+
+TIMELINE:
+fixed timestamps (deterministic)
+
+EVIDENCE:
+4 artifacts with confidence >0.9

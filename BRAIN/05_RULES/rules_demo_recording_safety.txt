@@ -1,0 +1,7 @@
+RECORDING SAFETY
+- no random notifications
+- no data jitter
+- deterministic event ordering
+- avoid long empty delays
+- avoid motion that causes compression artifacts
+- ensure text remains legible in video

@@ -1,0 +1,9 @@
+INTERACTION CONTRACT TEMPLATE
+User Action
+-> System Response
+-> State Change
+-> Logged Event
+-> UI Update
+-> Optional Notification
+
+All feature interactions must follow this structure internally, even if not shown directly to users.

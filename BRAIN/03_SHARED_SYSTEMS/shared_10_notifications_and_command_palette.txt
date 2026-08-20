@@ -1,0 +1,22 @@
+COMMAND PALETTE
+Open with Cmd+K
+Supports:
+- navigate route
+- jump to hero scene
+- open run
+- open agent
+- toggle role
+- export report
+
+NOTIFICATIONS
+Types:
+- verification complete
+- contract accepted
+- run completed
+- dispute opened
+- payout settled
+
+UI
+- compact glass dropdown
+- grouped by recency
+- status chips

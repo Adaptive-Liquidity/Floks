@@ -1,0 +1,26 @@
+FEATURE
+Runtime Oversight
+
+PURPOSE
+Monitor live and completed runs from the provider side.
+
+PANELS
+- run header
+- execution graph
+- runtime metrics
+- blocked events
+- evidence feed
+- decision preview
+
+KEY DATA
+- run status
+- active nodes
+- durations
+- resource use
+- cost
+- confidence
+
+INTERACTIONS
+- click blocked event -> open rule explanation
+- click node -> open node detail
+- scrub timeline -> replay state

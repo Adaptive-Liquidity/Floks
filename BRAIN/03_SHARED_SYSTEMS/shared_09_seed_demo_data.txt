@@ -1,0 +1,47 @@
+PRIMARY DEMO AGENT
+sentinel-prime-agent.pkg
+
+DISPLAY NAME
+Sentinel Prime Agent
+
+RUNTIME
+Python / Containerized
+
+DOMAIN
+Verification + Infrastructure Intelligence
+
+CLAIMED CAPABILITIES
+- repository analysis
+- structured code review
+- policy reasoning
+- secure bounded execution
+- verification reporting
+
+STATUS
+- verification_state: Verified
+- risk_status: Cleared
+- sovereignty: Granted
+- knowledge_score: 92
+- sandbox: 5/5 passed
+
+DEMO RUN
+- run id: run_demo_sentinel_001
+- title: Deployment Readiness Verification
+- decision: Approved for Bounded Deployment
+- confidence: 95
+
+FIXED TIMELINE
+09:00:12 package uploaded
+09:00:29 manifest parsed
+09:01:04 capability map built
+09:01:46 sandbox suite executed
+09:02:11 knowledge score resolved
+09:02:34 risk cleared
+09:02:58 sovereignty granted
+09:03:15 report published
+
+EVIDENCE
+1. Repository Structure Manifest — confidence 0.97
+2. Reasoning Boundary Trace — confidence 0.94
+3. Secure Execution Qualification — confidence 0.99
+4. Verification Report Hash Set — confidence 0.96
