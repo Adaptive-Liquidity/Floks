@@ -84,17 +84,21 @@ OC_OPENED → OC_AWARDED → OC_FULFILLED | OC_FAILED | OC_SLASHED
 
 Do not reuse `TASK_COMPLETED`. Hall stays closed while `decoderLive === false`.
 
-**Current S2 slice:** Flok defines and validates the exact `OC_*` lifecycle and a
-typed `task_executor` evidence envelope. Emission remains fail-closed because
-upstream has no `OC_*` ingestion contract and still reports
-`task_executor.decoderLive === false`. The next slice is the upstream decoder
-and authenticated ingestion contract; only then may Flok replace the blocked
-emitter and treat `decoderLive` as true. Activation must also bind the subject
-server-side from the authenticated Flok + Cluster mapping, persist lifecycle
-and idempotency state, validate again at the emission boundary, and use an
-upstream-observed timestamp for scoring. The upstream contract must explicitly
-map the local `flok.oc-evidence.v1` envelope to its canonical
-`spx.evidence.v1` row before activation.
+**S2 Gate 1 — Flok-owned evidence boundary is done when:**
+
+- [x] 1. The exact `OC_*` taxonomy and lifecycle are runtime-validated.
+- [x] 2. Flok canonicalizes evidence and computes `sha256:…` server-side.
+- [x] 3. Event identity is deterministic and retries classify as duplicates.
+- [x] 4. Lifecycle state is read under a database row lock, never supplied by a caller.
+- [x] 5. Evidence append and outbox enqueue commit in one transaction.
+- [x] 6. The subject is resolved server-side from the shared `handle/cluster-slug` map.
+- [x] 7. Decoder probing and emission fail closed with no ingestion egress.
+
+**Still upstream-blocked:** SPX402 has no authenticated `OC_*` ingestion
+contract, canonical `flok.oc-evidence.v1` → `spx.evidence.v1` mapping, or live
+`task_executor` decoder. Until all three ship, outbox rows remain pending,
+`decoderLive` remains false, and Hire Hall remains closed. Upstream scoring must
+use an upstream-observed timestamp rather than trusting Flok's `occurred_at`.
 
 ---
 

@@ -27,13 +27,19 @@ const identifierSchema = z
   .max(128)
   .regex(/^[A-Za-z0-9._:-]+$/);
 
-const subjectSchema = z
+export const ocSubjectSchema = z
   .string()
   .trim()
   .regex(/^[1-9A-HJ-NP-Za-km-z]{32,64}$/);
 
 export const ocEvidenceInputSchema = z
   .object({
+    handle: z
+      .string()
+      .trim()
+      .min(1)
+      .max(40)
+      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
     contract_id: identifierSchema,
     cluster_id: identifierSchema,
     cluster_slug: z
@@ -44,7 +50,7 @@ export const ocEvidenceInputSchema = z
       .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
     type: z.enum(OC_EVENT_TYPES),
     occurred_at: z.iso.datetime({ offset: true }),
-    evidence_hash: z.string().regex(/^sha256:[0-9a-f]{64}$/),
+    idempotency_key: identifierSchema,
     capsule_id: identifierSchema.optional(),
   })
   .strict();
@@ -58,20 +64,12 @@ export type OcEvidence = Readonly<
     category: "task_executor";
     subject: string;
     severity: OcSeverity;
+    evidence_hash: string;
   }
 >;
 
-export function createOcEvidence(input: unknown, trustedSubject: string): OcEvidence {
-  const parsed = ocEvidenceInputSchema.parse(input);
-  const subject = subjectSchema.parse(trustedSubject);
-  return Object.freeze({
-    ...parsed,
-    schema: "flok.oc-evidence.v1",
-    event_id: crypto.randomUUID(),
-    category: "task_executor",
-    subject,
-    severity: EVENT_SEVERITY[parsed.type],
-  });
+export function severityForOcEvent(type: OcEventType): OcSeverity {
+  return EVENT_SEVERITY[type];
 }
 
 function isSameEvent(previous: OcEvidence, next: OcEvidence): boolean {
@@ -88,7 +86,10 @@ function isSameEvent(previous: OcEvidence, next: OcEvidence): boolean {
   );
 }
 
-export function classifyOcTransition(previous: OcEvidence | null, next: OcEvidence): OcTransition {
+export function classifyOcTransitionFromState(
+  previous: OcEvidence | null,
+  next: OcEvidence,
+): OcTransition {
   if (previous === null) return next.type === "OC_OPENED" ? "advance" : "invalid";
   if (isSameEvent(previous, next)) return "duplicate";
   if (
