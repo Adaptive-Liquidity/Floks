@@ -16,7 +16,9 @@ export const OG_SITE_REL_PATH = "src/lib/og/site.json";
  * FLOK_GROK_PLATFORM=1 (or GROK_APP_BUILDER=1 / VITE_GROK_PLATFORM=1) inside
  * the sandbox only.
  */
-export function isGrokPlatformEnabled(env = typeof process !== "undefined" ? process.env : undefined) {
+export function isGrokPlatformEnabled(
+  env = typeof process !== "undefined" ? process.env : undefined,
+) {
   const e = env ?? {};
   const truthy = (v) => {
     const s = String(v ?? "")
@@ -24,9 +26,7 @@ export function isGrokPlatformEnabled(env = typeof process !== "undefined" ? pro
       .toLowerCase();
     return s === "1" || s === "true" || s === "yes" || s === "on";
   };
-  return (
-    truthy(e.FLOK_GROK_PLATFORM) || truthy(e.GROK_APP_BUILDER) || truthy(e.VITE_GROK_PLATFORM)
-  );
+  return truthy(e.FLOK_GROK_PLATFORM) || truthy(e.GROK_APP_BUILDER) || truthy(e.VITE_GROK_PLATFORM);
 }
 
 const SHARE_META_KEYS = new Set([
