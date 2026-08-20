@@ -1,3 +1,5 @@
+export { parseSubjectMap, resolveSubject } from "./spx-subject.ts";
+
 export type Grade =
   "SPX AAA" | "SPX AA" | "SPX A" | "SPX BBB" | "SPX BB" | "SPX B" | "SPX D" | "SPX404";
 
@@ -103,24 +105,4 @@ export function aggregateGrades(grades: GradeSnapshot[]): GradeSnapshot {
       available.length !== grades.length,
     source: "spx402",
   };
-}
-
-export function parseSubjectMap(raw: string | undefined): Map<string, string> {
-  if (!raw) return new Map();
-  try {
-    const value: unknown = JSON.parse(raw);
-    if (!isRecord(value)) return new Map();
-    return new Map(
-      Object.entries(value)
-        .filter(
-          (entry): entry is [string, string] =>
-            entry[0].trim().length > 0 &&
-            typeof entry[1] === "string" &&
-            /^[1-9A-HJ-NP-Za-km-z]{32,64}$/.test(entry[1]),
-        )
-        .map(([key, subject]) => [key.trim().toLowerCase(), subject]),
-    );
-  } catch {
-    return new Map();
-  }
 }

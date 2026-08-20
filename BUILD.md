@@ -38,8 +38,8 @@ Root `ARCHITECTURE.md` / `DESIGN.md` are compatibility redirects only. Not live 
 | **R1** | Cluster Index: 2×2 meta-tiles, click → Roost (≤12)                | R0                             | MEDIUM   | shipped | FINAL_DESIGN §6                      |
 | **R2** | Node chrome: executing / racing / rolled-back / denied / attested | R1                             | MEDIUM   | shipped | BRAIN `provider_06` slice            |
 | **R3** | Rack: pin 2–4 Roosts                                              | R1                             | MEDIUM   | this PR | FINAL_DESIGN §6                      |
-| **S1** | Consume SPX402 Grade + confidence on Index / OG (read-only)       | `reference/spx402`             | MEDIUM   | NEXT    | BRAIN Grade strip                    |
-| **S2** | Emit `OC_*` evidence into SPX402 (`task_executor` decoder)        | S1, SPX402 upstream            | HIGH     | —       | `reference/spx402/FLOK_EXTENSION.md` |
+| **S1** | Consume SPX402 Grade + confidence on Index / OG (read-only)       | `reference/spx402`             | MEDIUM   | shipped | BRAIN Grade strip                    |
+| **S2** | Emit `OC_*` evidence into SPX402 (`task_executor` decoder)        | S1, SPX402 upstream            | HIGH     | NEXT    | `reference/spx402/FLOK_EXTENSION.md` |
 | **T1** | Night Tape + Spotlight (no Sky)                                   | ~50 live Floks                 | HIGH     | gated   | FINAL_DESIGN §7                      |
 | **E1** | Outcome Contract object + public header                           | S2 live (or Hall shows SPX404) | HIGH     | gated   | BRAIN `buyer_04`, `buyer_10`         |
 | **E2** | AEON escrow as middleman                                          | E1                             | CRITICAL | gated   | BRAIN `provider_10`                  |
@@ -83,6 +83,22 @@ OC_OPENED → OC_AWARDED → OC_FULFILLED | OC_FAILED | OC_SLASHED
 ```
 
 Do not reuse `TASK_COMPLETED`. Hall stays closed while `decoderLive === false`.
+
+**S2 Gate 1 — Flok-owned evidence boundary is done when:**
+
+- [x] 1. The exact `OC_*` taxonomy and lifecycle are runtime-validated.
+- [x] 2. Flok canonicalizes evidence and computes `sha256:…` server-side.
+- [x] 3. Event identity is deterministic and retries classify as duplicates.
+- [x] 4. Lifecycle state is read under a database row lock, never supplied by a caller.
+- [x] 5. Evidence append and outbox enqueue commit in one transaction.
+- [x] 6. The subject is resolved server-side from the shared `handle/cluster-slug` map.
+- [x] 7. Decoder probing and emission fail closed with no ingestion egress.
+
+**Still upstream-blocked:** SPX402 has no authenticated `OC_*` ingestion
+contract, canonical `flok.oc-evidence.v1` → `spx.evidence.v1` mapping, or live
+`task_executor` decoder. Until all three ship, outbox rows remain pending,
+`decoderLive` remains false, and Hire Hall remains closed. Upstream scoring must
+use an upstream-observed timestamp rather than trusting Flok's `occurred_at`.
 
 ---
 
@@ -157,5 +173,6 @@ Do not wait on Cluster/Hall.
 - [x] R1 Cluster Index + Roost
 - [x] R2 Node chrome (executing / racing / rolled-back / denied / attested)
 - [x] R3 Rack
-- [ ] S1 Grade or SPX404 on the Index tile
-- [ ] Hall still closed until S2
+- [x] S1 Grade or SPX404 on the Index tile
+- [ ] S2 `OC_*` evidence (`task_executor` decoder) — in progress
+- [ ] Hall still closed until S2 is live (`decoderLive === true`)

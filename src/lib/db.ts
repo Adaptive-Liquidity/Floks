@@ -25,6 +25,7 @@ export const dbSource: DbSource = databaseUrl ? "neon" : "pglite";
 export interface Sql {
   <T = Record<string, unknown>>(strings: TemplateStringsArray, ...values: unknown[]): Promise<T[]>;
   query<T = Record<string, unknown>>(text: string, params?: unknown[]): Promise<T[]>;
+  transaction<T>(callback: (sql: Sql) => Promise<T>): Promise<T>;
 }
 
 /**
@@ -58,9 +59,10 @@ const OID_INTERVAL = 1186;
 const identity = (v: string) => v;
 
 type Run = <T>(text: string, params: unknown[]) => Promise<T[]>;
+type Transact = <T>(callback: (sql: Sql) => Promise<T>) => Promise<T>;
 
 /** Wrap a query runner in the tagged-template + `.query()` `Sql` surface. */
-function toSql(run: Run): Sql {
+function toSql(run: Run, transact: Transact): Sql {
   const sql = (async <T = Record<string, unknown>>(
     strings: TemplateStringsArray,
     ...values: unknown[]
@@ -72,6 +74,7 @@ function toSql(run: Run): Sql {
   }) as unknown as Sql;
   sql.query = <T = Record<string, unknown>>(text: string, params: unknown[] = []) =>
     run<T>(text, params);
+  sql.transaction = transact;
   return sql;
 }
 
@@ -84,9 +87,36 @@ function createNeonSql(): Promise<Sql> {
     types.setTypeParser(OID_DATE, identity);
     types.setTypeParser(OID_INTERVAL, identity);
     const pool = new Pool({ connectionString: databaseUrl });
-    return toSql(async <T>(text: string, params: unknown[]) => {
+    const run: Run = async <T>(text: string, params: unknown[]) => {
       const res = await pool.query(text, params);
       return res.rows as T[];
+    };
+    return toSql(run, async <T>(callback: (sql: Sql) => Promise<T>) => {
+      const client = await pool.connect();
+      let destroyClient = false;
+      try {
+        await client.query("BEGIN");
+        const txRun: Run = async <R>(text: string, params: unknown[]) => {
+          const result = await client.query(text, params);
+          return result.rows as R[];
+        };
+        const txSql = toSql(txRun, () => {
+          throw new Error("nested_transactions_not_supported");
+        });
+        const result = await callback(txSql);
+        await client.query("COMMIT");
+        return result;
+      } catch (error) {
+        try {
+          await client.query("ROLLBACK");
+        } catch {
+          // Preserve the original error and discard the unusable connection.
+          destroyClient = true;
+        }
+        throw error;
+      } finally {
+        client.release(destroyClient);
+      }
     });
   })().catch((err) => {
     globalRef.__pgSqlPromise__ = undefined;
@@ -119,17 +149,34 @@ async function createPgliteSql(): Promise<Sql> {
   });
   const pg = await globalRef.__pgliteInstance__;
 
+  const loadMigrations = async (): Promise<Record<string, string>> => {
+    if (typeof import.meta.glob === "function") {
+      return import.meta.glob("/migrations/*.sql", {
+        query: "?raw",
+        import: "default",
+        eager: true,
+      }) as Record<string, string>;
+    }
+    const { readdir, readFile } = await import("node:fs/promises");
+    const directory = new URL("../../migrations/", import.meta.url);
+    const files = (await readdir(directory)).filter((name) => name.endsWith(".sql")).sort();
+    return Object.fromEntries(
+      await Promise.all(
+        files.map(async (name) => [
+          `/migrations/${name}`,
+          await readFile(new URL(name, directory), "utf8"),
+        ]),
+      ),
+    );
+  };
+
   // Apply migrations/ (the single schema source) so preview matches production.
   // SQL is inlined by the bundler via import.meta.glob (no runtime fs); applied
   // files are tracked in _migrations. Runs once per module instance — so an HMR
   // reload after adding a migration file applies it live — with passes
   // serialized on a global chain so concurrent callers never double-apply.
   const migrate = async (): Promise<void> => {
-    const migrations = import.meta.glob("/migrations/*.sql", {
-      query: "?raw",
-      import: "default",
-      eager: true,
-    }) as Record<string, string>;
+    const migrations = await loadMigrations();
     const doneRows = await pg.query<{ name: string }>("select name from _migrations");
     const done = new Set(doneRows.rows.map((r) => r.name));
     for (const [path, text] of Object.entries(migrations).sort(([a], [b]) => a.localeCompare(b))) {
@@ -149,10 +196,22 @@ async function createPgliteSql(): Promise<Sql> {
   globalRef.__pgliteMigrateChain__ = pass;
   await pass;
 
-  return toSql(async <T>(text: string, params: unknown[]) => {
+  const run: Run = async <T>(text: string, params: unknown[]) => {
     const result = await pg.query<T>(text, params);
     return result.rows;
-  });
+  };
+  return toSql(run, <T>(callback: (sql: Sql) => Promise<T>) =>
+    pg.transaction(async (tx) => {
+      const txRun: Run = async <R>(text: string, params: unknown[]) => {
+        const result = await tx.query<R>(text, params);
+        return result.rows;
+      };
+      const txSql = toSql(txRun, () => {
+        throw new Error("nested_transactions_not_supported");
+      });
+      return callback(txSql);
+    }),
+  );
 }
 
 let sqlPromise: Promise<Sql> | null = null;

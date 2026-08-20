@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { aggregateGrades, parseEvidenceGrade, parseSubjectMap, UNGRADED } from "./grade.ts";
+import { resolveSubject } from "./spx-subject.ts";
 
 const SUBJECT = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijk";
 const METHODOLOGY = "spx-oc-score-v1";
@@ -91,9 +92,17 @@ test("aggregateGrades uses the lowest available grade and confidence", () => {
 
 test("parseSubjectMap validates subjects and normalizes keys", () => {
   const parsed = parseSubjectMap(
-    JSON.stringify({ " GrowthOps/Outbound ": SUBJECT, "bad/key": "not-a-subject" }),
+    JSON.stringify({
+      " GrowthOps/Outbound ": SUBJECT,
+      "bad/key": "not-a-subject",
+      "missing-cluster": SUBJECT,
+      "bad_handle/outbound": SUBJECT,
+    }),
   );
   assert.equal(parsed.get("growthops/outbound"), SUBJECT);
+  assert.equal(resolveSubject(parsed, "GrowthOps", "Outbound"), SUBJECT);
   assert.equal(parsed.has("bad/key"), false);
+  assert.equal(parsed.has("missing-cluster"), false);
+  assert.equal(parsed.has("bad_handle/outbound"), false);
   assert.deepEqual([...parseSubjectMap("{").entries()], []);
 });
