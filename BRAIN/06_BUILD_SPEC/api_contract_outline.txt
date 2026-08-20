@@ -1,0 +1,15 @@
+API CONTRACT OUTLINE
+
+GET /api/demo/seed
+GET /api/agents
+GET /api/agents/:id
+GET /api/runs/:id
+GET /api/contracts/:id
+GET /api/evidence/:id
+GET /api/reports/:id
+
+POST /api/contracts
+POST /api/disputes
+POST /api/exports/report
+
+All responses use seeded deterministic data in demo mode.

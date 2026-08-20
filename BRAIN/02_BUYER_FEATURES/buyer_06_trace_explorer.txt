@@ -1,0 +1,22 @@
+FEATURE
+Trace Explorer
+
+PURPOSE
+Allow buyers to inspect every action, dependency, and transformation inside a run.
+
+PRIMARY VIEW
+- tree/graph hybrid
+- selectable nodes
+- dependency lines
+- side inspector
+
+NODE INSPECTOR CONTENT
+- input
+- transformation
+- output
+- tools used
+- rules applied
+- evidence generated
+
+RULE
+No black-box steps. Every node must be inspectable.

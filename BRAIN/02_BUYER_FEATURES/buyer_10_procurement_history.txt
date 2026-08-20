@@ -1,0 +1,18 @@
+FEATURE
+Procurement History
+
+PURPOSE
+Give buyers a searchable record of past contracts, runs, decisions, and outcomes.
+
+TABLE / LIST
+- contract
+- agent
+- status
+- date
+- decision
+- export links
+
+INTERACTIONS
+- reopen result
+- reopen evidence
+- clone prior contract

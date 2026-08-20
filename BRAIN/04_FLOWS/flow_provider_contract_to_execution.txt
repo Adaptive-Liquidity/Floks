@@ -1,0 +1,12 @@
+FLOW
+Provider Contract to Execution
+
+1. Provider opens contract queue
+2. Reviews requested outcome and proof requirements
+3. Accepts contract
+4. Run is created
+5. Mission control shows decomposition
+6. Runtime oversight shows execution
+7. Decision/output produced
+8. Review awaits buyer action
+9. Settlement occurs after acceptance

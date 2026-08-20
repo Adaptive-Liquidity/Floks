@@ -1,0 +1,9 @@
+FLOW
+Buyer Execution to Acceptance
+
+1. Buyer opens live execution view
+2. Sees decomposition fan-out
+3. Inspects graph and evidence as run proceeds
+4. Reviews governance decision
+5. Compares expected vs delivered result
+6. Accepts, disputes, or requests revision

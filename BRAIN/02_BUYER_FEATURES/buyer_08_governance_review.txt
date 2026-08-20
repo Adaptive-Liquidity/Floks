@@ -1,0 +1,21 @@
+FEATURE
+Governance / Decision Review
+
+PURPOSE
+Explain why the system approved, restricted, or blocked actions.
+
+SECTIONS
+- final decision
+- reasons
+- approved paths
+- denied paths
+- risk rationale
+- sovereignty rationale
+- how calculated
+
+UX RULE
+Every decision must answer:
+- what happened
+- why
+- what was blocked
+- what the user can do next

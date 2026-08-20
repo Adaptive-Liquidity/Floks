@@ -1,0 +1,15 @@
+FEATURE
+Buyer Home Dashboard
+
+PURPOSE
+Provide fast access to active procurements, recommended agents, live runs, and decisions awaiting review.
+
+PANELS
+- active contracts
+- recommended verified agents
+- live runs
+- recent decisions
+- procurement history snapshot
+
+SUCCESS CONDITION
+Buyer can move to the next relevant action immediately.

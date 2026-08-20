@@ -1,0 +1,9 @@
+FLOW
+Dispute Resolution
+
+1. Buyer opens dispute
+2. System captures reason + mismatches
+3. Provider views dispute
+4. Provider revises or contests with evidence
+5. Buyer re-reviews result
+6. Final state becomes accepted_result or unresolved_demo_state

@@ -1,0 +1,19 @@
+FEATURE
+Evidence Review
+
+PURPOSE
+Ground all major claims in proof.
+
+CARD CONTENT
+- title
+- type
+- confidence
+- source
+- summary
+- why it matters
+- integrity hash
+
+INTERACTION
+- click evidence -> open drawer
+- related nodes highlight in graph
+- filter by type or confidence

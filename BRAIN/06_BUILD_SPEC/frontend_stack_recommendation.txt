@@ -1,0 +1,10 @@
+RECOMMENDED STACK
+- React + TypeScript
+- Next.js or Vite depending preference
+- Zustand for local app state
+- Framer Motion for controlled motion
+- React Flow / custom canvas for graph
+- Tailwind or tokenized CSS variables for design system
+
+RECOMMENDATION
+Prioritize stable demo performance over unnecessary architecture complexity.

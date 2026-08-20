@@ -1,0 +1,15 @@
+FLOW
+Provider Upload to Verified Agent
+
+1. Provider opens submission page
+2. Uploads package
+3. System parses metadata
+4. Provider confirms metadata
+5. Verification pipeline starts
+6. Stages resolve in sequence
+7. Scores finalize
+8. Governance decision resolves
+9. Verified identity card available
+
+KEY UI HANDOFFS
+- submission page -> verification page -> identity card
