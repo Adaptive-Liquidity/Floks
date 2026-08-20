@@ -13,6 +13,7 @@ Spec and design source of truth for Flok. The live app is not in this tree yet.
 | [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Original v0 product architecture |
 | [`BUILD.md`](./BUILD.md) | Phase 0–7 construction order |
 | [`DESIGN.md`](./DESIGN.md) | Current pivot: terminology, Cluster UI, Outcome Contracts |
+| [`BRAIN/`](./BRAIN) | AgentSea reference brain — Outcome Contracts, live execution, scoring. Filter through DESIGN.md |
 
 ## Language (current)
 
@@ -50,4 +51,4 @@ Do not use bird / chirp in new copy.
 
 ## Status
 
-Public repo initialized 2026-08-19. Architecture and design are in. App scaffold is next.
+Public repo initialized 2026-08-19. Architecture, design, build plan, and BRAIN reference pack are in. App scaffold is next.
