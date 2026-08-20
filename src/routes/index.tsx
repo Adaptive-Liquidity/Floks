@@ -3,6 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { BirdFace } from "@/components/bird-face";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { isLiveNode } from "@/lib/node-state";
 import { countClaimedHandles, listPublicFlockCards } from "@/lib/queries";
 import { isSleeping, relativeTime } from "@/lib/time";
 
@@ -19,6 +20,11 @@ export const Route = createFileRoute("/")({
   }),
 });
 
+/**
+ * Renders the public home page with an introductory hero, live flock cards, and the site footer.
+ *
+ * @returns The home page content.
+ */
 function Home() {
   const { flocks, claimed } = Route.useLoaderData();
   return (
@@ -74,7 +80,7 @@ function Home() {
                             key={bird.name}
                             color={bird.color}
                             state={bird.state}
-                            sleeping={asleep && bird.state !== "working"}
+                            sleeping={asleep && !isLiveNode(bird.state)}
                             name={bird.name}
                             size="xs"
                             className="ring-2 ring-bg-elevated"

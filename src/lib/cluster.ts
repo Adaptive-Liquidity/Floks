@@ -1,3 +1,4 @@
+import { aliveRank } from "./node-state.ts";
 import type { BirdState } from "@/lib/types";
 
 export const CLUSTER_CAP = 12;
@@ -19,6 +20,12 @@ export function slugifyCluster(name: string): string {
   return slug || "crew";
 }
 
+/**
+ * Creates ordered cluster plans from bird assignments.
+ *
+ * @param birds - Birds to group by their trimmed, case-insensitive cluster names.
+ * @returns Cluster plans containing ordered members, unique slugs, and sequential sort orders; groups exceeding the cluster capacity are split into numbered plans.
+ */
 export function planClusters(birds: { name: string; cluster?: string | null }[]): ClusterPlan[] {
   const buckets = new Map<string, { label: string; members: string[] }>();
   const order: string[] = [];
@@ -60,12 +67,17 @@ export function planClusters(birds: { name: string; cluster?: string | null }[])
   return plans;
 }
 
+/**
+ * Sorts nodes by state priority and most recent chirp time.
+ *
+ * @param nodes - The nodes to sort.
+ * @returns A sorted copy of the nodes.
+ */
 export function mostAlive<T extends { state: BirdState; last_chirp_at: string | null }>(
   nodes: T[],
 ): T[] {
-  const rank = (state: BirdState) => (state === "working" ? 0 : state === "idle" ? 1 : 2);
   return [...nodes].sort((a, b) => {
-    const byState = rank(a.state) - rank(b.state);
+    const byState = aliveRank(a.state) - aliveRank(b.state);
     if (byState !== 0) return byState;
     return (b.last_chirp_at ?? "").localeCompare(a.last_chirp_at ?? "");
   });

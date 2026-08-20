@@ -1,13 +1,15 @@
 import { getSql } from "@/lib/db";
+import type { BirdState } from "@/lib/types";
 import { colorForIndex } from "@/lib/colors";
-import { planClusters } from "@/lib/cluster";
+import { planClusters, slugifyCluster } from "@/lib/cluster";
 import { newId } from "@/lib/ids";
+import { planRacks } from "@/lib/rack";
 import { hashToken } from "@/lib/tokens";
 
 type SeedBird = {
   name: string;
   role: string;
-  state?: "working" | "idle" | "offline";
+  state?: BirdState;
   cluster?: string;
   chirps: string[];
 };
@@ -18,6 +20,7 @@ type SeedFlock = {
   bio: string;
   owner_hint: string;
   birds: SeedBird[];
+  racks?: { name: string; clusters: string[] }[];
 };
 
 const SEED: SeedFlock[] = [
@@ -45,7 +48,7 @@ const SEED: SeedFlock[] = [
         state: "working",
         chirps: ["Reconciled yesterday’s open tickets"],
       },
-      { name: "Poe", role: "Research", chirps: ["Summarized three public competitor pages"] },
+      { name: "Poe", role: "Research", state: "bound", chirps: ["Hit the public-read Bound"] },
     ],
   },
   {
@@ -175,7 +178,7 @@ const SEED: SeedFlock[] = [
   {
     handle: "loft",
     title: "The Loft",
-    bio: "Demo studio crew. Two clusters, one shared desk.",
+    bio: "Demo studio crew. Two roosts pinned on one Shift rack.",
     owner_hint: "demo",
     birds: [
       {
@@ -185,33 +188,43 @@ const SEED: SeedFlock[] = [
         cluster: "Studio",
         chirps: ["Published the weekly roster"],
       },
-      { name: "Maya", role: "Sales", cluster: "Desk", chirps: ["Drafted twelve follow-ups"] },
+      {
+        name: "Maya",
+        role: "Sales",
+        state: "idle",
+        cluster: "Desk",
+        chirps: ["Drafted twelve follow-ups"],
+      },
       {
         name: "Sol",
         role: "Engineer",
-        state: "idle",
+        state: "racing",
         cluster: "Studio",
-        chirps: ["Patched the morning lint failures"],
+        chirps: ["Forked two patches, racing the lint"],
       },
       {
         name: "Kite",
         role: "Support",
+        state: "denied",
         cluster: "Desk",
-        chirps: ["Triaged the public inbox to three threads"],
+        chirps: ["Blocked a private inbox read"],
       },
       {
         name: "Noor",
         role: "Research",
+        state: "rolled_back",
         cluster: "Desk",
-        chirps: ["Compared two open-source eval suites"],
+        chirps: ["Rolled back a bad public scrape"],
       },
       {
         name: "Elm",
         role: "Writer",
+        state: "attested",
         cluster: "Studio",
-        chirps: ["Cut the launch note to 180 words"],
+        chirps: ["Attested the launch note, 180 words"],
       },
     ],
+    racks: [{ name: "Shift", clusters: ["Studio", "Desk"] }],
   },
 ];
 
@@ -235,17 +248,66 @@ export async function resetSeed(): Promise<void> {
   globalRef.__flokSeeded__ = Promise.resolve();
 }
 
+/**
+ * Seeds demo flocks when the database is empty, or refreshes existing seed birds and clusters.
+ */
 async function seedIfEmpty(): Promise<void> {
   const sql = await getSql();
   const rows = await sql<{ n: number }>`select count(*)::int as n from flocks`;
   if (Number(rows[0]?.n ?? 0) > 0) {
     await recolorSeedBirds();
+    await reconcileSeedBirds();
     await syncSeedClusters();
     return;
   }
   await insertSeedFlocks();
 }
 
+/**
+ * Reconciles seed birds with their configured states and heartbeat chirps.
+ *
+ * Missing seed flocks and birds are skipped. Existing chirps are replaced with
+ * the configured messages and generated historical timestamps.
+ */
+async function reconcileSeedBirds(): Promise<void> {
+  const sql = await getSql();
+  for (const flock of SEED) {
+    const rows = await sql<{ id: string }>`
+      select id from flocks where handle = ${flock.handle} and is_seed = true limit 1
+    `;
+    const flockId = rows[0]?.id;
+    if (!flockId) continue;
+    for (const [index, bird] of flock.birds.entries()) {
+      const state = bird.state ?? "offline";
+      const birdRows = await sql<{ id: string }>`
+        select id from birds where flock_id = ${flockId} and name = ${bird.name} limit 1
+      `;
+      const birdId = birdRows[0]?.id;
+      if (!birdId) continue;
+      await sql`update birds set state = ${state} where id = ${birdId}`;
+      await sql`delete from chirps where bird_id = ${birdId}`;
+      const minutesAgo = 12 + index * 17 + Math.floor(index * 3);
+      for (const [ci, text] of bird.chirps.entries()) {
+        const created = new Date(Date.now() - (minutesAgo + ci * 5) * 60 * 1000).toISOString();
+        await sql`
+          insert into chirps (id, bird_id, flock_id, text, source, created_at)
+          values (
+            ${newId()},
+            ${birdId},
+            ${flockId},
+            ${text},
+            'heartbeat',
+            ${created}
+          )
+        `;
+      }
+    }
+  }
+}
+
+/**
+ * Recalculates colors for birds in seed flocks based on their sort order.
+ */
 async function recolorSeedBirds(): Promise<void> {
   const sql = await getSql();
   const birds = await sql<{ id: string; sort_order: number }>`
@@ -302,6 +364,64 @@ async function syncSeedClusters(): Promise<void> {
       if (!keep.has(extra.id)) {
         await sql`delete from clusters where id = ${extra.id}`;
       }
+    }
+    await syncSeedRacksForFlock(flockId, flock);
+  }
+}
+
+async function syncSeedRacksForFlock(flockId: string, flock: SeedFlock): Promise<void> {
+  const sql = await getSql();
+  const wanted = flock.racks ?? [];
+  if (wanted.length === 0) {
+    await sql`delete from racks where flock_id = ${flockId}`;
+    return;
+  }
+  const planned = planRacks(wanted);
+  if (!planned.ok) return;
+  const clusters = await sql<{ id: string; name: string; slug: string }>`
+    select id, name, slug from clusters where flock_id = ${flockId}
+  `;
+  const keep = new Set<string>();
+  for (const plan of planned.plans) {
+    const roosts = plan.clusters
+      .map((label) => {
+        const key = label.trim().toLowerCase();
+        const slug = slugifyCluster(label);
+        return clusters.find(
+          (c) => c.slug === key || c.slug === slug || c.name.toLowerCase() === key,
+        );
+      })
+      .filter((c): c is { id: string; name: string; slug: string } => Boolean(c));
+    if (roosts.length < 2) continue;
+    const existing = await sql<{ id: string }>`
+      select id from racks where flock_id = ${flockId} and slug = ${plan.slug} limit 1
+    `;
+    const rackId = existing[0]?.id ?? newId();
+    keep.add(rackId);
+    if (existing[0]) {
+      await sql`
+        update racks
+        set name = ${plan.name}, sort_order = ${plan.sort_order}
+        where id = ${rackId}
+      `;
+      await sql`delete from rack_slots where rack_id = ${rackId}`;
+    } else {
+      await sql`
+        insert into racks (id, flock_id, name, slug, sort_order)
+        values (${rackId}, ${flockId}, ${plan.name}, ${plan.slug}, ${plan.sort_order})
+      `;
+    }
+    for (const [index, roost] of roosts.entries()) {
+      await sql`
+        insert into rack_slots (rack_id, cluster_id, sort_order)
+        values (${rackId}, ${roost.id}, ${index})
+      `;
+    }
+  }
+  const extras = await sql<{ id: string }>`select id from racks where flock_id = ${flockId}`;
+  for (const extra of extras) {
+    if (!keep.has(extra.id)) {
+      await sql`delete from racks where id = ${extra.id}`;
     }
   }
 }

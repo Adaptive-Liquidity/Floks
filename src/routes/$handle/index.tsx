@@ -3,7 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { FlockPageView } from "@/components/flock-page";
 import { RESERVED_HANDLES } from "@/lib/handles";
 import { getAppOrigin } from "@/lib/origin.server";
-import { getClusterCards, getFlockByHandle, getLatestChirp } from "@/lib/queries";
+import { getClusterCards, getFlockByHandle, getLatestChirp, getRackCards } from "@/lib/queries";
 
 const loadFlockPage = createServerFn({ method: "GET" })
   .validator((handle: string) => handle)
@@ -11,13 +11,15 @@ const loadFlockPage = createServerFn({ method: "GET" })
     if (RESERVED_HANDLES.has(handle)) return null;
     const flock = await getFlockByHandle(handle);
     if (!flock) return null;
-    const [clusters, latest] = await Promise.all([
+    const [clusters, racks, latest] = await Promise.all([
       getClusterCards(flock.id),
+      getRackCards(flock.id),
       getLatestChirp(flock.id),
     ]);
     return {
       flock,
       clusters,
+      racks,
       latest,
       nodeCount: clusters.reduce((n, c) => n + c.node_count, 0),
       origin: getAppOrigin(),
@@ -56,11 +58,12 @@ export const Route = createFileRoute("/$handle/")({
 });
 
 function FlockRoute() {
-  const { flock, clusters, latest, nodeCount, origin } = Route.useLoaderData();
+  const { flock, clusters, racks, latest, nodeCount, origin } = Route.useLoaderData();
   return (
     <FlockPageView
       flock={flock}
       clusters={clusters}
+      racks={racks}
       latest={latest}
       nodeCount={nodeCount}
       pageUrl={`${origin}/${flock.handle}`}

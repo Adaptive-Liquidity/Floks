@@ -1,5 +1,6 @@
 export type Visibility = "public" | "unlisted";
-export type BirdState = "working" | "idle" | "offline";
+export type BirdState =
+  "working" | "idle" | "offline" | "racing" | "rolled_back" | "denied" | "attested" | "bound";
 export type ChirpSource = "heartbeat" | "manual" | "system";
 
 export type Flock = {
@@ -84,4 +85,12 @@ export type ClusterCard = {
 export type OgCluster = {
   name: string;
   faces: ClusterFace[];
+};
+
+export type RackCard = {
+  id: string;
+  name: string;
+  slug: string;
+  sort_order: number;
+  roosts: ClusterCard[];
 };
