@@ -22,15 +22,12 @@ export type OcDecoderStatus = {
   reason: "upstream_decoder_unavailable" | "upstream_decoder_live" | "probe_failed";
 };
 
-export async function createOcEvidence(input: unknown): Promise<OcEvidence> {
+async function materializeOcEvidence(
+  input: unknown,
+  subject: unknown,
+): Promise<OcEvidence> {
   const parsed = ocEvidenceInputSchema.parse(input);
-  const subject = ocSubjectSchema.parse(
-    resolveSubject(
-      parseSubjectMap(process.env.FLOK_SPX402_SUBJECTS),
-      parsed.handle,
-      parsed.cluster_slug,
-    ),
-  );
+  const boundSubject = ocSubjectSchema.parse(subject);
   const eventId = `oc_${await sha256Hex(
     canonicalJsonStringify({
       contract_id: parsed.contract_id,
@@ -43,7 +40,7 @@ export async function createOcEvidence(input: unknown): Promise<OcEvidence> {
     schema: "flok.oc-evidence.v1" as const,
     event_id: eventId,
     category: "task_executor" as const,
-    subject,
+    subject: boundSubject,
     severity: severityForOcEvent(parsed.type),
   };
   return Object.freeze({
@@ -52,19 +49,36 @@ export async function createOcEvidence(input: unknown): Promise<OcEvidence> {
   });
 }
 
+export async function createOcEvidence(input: unknown): Promise<OcEvidence> {
+  const parsed = ocEvidenceInputSchema.parse(input);
+  return materializeOcEvidence(
+    parsed,
+    resolveSubject(
+      parseSubjectMap(process.env.FLOK_SPX402_SUBJECTS),
+      parsed.handle,
+      parsed.cluster_slug,
+    ),
+  );
+}
+
 async function validateOcEvidence(value: unknown): Promise<OcEvidence> {
   if (typeof value !== "object" || value === null) throw new Error("invalid_oc_evidence");
   const evidence = value as Partial<OcEvidence>;
-  const expected = await createOcEvidence({
-    handle: evidence.handle,
-    contract_id: evidence.contract_id,
-    cluster_id: evidence.cluster_id,
-    cluster_slug: evidence.cluster_slug,
-    type: evidence.type,
-    occurred_at: evidence.occurred_at,
-    idempotency_key: evidence.idempotency_key,
-    ...(evidence.capsule_id === undefined ? {} : { capsule_id: evidence.capsule_id }),
-  });
+  // Durable/queued payloads carry the subject binding captured at create time.
+  // Recompute against that binding — never re-resolve from mutable env config.
+  const expected = await materializeOcEvidence(
+    {
+      handle: evidence.handle,
+      contract_id: evidence.contract_id,
+      cluster_id: evidence.cluster_id,
+      cluster_slug: evidence.cluster_slug,
+      type: evidence.type,
+      occurred_at: evidence.occurred_at,
+      idempotency_key: evidence.idempotency_key,
+      ...(evidence.capsule_id === undefined ? {} : { capsule_id: evidence.capsule_id }),
+    },
+    evidence.subject,
+  );
   if (canonicalJsonStringify(expected) !== canonicalJsonStringify(value)) {
     throw new Error("invalid_oc_evidence");
   }

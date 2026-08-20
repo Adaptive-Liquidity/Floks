@@ -333,3 +333,34 @@ test("OC emitter probes fail-closed and performs no ingestion fetch", async () =
   assert.equal(fetchCalls, 0);
   assert.equal(Object.isFrozen(result), true);
 });
+
+test("durable OC evidence keeps subject binding when env map changes", async () => {
+  const contractId = "contract-subject-binding";
+  const opened = await event("OC_OPENED", {
+    contract_id: contractId,
+    idempotency_key: "bind-open",
+    occurred_at: "2026-08-20T19:00:00.000Z",
+  });
+  assert.equal(opened.subject, SUBJECT);
+  assert.equal((await persistOcEvidence(opened)).transition, "advance");
+
+  const previous = process.env.FLOK_SPX402_SUBJECTS;
+  process.env.FLOK_SPX402_SUBJECTS = JSON.stringify({
+    "growthops/outbound": "9ABcdefghijk123456789ABCDEFGHJKLMNPQRSTUVWXY",
+  });
+  try {
+    // Queued/persisted payload must still validate and classify against the
+    // subject captured at create time, not the mutated env map.
+    const emitResult = await emitOcEvidence(opened);
+    assert.equal(emitResult.code, "upstream_decoder_unavailable");
+    assert.notEqual(emitResult.code, "invalid_evidence");
+
+    const retry = await persistOcEvidence(opened);
+    assert.equal(retry.transition, "duplicate");
+    assert.equal(retry.evidence.subject, SUBJECT);
+
+    assert.equal(await classifyOcTransition(opened), "duplicate");
+  } finally {
+    process.env.FLOK_SPX402_SUBJECTS = previous;
+  }
+});
