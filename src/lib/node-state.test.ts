@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { aliveRank, eyesClosed, isLiveNode, nodeStateLabel } from "./node-state.ts";
+import { aliveRank, eyesClosed, eyesStill, isLiveNode, nodeStateLabel } from "./node-state.ts";
 
 test("working is public executing and live", () => {
   assert.equal(nodeStateLabel("working"), "executing");
@@ -16,6 +16,9 @@ test("racing and attested stay open; denied and bound are still", () => {
   assert.equal(eyesClosed("denied"), false);
   assert.equal(eyesClosed("bound"), false);
   assert.equal(isLiveNode("denied"), false);
+  assert.equal(eyesStill("denied"), true);
+  assert.equal(eyesStill("bound"), true);
+  assert.equal(eyesStill("working"), false);
 });
 
 test("rolled back is closed; flock sleep does not close live nodes", () => {
