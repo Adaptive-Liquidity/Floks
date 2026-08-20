@@ -1,4 +1,10 @@
-import { aggregateGrades, parseEvidenceGrade, parseSubjectMap, UNGRADED } from "@/lib/grade";
+import {
+  aggregateGrades,
+  parseEvidenceGrade,
+  parseSubjectMap,
+  resolveSubject,
+  UNGRADED,
+} from "@/lib/grade";
 import type { GradeSnapshot } from "@/lib/grade";
 import type { ClusterCard } from "@/lib/types";
 
@@ -56,7 +62,7 @@ export async function getClusterGrades(
   const subjects = parseSubjectMap(process.env.FLOK_SPX402_SUBJECTS);
   const entries = await Promise.all(
     clusters.map(async (cluster): Promise<[string, GradeSnapshot]> => {
-      const subject = subjects.get(`${handle}/${cluster.slug}`.toLowerCase());
+      const subject = resolveSubject(subjects, handle, cluster.slug);
       if (!baseUrl || !methodologyVersion || !subject) return [cluster.id, UNGRADED];
       return [cluster.id, await fetchGrade(baseUrl, subject, methodologyVersion)];
     }),

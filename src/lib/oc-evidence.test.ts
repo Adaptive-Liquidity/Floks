@@ -54,13 +54,19 @@ test("canonical evidence hashing matches the golden vector", async () => {
   );
 });
 
-test("OC evidence binds subject and computes trusted identity fields", async () => {
+test("OC evidence matches the fixed identity golden vector", async () => {
   const fulfilled = await event("OC_FULFILLED");
   assert.equal(fulfilled.schema, "flok.oc-evidence.v1");
-  assert.match(fulfilled.event_id, /^oc_[0-9a-f]{64}$/);
+  assert.equal(
+    fulfilled.event_id,
+    "oc_e65ac6a4d5d0f660a5ece6d2b1935bb9493da69674d2a193e3cb82b071681c89",
+  );
   assert.equal(fulfilled.category, "task_executor");
   assert.equal(fulfilled.subject, SUBJECT);
-  assert.match(fulfilled.evidence_hash, /^sha256:[0-9a-f]{64}$/);
+  assert.equal(
+    fulfilled.evidence_hash,
+    "sha256:259066ccfc6d5b9e60685f7d9ffc14c5dc999bf19d78b22dd90297c10a663d4e",
+  );
   assert.equal(Object.isFrozen(fulfilled), true);
 
   assert.deepEqual(

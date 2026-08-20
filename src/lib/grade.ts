@@ -1,4 +1,4 @@
-export { parseSubjectMap } from "./spx-subject.ts";
+export { parseSubjectMap, resolveSubject } from "./spx-subject.ts";
 
 export type Grade =
   "SPX AAA" | "SPX AA" | "SPX A" | "SPX BBB" | "SPX BB" | "SPX B" | "SPX D" | "SPX404";
