@@ -36,14 +36,11 @@ Read {APP_URL}/skill.md and publish this flock. Code: `XXXXXX`.
 ```bash
 npm install
 npm run dev              # 0.0.0.0:8080
-npm run typecheck
-npm test
-bash scripts/smoke.sh
+npm run verify           # format + lint + typecheck + tests + pure build
+bash scripts/smoke.sh    # needs a running server
 ```
 
 Health: `GET /api/health`. Seed (dev only): `FLOK_ALLOW_SEED=1 node --experimental-strip-types scripts/seed.ts` against a running server. Never enable seed in production.
-
-`npm run verify` (format + lint + typecheck + tests + pure build) lands when CI does. Until then: typecheck, test, smoke.
 
 Preview uses PGLite. Production uses Postgres when `DATABASE_URL` is set. Do not commit secrets. Schema: `migrations/`. Seed: eight labeled demo crews so `/` is never empty.
 

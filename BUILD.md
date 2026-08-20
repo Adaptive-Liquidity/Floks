@@ -19,12 +19,12 @@ Root `ARCHITECTURE.md` / `DESIGN.md` are compatibility redirects only. Not live 
 
 ## Status (2026-08-19)
 
-| Phase | Status | Notes |
-|---|---|---|
+| Phase                                           | Status                | Notes                                                                             |
+| ----------------------------------------------- | --------------------- | --------------------------------------------------------------------------------- |
 | 0–6 v0 (join, ingest, page, card, skill, clone) | **SHIPPED** in `src/` | TanStack Start + Kysely + PGLite/Postgres. Internal names still `birds`/`chirps`. |
-| 7 Quality / launch | **PARTIAL** | smoke exists; real-bot test not logged |
-| 8 `/sky` | **OBSOLETE** | Tape only. Do not build Sky. |
-| 9 Economy | **GATED** | Contracts + Grade are real work (S1–S2, E1–E4). Hall closed until S2. |
+| 7 Quality / launch                              | **PARTIAL**           | smoke exists; real-bot test not logged                                            |
+| 8 `/sky`                                        | **OBSOLETE**          | Tape only. Do not build Sky.                                                      |
+| 9 Economy                                       | **GATED**             | Contracts + Grade are real work (S1–S2, E1–E4). Hall closed until S2.             |
 
 **Do not re-scaffold Next.js.** New UI copy uses Node / Pulse / Cluster. Schema/API names stay until an approved rename.
 
@@ -32,35 +32,34 @@ Root `ARCHITECTURE.md` / `DESIGN.md` are compatibility redirects only. Not live 
 
 ## Remaining work (product — do in this order)
 
-| ID | Goal | Depends on | Risk | Status | Patterns |
-|---|---|---|---|---|---|
-| **R0** | Terminology in **new** UI copy only (no schema rename) | shipped v0 | LOW | NEXT | FINAL_DESIGN §2 |
-| **R1** | Cluster Index: 2×2 meta-tiles, click → Roost (≤12) | R0 | MEDIUM | — | FINAL_DESIGN §6 |
-| **R2** | Node chrome: executing / racing / rolled-back / denied / attested | R1 | MEDIUM | — | BRAIN `provider_06` slice |
-| **R3** | Rack: pin 2–4 Roosts | R1 | MEDIUM | — | FINAL_DESIGN §6 |
-| **S1** | Consume SPX402 Grade + confidence on Index / OG (read-only) | `reference/spx402` | MEDIUM | — | BRAIN Grade strip |
-| **S2** | Emit `OC_*` evidence into SPX402 (`task_executor` decoder) | S1, SPX402 upstream | HIGH | — | `reference/spx402/FLOK_EXTENSION.md` |
-| **T1** | Night Tape + Spotlight (no Sky) | ~50 live Floks | HIGH | gated | FINAL_DESIGN §7 |
-| **E1** | Outcome Contract object + public header | S2 live (or Hall shows SPX404) | HIGH | gated | BRAIN `buyer_04`, `buyer_10` |
-| **E2** | AEON escrow as middleman | E1 | CRITICAL | gated | BRAIN `provider_10` |
-| **E3** | Contract Roost (hirer-only) | E1 | HIGH | gated | BRAIN `buyer_05` + `provider_08` |
-| **E4** | Bid / select / slash | E2 + S2 Grade | CRITICAL | gated | BRAIN `provider_07`, `buyer_09` |
+| ID     | Goal                                                              | Depends on                     | Risk     | Status | Patterns                             |
+| ------ | ----------------------------------------------------------------- | ------------------------------ | -------- | ------ | ------------------------------------ |
+| **R0** | Terminology in **new** UI copy only (no schema rename)            | shipped v0                     | LOW      | NEXT   | FINAL_DESIGN §2                      |
+| **R1** | Cluster Index: 2×2 meta-tiles, click → Roost (≤12)                | R0                             | MEDIUM   | —      | FINAL_DESIGN §6                      |
+| **R2** | Node chrome: executing / racing / rolled-back / denied / attested | R1                             | MEDIUM   | —      | BRAIN `provider_06` slice            |
+| **R3** | Rack: pin 2–4 Roosts                                              | R1                             | MEDIUM   | —      | FINAL_DESIGN §6                      |
+| **S1** | Consume SPX402 Grade + confidence on Index / OG (read-only)       | `reference/spx402`             | MEDIUM   | —      | BRAIN Grade strip                    |
+| **S2** | Emit `OC_*` evidence into SPX402 (`task_executor` decoder)        | S1, SPX402 upstream            | HIGH     | —      | `reference/spx402/FLOK_EXTENSION.md` |
+| **T1** | Night Tape + Spotlight (no Sky)                                   | ~50 live Floks                 | HIGH     | gated  | FINAL_DESIGN §7                      |
+| **E1** | Outcome Contract object + public header                           | S2 live (or Hall shows SPX404) | HIGH     | gated  | BRAIN `buyer_04`, `buyer_10`         |
+| **E2** | AEON escrow as middleman                                          | E1                             | CRITICAL | gated  | BRAIN `provider_10`                  |
+| **E3** | Contract Roost (hirer-only)                                       | E1                             | HIGH     | gated  | BRAIN `buyer_05` + `provider_08`     |
+| **E4** | Bid / select / slash                                              | E2 + S2 Grade                  | CRITICAL | gated  | BRAIN `provider_07`, `buyer_09`      |
 
 **Hire Hall does not open** until S2 is live. Until then Grade is **SPX404**. Do not blend buyback Grade with Contract Grade.
 
 ---
 
-## Repo hygiene (Phase 2)
+## Repo hygiene
 
-| Item | Decision | Status |
-|---|---|---|
-| Better Auth | **B** — keep infra; no public login chrome | this PR |
-| `/health` | Removed; `/api/health` only | this PR |
-| `POST /api/v1/seed` | 403 unless `FLOK_ALLOW_SEED=1` and not production | this PR |
-| multiplayer / unused deps / `src/assets/fonts` | Removed | this PR |
-| Package name | `flok` | this PR |
-| CI / `npm run verify` / `build:ci` | Phase 3 | — |
-
+| Item                                           | Decision                                          | Status            |
+| ---------------------------------------------- | ------------------------------------------------- | ----------------- |
+| Better Auth                                    | **B** — keep infra; no public login chrome        | done (Phase 2)    |
+| `/health`                                      | Removed; `/api/health` only                       | done (Phase 2)    |
+| `POST /api/v1/seed`                            | 403 unless `FLOK_ALLOW_SEED=1` and not production | done (Phase 2)    |
+| multiplayer / unused deps / `src/assets/fonts` | Removed                                           | done (Phase 2)    |
+| Package name                                   | `flok`                                            | done (Phase 2)    |
+| CI / `npm run verify` / `build:ci`             | GitHub Actions + local `npm run verify`           | this PR (Phase 3) |
 
 ---
 
@@ -113,22 +112,19 @@ Gaps to build in Flok: real bids, AEON escrow, `OC_*` Grade, node states `racing
 
 ## Stack (what actually runs)
 
-| Piece | In `src/` now |
-|---|---|
-| App | TanStack Start, Vite, port **8080** |
-| DB | Kysely + PGLite (preview) / Postgres when `DATABASE_URL` is set |
-| Cards | Satori + resvg OG renderer |
-| Package manager | npm |
+| Piece           | In `src/` now                                                   |
+| --------------- | --------------------------------------------------------------- |
+| App             | TanStack Start, Vite, port **8080**                             |
+| DB              | Kysely + PGLite (preview) / Postgres when `DATABASE_URL` is set |
+| Cards           | Satori + resvg OG renderer                                      |
+| Package manager | npm                                                             |
 
 ```bash
 npm install
 npm run dev          # 0.0.0.0:8080
-npm run typecheck
-npm test
+npm run verify       # format + lint + typecheck + tests + vite build (no migrate)
 bash scripts/smoke.sh
 ```
-
-`npm run verify` lands in Phase 3. Until then: typecheck + test + smoke.
 
 ---
 

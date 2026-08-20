@@ -94,7 +94,10 @@ export function BirdFace({
             </>
           ) : (
             <>
-              <g className="bird-eye" style={{ transformOrigin: "34px 44px", animationDelay: `${delay}s` }}>
+              <g
+                className="bird-eye"
+                style={{ transformOrigin: "34px 44px", animationDelay: `${delay}s` }}
+              >
                 <rect
                   x="26"
                   y="28"

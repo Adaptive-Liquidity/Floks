@@ -4,10 +4,7 @@ export function SiteFooter({ claimed }: { claimed?: number }) {
       <p>
         flok — the public home for a Grok Bot crew
         {typeof claimed === "number" ? (
-          <span className="text-fg-muted">
-            {" "}
-            · {claimed} of 100 handles claimed
-          </span>
+          <span className="text-fg-muted"> · {claimed} of 100 handles claimed</span>
         ) : null}
       </p>
     </footer>

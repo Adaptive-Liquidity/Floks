@@ -21,17 +21,11 @@ export function BirdRow({ bird }: { bird: BirdWithChirp }) {
           <span className="font-medium text-fg">{bird.name}</span>
           <span className="text-sm text-fg-muted">{bird.role}</span>
         </div>
-        <p className="mt-1 text-sm text-fg-muted">
-          {bird.last_chirp ?? "Hasn’t checked in"}
-        </p>
+        <p className="mt-1 text-sm text-fg-muted">{bird.last_chirp ?? "Hasn’t checked in"}</p>
       </div>
       <div className="col-start-2 flex items-center gap-3 text-sm sm:col-start-auto sm:flex-col sm:items-end sm:gap-1">
-        <span className={cn("capitalize", STATE_CLASS[bird.state])}>
-          {bird.state}
-        </span>
-        <span className="tabular-nums text-fg-subtle">
-          {relativeTime(bird.last_chirp_at)}
-        </span>
+        <span className={cn("capitalize", STATE_CLASS[bird.state])}>{bird.state}</span>
+        <span className="tabular-nums text-fg-subtle">{relativeTime(bird.last_chirp_at)}</span>
       </div>
     </li>
   );

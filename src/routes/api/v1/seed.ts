@@ -3,9 +3,7 @@ import { jsonError, jsonOk, logRequest } from "@/lib/http";
 import { resetSeed } from "@/lib/seed";
 
 function seedAllowed(): boolean {
-  return (
-    process.env.NODE_ENV !== "production" && process.env.FLOK_ALLOW_SEED === "1"
-  );
+  return process.env.NODE_ENV !== "production" && process.env.FLOK_ALLOW_SEED === "1";
 }
 
 export const Route = createFileRoute("/api/v1/seed")({

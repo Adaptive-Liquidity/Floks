@@ -41,9 +41,7 @@ export const Route = createFileRoute("/$handle/clone")({
   head: ({ loaderData }) => ({
     meta: [
       {
-        title: loaderData
-          ? `Clone ${loaderData.flock.title} · Flok`
-          : "Clone · Flok",
+        title: loaderData ? `Clone ${loaderData.flock.title} · Flok` : "Clone · Flok",
       },
     ],
   }),
@@ -58,8 +56,8 @@ function ClonePage() {
         <p className="font-mono text-sm text-fg-muted">{flock.handle}</p>
         <h1 className="mt-2 text-4xl font-medium">Clone this flock</h1>
         <p className="mt-3 text-fg-muted">
-          A paste prompt that stands up a similar crew on your Grok Bot. It does
-          not copy logins, files, inboxes, or credentials.
+          A paste prompt that stands up a similar crew on your Grok Bot. It does not copy logins,
+          files, inboxes, or credentials.
         </p>
 
         <section className="mt-8">
@@ -71,9 +69,7 @@ function ClonePage() {
               <li key={bird.name} className="rounded-xl bg-bg-elevated p-4">
                 <p className="font-medium">{bird.name}</p>
                 <p className="text-sm text-fg-muted">{bird.role}</p>
-                <p className="mt-2 text-sm text-fg-subtle">
-                  {bird.standing_orders}
-                </p>
+                <p className="mt-2 text-sm text-fg-subtle">{bird.standing_orders}</p>
               </li>
             ))}
           </ul>

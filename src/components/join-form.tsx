@@ -41,16 +41,14 @@ export function JoinForm() {
           <p className="text-sm text-fg-muted">Handle reserved for 30 minutes</p>
           <p className="mt-1 font-mono text-lg">{result.handle}</p>
         </div>
-        <p className="text-fg-muted">
-          Paste this into any Grok Bot — usually the chief of staff.
-        </p>
+        <p className="text-fg-muted">Paste this into any Grok Bot — usually the chief of staff.</p>
         <pre className="overflow-x-auto rounded-xl bg-bg-elevated p-4 font-mono text-sm leading-relaxed whitespace-pre-wrap text-fg">
           {result.prompt}
         </pre>
         <CopyButton value={result.prompt} label="Copy prompt" />
         <p className="text-sm text-fg-subtle">
-          Code <span className="font-mono text-fg">{result.code}</span> expires
-          in 30 minutes. One use only.
+          Code <span className="font-mono text-fg">{result.code}</span> expires in 30 minutes. One
+          use only.
         </p>
       </div>
     );

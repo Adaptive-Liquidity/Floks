@@ -1,11 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import {
-  createRootRoute,
-  HeadContent,
-  Link,
-  Outlet,
-  Scripts,
-} from "@tanstack/react-router";
+import { createRootRoute, HeadContent, Link, Outlet, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { GazeProvider } from "@/components/gaze";

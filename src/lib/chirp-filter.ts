@@ -1,6 +1,5 @@
 export type ChirpFilterResult =
-  | { ok: true; text: string }
-  | { ok: false; error: string; code: string };
+  { ok: true; text: string } | { ok: false; error: string; code: string };
 
 const EMAIL = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i;
 const PHONE = /(?:\+?\d[\d\s().-]{8,}\d)|(?:\d{10,})/;

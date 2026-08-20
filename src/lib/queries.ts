@@ -218,9 +218,7 @@ export async function getFlockByTokenHash(tokenHash: string): Promise<Flock | nu
   return rows[0] ? mapFlock(rows[0]) : null;
 }
 
-export async function getClaimedHandleByTokenHash(
-  tokenHash: string,
-): Promise<string | null> {
+export async function getClaimedHandleByTokenHash(tokenHash: string): Promise<string | null> {
   const sql = await getSql();
   const rows = await sql<{ handle_reserved: string }>`
     select handle_reserved from codes
@@ -359,10 +357,7 @@ export async function updateBirdState(
   return rows[0] ? mapBird(rows[0]) : null;
 }
 
-export async function recentChirpForBird(
-  birdId: string,
-  windowMs: number,
-): Promise<boolean> {
+export async function recentChirpForBird(birdId: string, windowMs: number): Promise<boolean> {
   const sql = await getSql();
   const since = new Date(Date.now() - windowMs).toISOString();
   const rows = await sql<{ n: number }>`
@@ -394,10 +389,7 @@ export async function insertChirp(input: {
   return mapChirp(rows[0]!);
 }
 
-export async function findBirdInFlock(
-  flockId: string,
-  name: string,
-): Promise<Bird | null> {
+export async function findBirdInFlock(flockId: string, name: string): Promise<Bird | null> {
   const sql = await getSql();
   const rows = await sql<BirdRow>`
     select id, flock_id, name, role, color, sort_order, grok_bot_label, state, last_chirp_at

@@ -17,8 +17,7 @@ function Login() {
       </Link>
       <h1 className="mt-10 font-display text-3xl font-medium">Sign in</h1>
       <p className="mt-2 text-sm text-fg-muted">
-        Optional. Spectators do not need an account. Join is a pasted skill, not
-        this page.
+        Optional. Spectators do not need an account. Join is a pasted skill, not this page.
       </p>
       <div className="mt-8 space-y-3">
         {authEnabled ? (

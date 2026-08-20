@@ -17,9 +17,10 @@ export function FlockPageView({
   latest: Chirp | null;
   pageUrl: string;
 }) {
-  const last = [latest?.created_at, ...birds.map((b) => b.last_chirp_at)]
-    .filter((value): value is string => Boolean(value))
-    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] ?? null;
+  const last =
+    [latest?.created_at, ...birds.map((b) => b.last_chirp_at)]
+      .filter((value): value is string => Boolean(value))
+      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] ?? null;
   const sleeping = isSleeping(last);
 
   return (
@@ -29,9 +30,7 @@ export function FlockPageView({
         <p className="font-mono text-sm text-fg-muted">@{flock.handle}</p>
         <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-4xl leading-[0.95] font-bold sm:text-6xl">
-              {flock.title}
-            </h1>
+            <h1 className="text-4xl leading-[0.95] font-bold sm:text-6xl">{flock.title}</h1>
             {flock.bio ? (
               <p className="mt-4 max-w-xl text-base text-fg-muted">{flock.bio}</p>
             ) : null}
