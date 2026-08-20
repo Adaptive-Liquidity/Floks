@@ -50,16 +50,17 @@ Root `ARCHITECTURE.md` / `DESIGN.md` are compatibility redirects only. Not live 
 
 ---
 
-## Repo hygiene (approved, not started)
+## Repo hygiene (Phase 2)
 
-Recorded for Phase 2+. Do not mix with R0–E4 feature work.
+| Item | Decision | Status |
+|---|---|---|
+| Better Auth | **B** — keep infra; no public login chrome | this PR |
+| `/health` | Removed; `/api/health` only | this PR |
+| `POST /api/v1/seed` | 403 unless `FLOK_ALLOW_SEED=1` and not production | this PR |
+| multiplayer / unused deps / `src/assets/fonts` | Removed | this PR |
+| Package name | `flok` | this PR |
+| CI / `npm run verify` / `build:ci` | Phase 3 | — |
 
-| Item | Decision |
-|---|---|
-| Better Auth | **B** — keep infrastructure; hide/disable product login chrome until Flok needs human accounts |
-| `/health` | Remove; standardize on `/api/health` unless an external probe is found |
-| Unused App Builder deps / multiplayer / unauth seed / duplicate fonts | Audit-confirmed; implement in Phase 2 |
-| CI / `npm run verify` / `build:ci` | Phase 3 |
 
 ---
 
