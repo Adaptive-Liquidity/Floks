@@ -1,0 +1,27 @@
+---
+description: Flok multi-agent Task routing and ownership (always on)
+alwaysApply: true
+---
+
+# Flok multi-agent
+
+Lead agent owns planning, commits, and PRs. Parallelize only independent streams. Prefer existing skills `multi-agent` / `swarm` for orchestration patterns — do not paste their full text here.
+
+## Subagent map
+
+| Work | Subagent |
+|------|----------|
+| Broad codebase map | `explore` / `repo-analyst` |
+| Ambiguous design / multi-layer | `architect` then implement |
+| API / DB / auth / tokens | `backend-engineer` |
+| UI / OG / pages | `frontend-engineer` |
+| After non-trivial change | `verifier` |
+| Auth / secrets / seed / tokens | `security-auditor` then `verifier` |
+| High-risk (OG rewrite, payments) | `verifier` + `red-team` |
+
+## Ownership
+
+- One file-ownership matrix per parallel wave; no two workers edit the same file.
+- Subagent prompts are self-contained: objective, files, constraints, acceptance criteria.
+- Never merge a PR without explicit user approval.
+- Do not treat BRAIN or `reference/spx402/` as the product spec.

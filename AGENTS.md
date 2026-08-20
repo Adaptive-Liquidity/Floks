@@ -22,17 +22,21 @@ Root `ARCHITECTURE.md` and `DESIGN.md` are compatibility redirects.
 - Hire Hall stays closed until SPX402 `OC_*` (S2).
 - Do not treat BRAIN or `reference/spx402/` as the product spec.
 - Smallest coherent change. No drive-by refactors.
-- Verify: `npm run typecheck`, `npm test`, `bash scripts/smoke.sh`. `npm run verify` when CI lands.
+- Verify: `npm run typecheck`, `npm test`, `bash scripts/smoke.sh`, and `npm run verify`.
+
+## Cursor harness
+
+Project Cursor rules, hooks, and the `flok-ship` skill live under `.cursor/`. They must **not** contradict this file. Prefer this file on conflict. Do not install ECC / `.claude/` into this repo to “enable” agent skills — use Cursor user skills + `.cursor/` instead.
 
 ## Preview sandbox
 
-If you are inside Grok App Builder, also obey the sandbox contract already in that environment (port 8080, PGLite, live preview). Do not replace it with this file.
+If you are inside Grok App Builder, also obey the sandbox contract already in that environment (port 8080, PGLite, live preview). Do not replace it with this file. Outside that sandbox, do not treat Grok PWA / `__grok` platform chrome as product requirements.
 
 ---
 
 ## Git / GitHub workflow
 
-This section is the **authority** for how work is published. When `.grok/` exists, a `git-publish` skill may hold the procedure; it must not contradict this file.
+This section is the **authority** for how work is published. When `.grok/` exists, a `git-publish` skill may hold the procedure; it must not contradict this file. Cursor project hooks under `.cursor/hooks/` are advisory and must not contradict this workflow.
 
 ### Default path
 
