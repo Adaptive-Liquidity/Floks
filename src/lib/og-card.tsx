@@ -1,6 +1,14 @@
 import { eyesStill } from "@/lib/node-state";
 import type { ClusterFace, Flock, OgCluster } from "@/lib/types";
 
+/**
+ * Renders a stylized pair of eyes based on gaze direction and face state.
+ *
+ * @param looking - Horizontal gaze direction, with vertical movement derived from its magnitude
+ * @param closed - Whether to render closed eyes
+ * @param racing - Whether to render the racing-eye state
+ * @returns The rendered eye pair
+ */
 function EyePair({
   looking = 0,
   closed = false,

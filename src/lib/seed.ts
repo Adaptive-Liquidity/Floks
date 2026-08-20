@@ -245,6 +245,9 @@ export async function resetSeed(): Promise<void> {
   globalRef.__flokSeeded__ = Promise.resolve();
 }
 
+/**
+ * Seeds demo flocks when the database is empty, or refreshes existing seed birds and clusters.
+ */
 async function seedIfEmpty(): Promise<void> {
   const sql = await getSql();
   const rows = await sql<{ n: number }>`select count(*)::int as n from flocks`;
@@ -257,6 +260,12 @@ async function seedIfEmpty(): Promise<void> {
   await insertSeedFlocks();
 }
 
+/**
+ * Reconciles seed birds with their configured states and heartbeat chirps.
+ *
+ * Missing seed flocks and birds are skipped. Existing chirps are replaced with
+ * the configured messages and generated historical timestamps.
+ */
 async function reconcileSeedBirds(): Promise<void> {
   const sql = await getSql();
   for (const flock of SEED) {
@@ -293,6 +302,9 @@ async function reconcileSeedBirds(): Promise<void> {
   }
 }
 
+/**
+ * Recalculates colors for birds in seed flocks based on their sort order.
+ */
 async function recolorSeedBirds(): Promise<void> {
   const sql = await getSql();
   const birds = await sql<{ id: string; sort_order: number }>`

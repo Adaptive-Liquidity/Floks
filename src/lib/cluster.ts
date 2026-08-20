@@ -20,6 +20,12 @@ export function slugifyCluster(name: string): string {
   return slug || "crew";
 }
 
+/**
+ * Creates ordered cluster plans from bird assignments.
+ *
+ * @param birds - Birds to group by their trimmed, case-insensitive cluster names.
+ * @returns Cluster plans containing ordered members, unique slugs, and sequential sort orders; groups exceeding the cluster capacity are split into numbered plans.
+ */
 export function planClusters(birds: { name: string; cluster?: string | null }[]): ClusterPlan[] {
   const buckets = new Map<string, { label: string; members: string[] }>();
   const order: string[] = [];

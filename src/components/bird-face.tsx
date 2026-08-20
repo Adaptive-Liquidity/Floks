@@ -14,6 +14,12 @@ const SIZE: Record<Size, string> = {
   lg: "size-36",
 };
 
+/**
+ * Computes a deterministic animation delay from a string seed.
+ *
+ * @param seed - The string used to derive the delay
+ * @returns A delay between 0 and 2.8 seconds
+ */
 function delayFor(seed: string) {
   let n = 0;
   for (const ch of seed) n = (n + ch.charCodeAt(0) * 17) % 97;
@@ -21,12 +27,14 @@ function delayFor(seed: string) {
 }
 
 /**
- * Renders a state-dependent bird face with animated eyes and visual status indicators.
+ * Renders a bird face with state-dependent eye animations and visual indicators.
  *
  * @param color - The bird face background color
  * @param state - The bird's current state
- * @param sleeping - Whether to display the bird with closed eyes
- * @param name - A stable identifier used to determine the animation delay
+ * @param sleeping - Whether to render closed eyes
+ * @param name - The bird name used to derive a stable animation delay
+ * @param size - The face size
+ * @param className - Additional CSS class names
  * @returns The rendered bird face element
  */
 export function BirdFace({
