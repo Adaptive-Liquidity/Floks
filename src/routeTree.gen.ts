@@ -22,11 +22,13 @@ import { Route as HandleCloneRouteImport } from './routes/$handle/clone'
 import { Route as HandleOpengraphImageRouteImport } from './routes/$handle/opengraph-image'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as HandleCSlugRouteImport } from './routes/$handle/c.$slug'
+import { Route as HandleRSlugRouteImport } from './routes/$handle/r.$slug'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiV1ChirpsRouteImport } from './routes/api/v1/chirps'
 import { Route as ApiV1ClaimRouteImport } from './routes/api/v1/claim'
 import { Route as ApiV1FlocksRouteImport } from './routes/api/v1/flocks'
 import { Route as ApiV1JoinRouteImport } from './routes/api/v1/join'
+import { Route as ApiV1RacksRouteImport } from './routes/api/v1/racks'
 import { Route as ApiV1SeedRouteImport } from './routes/api/v1/seed'
 import { Route as ApiV1BirdsIdRouteImport } from './routes/api/v1/birds.$id'
 import { Route as ApiV1CloneHandleRouteImport } from './routes/api/v1/clone.$handle'
@@ -96,6 +98,11 @@ const HandleCSlugRoute = HandleCSlugRouteImport.update({
   path: '/c/$slug',
   getParentRoute: () => HandleRouteRoute,
 } as any)
+const HandleRSlugRoute = HandleRSlugRouteImport.update({
+  id: '/r/$slug',
+  path: '/r/$slug',
+  getParentRoute: () => HandleRouteRoute,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -119,6 +126,11 @@ const ApiV1FlocksRoute = ApiV1FlocksRouteImport.update({
 const ApiV1JoinRoute = ApiV1JoinRouteImport.update({
   id: '/api/v1/join',
   path: '/api/v1/join',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1RacksRoute = ApiV1RacksRouteImport.update({
+  id: '/api/v1/racks',
+  path: '/api/v1/racks',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiV1SeedRoute = ApiV1SeedRouteImport.update({
@@ -151,11 +163,13 @@ export interface FileRoutesByFullPath {
   '/api/health': typeof ApiHealthRoute
   '/$handle/': typeof HandleIndexRoute
   '/$handle/c/$slug': typeof HandleCSlugRoute
+  '/$handle/r/$slug': typeof HandleRSlugRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/chirps': typeof ApiV1ChirpsRoute
   '/api/v1/claim': typeof ApiV1ClaimRoute
   '/api/v1/flocks': typeof ApiV1FlocksRoute
   '/api/v1/join': typeof ApiV1JoinRoute
+  '/api/v1/racks': typeof ApiV1RacksRoute
   '/api/v1/seed': typeof ApiV1SeedRoute
   '/api/v1/birds/$id': typeof ApiV1BirdsIdRoute
   '/api/v1/clone/$handle': typeof ApiV1CloneHandleRoute
@@ -173,11 +187,13 @@ export interface FileRoutesByTo {
   '/api/health': typeof ApiHealthRoute
   '/$handle': typeof HandleIndexRoute
   '/$handle/c/$slug': typeof HandleCSlugRoute
+  '/$handle/r/$slug': typeof HandleRSlugRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/chirps': typeof ApiV1ChirpsRoute
   '/api/v1/claim': typeof ApiV1ClaimRoute
   '/api/v1/flocks': typeof ApiV1FlocksRoute
   '/api/v1/join': typeof ApiV1JoinRoute
+  '/api/v1/racks': typeof ApiV1RacksRoute
   '/api/v1/seed': typeof ApiV1SeedRoute
   '/api/v1/birds/$id': typeof ApiV1BirdsIdRoute
   '/api/v1/clone/$handle': typeof ApiV1CloneHandleRoute
@@ -197,11 +213,13 @@ export interface FileRoutesById {
   '/api/health': typeof ApiHealthRoute
   '/$handle/': typeof HandleIndexRoute
   '/$handle/c/$slug': typeof HandleCSlugRoute
+  '/$handle/r/$slug': typeof HandleRSlugRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/chirps': typeof ApiV1ChirpsRoute
   '/api/v1/claim': typeof ApiV1ClaimRoute
   '/api/v1/flocks': typeof ApiV1FlocksRoute
   '/api/v1/join': typeof ApiV1JoinRoute
+  '/api/v1/racks': typeof ApiV1RacksRoute
   '/api/v1/seed': typeof ApiV1SeedRoute
   '/api/v1/birds/$id': typeof ApiV1BirdsIdRoute
   '/api/v1/clone/$handle': typeof ApiV1CloneHandleRoute
@@ -222,11 +240,13 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/$handle/'
     | '/$handle/c/$slug'
+    | '/$handle/r/$slug'
     | '/api/auth/$'
     | '/api/v1/chirps'
     | '/api/v1/claim'
     | '/api/v1/flocks'
     | '/api/v1/join'
+    | '/api/v1/racks'
     | '/api/v1/seed'
     | '/api/v1/birds/$id'
     | '/api/v1/clone/$handle'
@@ -244,11 +264,13 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/$handle'
     | '/$handle/c/$slug'
+    | '/$handle/r/$slug'
     | '/api/auth/$'
     | '/api/v1/chirps'
     | '/api/v1/claim'
     | '/api/v1/flocks'
     | '/api/v1/join'
+    | '/api/v1/racks'
     | '/api/v1/seed'
     | '/api/v1/birds/$id'
     | '/api/v1/clone/$handle'
@@ -267,11 +289,13 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/$handle/'
     | '/$handle/c/$slug'
+    | '/$handle/r/$slug'
     | '/api/auth/$'
     | '/api/v1/chirps'
     | '/api/v1/claim'
     | '/api/v1/flocks'
     | '/api/v1/join'
+    | '/api/v1/racks'
     | '/api/v1/seed'
     | '/api/v1/birds/$id'
     | '/api/v1/clone/$handle'
@@ -292,6 +316,7 @@ export interface RootRouteChildren {
   ApiV1ClaimRoute: typeof ApiV1ClaimRoute
   ApiV1FlocksRoute: typeof ApiV1FlocksRoute
   ApiV1JoinRoute: typeof ApiV1JoinRoute
+  ApiV1RacksRoute: typeof ApiV1RacksRoute
   ApiV1SeedRoute: typeof ApiV1SeedRoute
   ApiV1BirdsIdRoute: typeof ApiV1BirdsIdRoute
   ApiV1CloneHandleRoute: typeof ApiV1CloneHandleRoute
@@ -390,6 +415,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HandleCSlugRouteImport
       parentRoute: typeof HandleRouteRoute
     }
+    '/$handle/r/$slug': {
+      id: '/$handle/r/$slug'
+      path: '/r/$slug'
+      fullPath: '/$handle/r/$slug'
+      preLoaderRoute: typeof HandleRSlugRouteImport
+      parentRoute: typeof HandleRouteRoute
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -425,6 +457,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1JoinRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/v1/racks': {
+      id: '/api/v1/racks'
+      path: '/api/v1/racks'
+      fullPath: '/api/v1/racks'
+      preLoaderRoute: typeof ApiV1RacksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/v1/seed': {
       id: '/api/v1/seed'
       path: '/api/v1/seed'
@@ -454,6 +493,7 @@ interface HandleRouteRouteChildren {
   HandleOpengraphImageRoute: typeof HandleOpengraphImageRoute
   HandleIndexRoute: typeof HandleIndexRoute
   HandleCSlugRoute: typeof HandleCSlugRoute
+  HandleRSlugRoute: typeof HandleRSlugRoute
 }
 
 const HandleRouteRouteChildren: HandleRouteRouteChildren = {
@@ -461,6 +501,7 @@ const HandleRouteRouteChildren: HandleRouteRouteChildren = {
   HandleOpengraphImageRoute: HandleOpengraphImageRoute,
   HandleIndexRoute: HandleIndexRoute,
   HandleCSlugRoute: HandleCSlugRoute,
+  HandleRSlugRoute: HandleRSlugRoute,
 }
 
 const HandleRouteRouteWithChildren = HandleRouteRoute._addFileChildren(
@@ -482,6 +523,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiV1ClaimRoute: ApiV1ClaimRoute,
   ApiV1FlocksRoute: ApiV1FlocksRoute,
   ApiV1JoinRoute: ApiV1JoinRoute,
+  ApiV1RacksRoute: ApiV1RacksRoute,
   ApiV1SeedRoute: ApiV1SeedRoute,
   ApiV1BirdsIdRoute: ApiV1BirdsIdRoute,
   ApiV1CloneHandleRoute: ApiV1CloneHandleRoute,

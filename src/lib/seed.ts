@@ -1,8 +1,9 @@
 import { getSql } from "@/lib/db";
 import type { BirdState } from "@/lib/types";
 import { colorForIndex } from "@/lib/colors";
-import { planClusters } from "@/lib/cluster";
+import { planClusters, slugifyCluster } from "@/lib/cluster";
 import { newId } from "@/lib/ids";
+import { planRacks } from "@/lib/rack";
 import { hashToken } from "@/lib/tokens";
 
 type SeedBird = {
@@ -19,6 +20,7 @@ type SeedFlock = {
   bio: string;
   owner_hint: string;
   birds: SeedBird[];
+  racks?: { name: string; clusters: string[] }[];
 };
 
 const SEED: SeedFlock[] = [
@@ -176,7 +178,7 @@ const SEED: SeedFlock[] = [
   {
     handle: "loft",
     title: "The Loft",
-    bio: "Demo studio crew. Two clusters, one shared desk.",
+    bio: "Demo studio crew. Two roosts pinned on one Shift rack.",
     owner_hint: "demo",
     birds: [
       {
@@ -222,6 +224,7 @@ const SEED: SeedFlock[] = [
         chirps: ["Attested the launch note, 180 words"],
       },
     ],
+    racks: [{ name: "Shift", clusters: ["Studio", "Desk"] }],
   },
 ];
 
@@ -312,6 +315,64 @@ async function syncSeedClusters(): Promise<void> {
       if (!keep.has(extra.id)) {
         await sql`delete from clusters where id = ${extra.id}`;
       }
+    }
+    await syncSeedRacksForFlock(flockId, flock);
+  }
+}
+
+async function syncSeedRacksForFlock(flockId: string, flock: SeedFlock): Promise<void> {
+  const sql = await getSql();
+  const wanted = flock.racks ?? [];
+  if (wanted.length === 0) {
+    await sql`delete from racks where flock_id = ${flockId}`;
+    return;
+  }
+  const planned = planRacks(wanted);
+  if (!planned.ok) return;
+  const clusters = await sql<{ id: string; name: string; slug: string }>`
+    select id, name, slug from clusters where flock_id = ${flockId}
+  `;
+  const keep = new Set<string>();
+  for (const plan of planned.plans) {
+    const roosts = plan.clusters
+      .map((label) => {
+        const key = label.trim().toLowerCase();
+        const slug = slugifyCluster(label);
+        return clusters.find(
+          (c) => c.slug === key || c.slug === slug || c.name.toLowerCase() === key,
+        );
+      })
+      .filter((c): c is { id: string; name: string; slug: string } => Boolean(c));
+    if (roosts.length < 2) continue;
+    const existing = await sql<{ id: string }>`
+      select id from racks where flock_id = ${flockId} and slug = ${plan.slug} limit 1
+    `;
+    const rackId = existing[0]?.id ?? newId();
+    keep.add(rackId);
+    if (existing[0]) {
+      await sql`
+        update racks
+        set name = ${plan.name}, sort_order = ${plan.sort_order}
+        where id = ${rackId}
+      `;
+      await sql`delete from rack_slots where rack_id = ${rackId}`;
+    } else {
+      await sql`
+        insert into racks (id, flock_id, name, slug, sort_order)
+        values (${rackId}, ${flockId}, ${plan.name}, ${plan.slug}, ${plan.sort_order})
+      `;
+    }
+    for (const [index, roost] of roosts.entries()) {
+      await sql`
+        insert into rack_slots (rack_id, cluster_id, sort_order)
+        values (${rackId}, ${roost.id}, ${index})
+      `;
+    }
+  }
+  const extras = await sql<{ id: string }>`select id from racks where flock_id = ${flockId}`;
+  for (const extra of extras) {
+    if (!keep.has(extra.id)) {
+      await sql`delete from racks where id = ${extra.id}`;
     }
   }
 }

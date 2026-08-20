@@ -86,3 +86,11 @@ export type OgCluster = {
   name: string;
   faces: ClusterFace[];
 };
+
+export type RackCard = {
+  id: string;
+  name: string;
+  slug: string;
+  sort_order: number;
+  roosts: ClusterCard[];
+};

@@ -1,20 +1,23 @@
 import { Link } from "@tanstack/react-router";
 import { ClusterTile } from "@/components/cluster-tile";
 import { CopyButton } from "@/components/copy-button";
+import { RackTile } from "@/components/rack-tile";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { isSleeping } from "@/lib/time";
-import type { Chirp, ClusterCard, Flock } from "@/lib/types";
+import type { Chirp, ClusterCard, Flock, RackCard } from "@/lib/types";
 
 export function FlockPageView({
   flock,
   clusters,
+  racks,
   latest,
   nodeCount,
   pageUrl,
 }: {
   flock: Flock;
   clusters: ClusterCard[];
+  racks: RackCard[];
   latest: Chirp | null;
   nodeCount: number;
   pageUrl: string;
@@ -71,6 +74,26 @@ export function FlockPageView({
             Clone this crew
           </Link>
         </div>
+
+        {racks.length > 0 ? (
+          <section className="mt-12">
+            <div className="flex items-baseline justify-between gap-3">
+              <h2 className="font-mono text-[11px] font-medium tracking-[0.18em] text-fg-subtle uppercase">
+                Racks
+              </h2>
+              <p className="font-mono text-[11px] tracking-[0.06em] text-fg-subtle">
+                {racks.length} {racks.length === 1 ? "rack" : "racks"}
+              </p>
+            </div>
+            <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+              {racks.map((rack) => (
+                <li key={rack.id}>
+                  <RackTile handle={flock.handle} rack={rack} />
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
 
         <section className="mt-12">
           <div className="flex items-baseline justify-between gap-3">

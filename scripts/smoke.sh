@@ -76,6 +76,25 @@ grep -a -q "Maya" "$page_file"
 
 crew_code="$(curl -s -o /dev/null -w "%{http_code}" "$BASE/$HANDLE/c/crew")"
 test "$crew_code" = "404"
+
+curl -sf -X PUT "$BASE/api/v1/racks" \
+  -H "authorization: Bearer $token" \
+  -H 'content-type: application/json' \
+  -d '{"name":"Shift","clusters":["studio","desk"]}' >/tmp/flok-rack.json
+curl -sf "$BASE/$HANDLE" -o "$page_file"
+grep -a -q "Shift" "$page_file"
+grep -a -q "Racks" "$page_file"
+curl -sf "$BASE/$HANDLE/r/shift" -o "$page_file"
+grep -a -q "Rack" "$page_file"
+grep -a -q "Studio" "$page_file"
+grep -a -q "Desk" "$page_file"
+grep -a -q "Maya" "$page_file"
+grep -a -q "Jarvis" "$page_file"
+thin_rack="$(curl -s -o /tmp/flok-thin-rack.json -w "%{http_code}" -X PUT "$BASE/api/v1/racks" \
+  -H "authorization: Bearer $token" \
+  -H 'content-type: application/json' \
+  -d '{"name":"Thin","clusters":["desk"]}')"
+test "$thin_rack" = "400"
 rm -f "$page_file"
 
 og_code="$(curl -s -o /tmp/flok-og.png -w "%{http_code}" "$BASE/$HANDLE/opengraph-image")"
