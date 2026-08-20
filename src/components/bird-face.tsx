@@ -105,12 +105,12 @@ export function BirdFace({
         state === "denied" && "bird-face-denied",
         state === "bound" && "bird-face-bound",
         nodeFaceFilterClass(state, sleeping),
-        rollbackAnim && "bird-face-rollback-anim",
+        rollbackAnim && state === "rolled_back" && "bird-face-rollback-anim",
         className,
       )}
       style={{
         backgroundColor: color,
-        animationDelay: rollbackAnim ? "0s" : `${delay}s`,
+        animationDelay: rollbackAnim && state === "rolled_back" ? "0s" : `${delay}s`,
       }}
       data-state={closed ? "sleep" : state}
       aria-hidden="true"
