@@ -174,5 +174,6 @@ Do not wait on Cluster/Hall.
 - [x] R2 Node chrome (executing / racing / rolled-back / denied / attested)
 - [x] R3 Rack
 - [x] S1 Grade or SPX404 on the Index tile
-- [ ] S2 `OC_*` evidence (`task_executor` decoder) — in progress
+- [x] S2 Gate 1 — fail-closed OC evidence boundary (Flok-owned; outbox pending, no egress)
+- [ ] S2 live emit — upstream `task_executor` decoder + authenticated ingestion (`decoderLive === true`; upstream-blocked)
 - [ ] Hall still closed until S2 is live (`decoderLive === true`)
