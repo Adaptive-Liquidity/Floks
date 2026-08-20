@@ -7,6 +7,15 @@ import { isLiveNode } from "@/lib/node-state";
 import { isSleeping, relativeTime } from "@/lib/time";
 import type { BirdWithChirp, Chirp, ClusterCard, Flock } from "@/lib/types";
 
+/**
+ * Renders a flock cluster page with its latest activity and bird nodes.
+ *
+ * @param flock - The flock containing the cluster
+ * @param cluster - The cluster to display
+ * @param birds - The birds associated with the cluster
+ * @param latest - The latest cluster chirp, if available
+ * @returns The rendered cluster page
+ */
 export function RoostPageView({
   flock,
   cluster,

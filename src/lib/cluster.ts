@@ -61,6 +61,12 @@ export function planClusters(birds: { name: string; cluster?: string | null }[])
   return plans;
 }
 
+/**
+ * Sorts nodes by state priority and most recent chirp time.
+ *
+ * @param nodes - The nodes to sort.
+ * @returns A sorted copy of the nodes.
+ */
 export function mostAlive<T extends { state: BirdState; last_chirp_at: string | null }>(
   nodes: T[],
 ): T[] {

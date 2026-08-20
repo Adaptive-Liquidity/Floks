@@ -2,6 +2,12 @@ import { relativeTime } from "@/lib/time";
 import { nodeStateClass, nodeStateLabel } from "@/lib/node-state";
 import type { BirdWithChirp } from "@/lib/types";
 
+/**
+ * Renders a bird's identity, latest chirp, state, and last activity time as a list item.
+ *
+ * @param bird - The bird and its latest chirp data to display
+ * @returns The rendered bird row
+ */
 export function BirdRow({ bird }: { bird: BirdWithChirp }) {
   return (
     <li className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 border-b border-border py-4 last:border-b-0 sm:grid-cols-[auto_minmax(0,1fr)_auto]">

@@ -6,6 +6,12 @@ import type { ClusterCard, ClusterFace } from "@/lib/types";
 
 const STUB: ClusterFace = { name: "", color: "#16191F", state: "offline" };
 
+/**
+ * Renders a linked tile summarizing a cluster and its nodes.
+ *
+ * @param handle - The handle used to build the cluster link
+ * @param cluster - The cluster data displayed in the tile
+ */
 export function ClusterTile({ handle, cluster }: { handle: string; cluster: ClusterCard }) {
   const faces = [...cluster.faces];
   while (faces.length < 4) faces.push(STUB);

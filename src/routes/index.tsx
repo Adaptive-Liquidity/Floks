@@ -20,6 +20,11 @@ export const Route = createFileRoute("/")({
   }),
 });
 
+/**
+ * Renders the public home page with an introductory hero, live flock cards, and the site footer.
+ *
+ * @returns The home page content.
+ */
 function Home() {
   const { flocks, claimed } = Route.useLoaderData();
   return (

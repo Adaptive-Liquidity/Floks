@@ -3,6 +3,14 @@ import { nodeStateClass, nodeStateLabel } from "@/lib/node-state";
 import { relativeTime } from "@/lib/time";
 import type { BirdState } from "@/lib/types";
 
+/**
+ * Renders a bird summary tile with its identity, state, role, and optional activity details.
+ *
+ * @param sleeping - Whether the bird is sleeping.
+ * @param chirp - Optional message to display beneath the bird's role.
+ * @param at - Optional timestamp for the activity message.
+ * @returns The rendered bird summary tile.
+ */
 export function BirdTile({
   name,
   role,

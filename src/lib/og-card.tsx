@@ -42,6 +42,11 @@ function EyePair({ looking = 0, closed = false }: { looking?: number; closed?: b
 
 const STUB: ClusterFace = { name: "", color: "#16191F", state: "offline" };
 
+/**
+ * Renders a cluster tile with up to four faces and the cluster name.
+ *
+ * @param cluster - The cluster whose faces and name are displayed.
+ */
 function OgClusterTile({ cluster }: { cluster: OgCluster }) {
   const faces = [...cluster.faces];
   while (faces.length < 4) faces.push(STUB);

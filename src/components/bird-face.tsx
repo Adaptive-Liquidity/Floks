@@ -20,6 +20,15 @@ function delayFor(seed: string) {
   return (n / 97) * 2.8;
 }
 
+/**
+ * Renders a state-dependent bird face with animated eyes and visual status indicators.
+ *
+ * @param color - The bird face background color
+ * @param state - The bird's current state
+ * @param sleeping - Whether to display the bird with closed eyes
+ * @param name - A stable identifier used to determine the animation delay
+ * @returns The rendered bird face element
+ */
 export function BirdFace({
   color,
   state,
