@@ -97,6 +97,7 @@ export function classifyOcTransitionFromState(
     previous.contract_id !== next.contract_id ||
     previous.cluster_id !== next.cluster_id ||
     previous.cluster_slug !== next.cluster_slug ||
+    previous.handle !== next.handle ||
     previous.subject !== next.subject ||
     previous.type === next.type
   ) {
