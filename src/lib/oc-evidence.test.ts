@@ -172,6 +172,103 @@ test("OC persistence classifies from DB and enqueues atomically", async () => {
   assert.deepEqual(rows[0], { events: 1, outbox: 1 });
 });
 
+test("OC persistence advances latest_event_id through opened, awarded, terminal", async () => {
+  const contractId = "contract-lifecycle";
+  const sql = await getSql();
+  const latestEventId = async () =>
+    (
+      await sql.query<{ latest_event_id: string | null }>(
+        "select latest_event_id from oc_lifecycle where contract_id = $1",
+        [contractId],
+      )
+    )[0]?.latest_event_id;
+
+  const opened = await event("OC_OPENED", {
+    contract_id: contractId,
+    idempotency_key: "life-open",
+    occurred_at: "2026-08-20T19:00:00.000Z",
+  });
+  const first = await persistOcEvidence(opened);
+  assert.equal(first.transition, "advance");
+  assert.equal(await latestEventId(), opened.event_id);
+
+  const awarded = await event("OC_AWARDED", {
+    contract_id: contractId,
+    idempotency_key: "life-award",
+    occurred_at: "2026-08-20T19:01:00.000Z",
+  });
+  const second = await persistOcEvidence(awarded);
+  assert.equal(second.transition, "advance");
+  assert.equal(await latestEventId(), awarded.event_id);
+
+  const fulfilled = await event("OC_FULFILLED", {
+    contract_id: contractId,
+    idempotency_key: "life-fulfill",
+    occurred_at: "2026-08-20T19:02:00.000Z",
+    capsule_id: "capsule-9",
+  });
+  const third = await persistOcEvidence(fulfilled);
+  assert.equal(third.transition, "advance");
+  assert.equal(await latestEventId(), fulfilled.event_id);
+
+  const rows = await sql.query<{ type: string; outbox: number }>(
+    `select e.type, (select count(*)::int from oc_evidence_outbox o where o.event_id = e.event_id) as outbox
+     from oc_evidence_events e where e.contract_id = $1 order by e.occurred_at`,
+    [contractId],
+  );
+  assert.deepEqual(rows, [
+    { type: "OC_OPENED", outbox: 1 },
+    { type: "OC_AWARDED", outbox: 1 },
+    { type: "OC_FULFILLED", outbox: 1 },
+  ]);
+});
+
+test("OC persistence allows only one of two competing terminal events", async () => {
+  const contractId = "contract-terminal-race";
+  const opened = await event("OC_OPENED", {
+    contract_id: contractId,
+    idempotency_key: "race-open",
+    occurred_at: "2026-08-20T19:00:00.000Z",
+  });
+  const awarded = await event("OC_AWARDED", {
+    contract_id: contractId,
+    idempotency_key: "race-award",
+    occurred_at: "2026-08-20T19:01:00.000Z",
+  });
+  assert.equal((await persistOcEvidence(opened)).transition, "advance");
+  assert.equal((await persistOcEvidence(awarded)).transition, "advance");
+
+  const fulfilled = await event("OC_FULFILLED", {
+    contract_id: contractId,
+    idempotency_key: "race-fulfill",
+    occurred_at: "2026-08-20T19:02:00.000Z",
+    capsule_id: "capsule-9",
+  });
+  const slashed = await event("OC_SLASHED", {
+    contract_id: contractId,
+    idempotency_key: "race-slash",
+    occurred_at: "2026-08-20T19:02:00.000Z",
+  });
+  const results = await Promise.all([persistOcEvidence(fulfilled), persistOcEvidence(slashed)]);
+  const transitions = results.map((result) => result.transition);
+  // Exactly one terminal write wins; the loser is rejected (conflict/invalid)
+  // without persisting, regardless of which attempt acquires the lock first.
+  assert.equal(transitions.filter((transition) => transition === "advance").length, 1);
+
+  const sql = await getSql();
+  const rows = await sql.query<{ events: number; outbox: number; latest: string | null }>(
+    `select
+      (select count(*)::int from oc_evidence_events where contract_id = $1) as events,
+      (select count(*)::int from oc_evidence_outbox o join oc_evidence_events e using (event_id) where e.contract_id = $1) as outbox,
+      (select latest_event_id from oc_lifecycle where contract_id = $1) as latest`,
+    [contractId],
+  );
+  assert.equal(rows[0]?.events, 3);
+  assert.equal(rows[0]?.outbox, 3);
+  const winner = results[0]?.transition === "advance" ? fulfilled : slashed;
+  assert.equal(rows[0]?.latest, winner.event_id);
+});
+
 test("OC persistence rolls back event and lifecycle when outbox enqueue fails", async () => {
   const contractId = "contract-atomicity";
   const opened = await event("OC_OPENED", {
