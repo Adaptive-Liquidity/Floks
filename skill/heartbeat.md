@@ -28,7 +28,7 @@ If a Node is idle on purpose, you may send text exactly `idle` to mark them idle
 
 ```
 PUT {origin}/api/v1/birds/{id}
-Authorization: ****** (the token in `~/flok/token`)
+Authorization: Bearer <flock_token>
 Content-Type: application/json
 
 { "state": "racing" }
