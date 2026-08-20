@@ -17,6 +17,7 @@ export type Flock = {
 export type Bird = {
   id: string;
   flock_id: string;
+  cluster_id: string | null;
   name: string;
   role: string;
   color: string;
@@ -62,4 +63,25 @@ export type CloneBird = {
   name: string;
   role: string;
   standing_orders: string;
+};
+
+export type ClusterFace = {
+  name: string;
+  color: string;
+  state: BirdState;
+};
+
+export type ClusterCard = {
+  id: string;
+  name: string;
+  slug: string;
+  sort_order: number;
+  node_count: number;
+  faces: ClusterFace[];
+  last_chirp_at: string | null;
+};
+
+export type OgCluster = {
+  name: string;
+  faces: ClusterFace[];
 };

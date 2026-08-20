@@ -1,24 +1,26 @@
 import { Link } from "@tanstack/react-router";
-import { BirdTile } from "@/components/bird-tile";
+import { ClusterTile } from "@/components/cluster-tile";
 import { CopyButton } from "@/components/copy-button";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { isSleeping, relativeTime } from "@/lib/time";
-import type { BirdWithChirp, Chirp, Flock } from "@/lib/types";
+import { isSleeping } from "@/lib/time";
+import type { Chirp, ClusterCard, Flock } from "@/lib/types";
 
 export function FlockPageView({
   flock,
-  birds,
+  clusters,
   latest,
+  nodeCount,
   pageUrl,
 }: {
   flock: Flock;
-  birds: BirdWithChirp[];
+  clusters: ClusterCard[];
   latest: Chirp | null;
+  nodeCount: number;
   pageUrl: string;
 }) {
   const last =
-    [latest?.created_at, ...birds.map((b) => b.last_chirp_at)]
+    [latest?.created_at, ...clusters.map((c) => c.last_chirp_at)]
       .filter((value): value is string => Boolean(value))
       .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] ?? null;
   const sleeping = isSleeping(last);
@@ -73,28 +75,24 @@ export function FlockPageView({
         <section className="mt-12">
           <div className="flex items-baseline justify-between gap-3">
             <h2 className="font-mono text-[11px] font-medium tracking-[0.18em] text-fg-subtle uppercase">
-              The crew
+              Clusters
             </h2>
             <p className="font-mono text-[11px] tracking-[0.06em] text-fg-subtle">
-              {birds.length} · {last ? relativeTime(last) : "quiet"}
+              {clusters.length} {clusters.length === 1 ? "cluster" : "clusters"} · {nodeCount}{" "}
+              {nodeCount === 1 ? "node" : "nodes"}
             </p>
           </div>
-          <ul className="mt-6 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3">
-            {birds.map((bird) => (
-              <li key={bird.id}>
-                <BirdTile
-                  name={bird.name}
-                  role={bird.role}
-                  color={bird.color}
-                  state={bird.state}
-                  sleeping={sleeping && bird.state !== "working"}
-                  chirp={bird.last_chirp}
-                  at={bird.last_chirp_at}
-                  size="md"
-                />
-              </li>
-            ))}
-          </ul>
+          {clusters.length === 0 ? (
+            <p className="mt-6 text-sm text-fg-subtle">No clusters yet.</p>
+          ) : (
+            <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+              {clusters.map((cluster) => (
+                <li key={cluster.id}>
+                  <ClusterTile handle={flock.handle} cluster={cluster} />
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       </main>
       <SiteFooter />

@@ -17,7 +17,7 @@ Root `ARCHITECTURE.md` / `DESIGN.md` are compatibility redirects only. Not live 
 
 ---
 
-## Status (2026-08-19)
+## Status (2026-08-20)
 
 | Phase                                           | Status                | Notes                                                                             |
 | ----------------------------------------------- | --------------------- | --------------------------------------------------------------------------------- |
@@ -34,9 +34,9 @@ Root `ARCHITECTURE.md` / `DESIGN.md` are compatibility redirects only. Not live 
 
 | ID     | Goal                                                              | Depends on                     | Risk     | Status  | Patterns                             |
 | ------ | ----------------------------------------------------------------- | ------------------------------ | -------- | ------- | ------------------------------------ |
-| **R0** | Terminology in **new** UI copy only (no schema rename)            | shipped v0                     | LOW      | this PR | FINAL_DESIGN §2                      |
-| **R1** | Cluster Index: 2×2 meta-tiles, click → Roost (≤12)                | R0                             | MEDIUM   | NEXT    | FINAL_DESIGN §6                      |
-| **R2** | Node chrome: executing / racing / rolled-back / denied / attested | R1                             | MEDIUM   | —       | BRAIN `provider_06` slice            |
+| **R0** | Terminology in **new** UI copy only (no schema rename)            | shipped v0                     | LOW      | shipped | FINAL_DESIGN §2                      |
+| **R1** | Cluster Index: 2×2 meta-tiles, click → Roost (≤12)                | R0                             | MEDIUM   | this PR | FINAL_DESIGN §6                      |
+| **R2** | Node chrome: executing / racing / rolled-back / denied / attested | R1                             | MEDIUM   | NEXT    | BRAIN `provider_06` slice            |
 | **R3** | Rack: pin 2–4 Roosts                                              | R1                             | MEDIUM   | —       | FINAL_DESIGN §6                      |
 | **S1** | Consume SPX402 Grade + confidence on Index / OG (read-only)       | `reference/spx402`             | MEDIUM   | —       | BRAIN Grade strip                    |
 | **S2** | Emit `OC_*` evidence into SPX402 (`task_executor` decoder)        | S1, SPX402 upstream            | HIGH     | —       | `reference/spx402/FLOK_EXTENSION.md` |
@@ -154,6 +154,6 @@ Do not wait on Cluster/Hall.
 ## Next product slice
 
 - [x] R0 new copy uses Node/Pulse/Cluster
-- [ ] R1 Cluster Index + Roost
+- [x] R1 Cluster Index + Roost
 - [ ] S1 Grade or SPX404 on the Index tile
 - [ ] Hall still closed until S2

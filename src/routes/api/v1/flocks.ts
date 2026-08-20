@@ -8,6 +8,7 @@ const birdSchema = z.object({
   name: z.string().trim().min(1).max(32),
   role: z.string().trim().min(1).max(60),
   grok_bot_label: z.string().trim().max(32).optional(),
+  cluster: z.string().trim().max(40).optional(),
 });
 
 const bodySchema = z.object({
@@ -15,7 +16,7 @@ const bodySchema = z.object({
   bio: z.string().trim().max(200).optional(),
   owner_hint: z.string().trim().max(80).optional(),
   visibility: z.enum(["public", "unlisted"]).optional(),
-  birds: z.array(birdSchema).min(1).max(20),
+  birds: z.array(birdSchema).min(1).max(50),
 });
 
 export const Route = createFileRoute("/api/v1/flocks")({
@@ -39,7 +40,7 @@ export const Route = createFileRoute("/api/v1/flocks")({
           logRequest("POST", "/api/v1/flocks", 400);
           return jsonError(
             400,
-            "Need a title and 1–20 nodes with names and roles.",
+            "Need a title and 1–50 nodes with names and roles.",
             "invalid_body",
           );
         }

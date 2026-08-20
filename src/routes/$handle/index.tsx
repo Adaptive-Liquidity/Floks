@@ -3,7 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { FlockPageView } from "@/components/flock-page";
 import { RESERVED_HANDLES } from "@/lib/handles";
 import { getAppOrigin } from "@/lib/origin.server";
-import { getBirdsForFlock, getFlockByHandle, getLatestChirp } from "@/lib/queries";
+import { getClusterCards, getFlockByHandle, getLatestChirp } from "@/lib/queries";
 
 const loadFlockPage = createServerFn({ method: "GET" })
   .validator((handle: string) => handle)
@@ -11,14 +11,15 @@ const loadFlockPage = createServerFn({ method: "GET" })
     if (RESERVED_HANDLES.has(handle)) return null;
     const flock = await getFlockByHandle(handle);
     if (!flock) return null;
-    const [birds, latest] = await Promise.all([
-      getBirdsForFlock(flock.id),
+    const [clusters, latest] = await Promise.all([
+      getClusterCards(flock.id),
       getLatestChirp(flock.id),
     ]);
     return {
       flock,
-      birds,
+      clusters,
       latest,
+      nodeCount: clusters.reduce((n, c) => n + c.node_count, 0),
       origin: getAppOrigin(),
     };
   });
@@ -32,9 +33,9 @@ export const Route = createFileRoute("/$handle/")({
   component: FlockRoute,
   head: ({ loaderData }) => {
     if (!loaderData) return { meta: [{ title: "Flok" }] };
-    const { flock, origin } = loaderData;
+    const { flock, origin, clusters, nodeCount } = loaderData;
     const title = `${flock.title} · ${flock.handle}`;
-    const description = flock.bio || `A Grok Bot crew published on Flok.`;
+    const description = flock.bio || `${clusters.length} clusters · ${nodeCount} nodes · SPX404`;
     const image = `${origin}/${flock.handle}/opengraph-image`;
     return {
       meta: [
@@ -55,12 +56,13 @@ export const Route = createFileRoute("/$handle/")({
 });
 
 function FlockRoute() {
-  const { flock, birds, latest, origin } = Route.useLoaderData();
+  const { flock, clusters, latest, nodeCount, origin } = Route.useLoaderData();
   return (
     <FlockPageView
       flock={flock}
-      birds={birds}
+      clusters={clusters}
       latest={latest}
+      nodeCount={nodeCount}
       pageUrl={`${origin}/${flock.handle}`}
     />
   );
