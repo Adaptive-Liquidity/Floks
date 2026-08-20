@@ -1,0 +1,89 @@
+AGENT
+- id
+- slug
+- display_name
+- package_file
+- version
+- runtime
+- domain
+- summary
+- capabilities[]
+- constraints[]
+- scores{}
+- statuses{}
+- evidence_ids[]
+- run_ids[]
+- contract_ids[]
+
+RUN
+- id
+- title
+- agent_id
+- buyer_id
+- provider_id
+- contract_id
+- status
+- task_input
+- subtasks[]
+- node_graph{}
+- evidence_ids[]
+- score_snapshot{}
+- decision{}
+- started_at
+- ended_at
+- cost_snapshot{}
+- timeline_event_ids[]
+
+SUBTASK
+- id
+- name
+- agent_role
+- dependency_ids[]
+- status
+- input_summary
+- output_summary
+- confidence
+- duration_ms
+- cost_estimate
+- evidence_ids[]
+
+EVIDENCE
+- id
+- type
+- title
+- source
+- confidence
+- summary
+- why_it_matters
+- integrity_hash
+- related_node_ids[]
+- created_at
+
+CONTRACT
+- id
+- title
+- requested_outcome
+- proof_requirements[]
+- expected_deliverables[]
+- budget_range
+- status
+- buyer_notes
+- provider_notes
+- selected_agent_id
+
+DECISION
+- id
+- outcome
+- confidence
+- reasons[]
+- denied_paths[]
+- approved_paths[]
+- created_at
+
+TIMELINE_EVENT
+- id
+- ts
+- type
+- label
+- detail
+- related_ids[]
