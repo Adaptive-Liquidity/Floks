@@ -61,6 +61,7 @@ function OgClusterTile({ cluster }: { cluster: OgCluster }) {
           <div
             key={`${cluster.name}-${i}`}
             style={{
+              position: "relative",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -69,6 +70,7 @@ function OgClusterTile({ cluster }: { cluster: OgCluster }) {
               borderRadius: 24,
               backgroundColor: face.color,
               opacity: face.name ? 1 : 0.55,
+              overflow: "hidden",
               boxShadow:
                 face.state === "attested"
                   ? "0 0 0 2px #C6F84E"
@@ -85,6 +87,20 @@ function OgClusterTile({ cluster }: { cluster: OgCluster }) {
               looking={face.state === "racing" ? 1 : (i % 3) - 1}
               closed={!face.name || face.state === "offline" || face.state === "rolled_back"}
             />
+            {face.state === "denied" && (
+              <svg
+                width="107"
+                height="107"
+                viewBox="0 0 107 107"
+                style={{ position: "absolute", top: 0, left: 0 }}
+              >
+                <g stroke="rgba(247,179,61,0.55)" strokeWidth="3.2">
+                  <line x1="16" y1="81" x2="90" y2="21" />
+                  <line x1="26" y1="94" x2="97" y2="36" />
+                  <line x1="6" y1="66" x2="78" y2="10" />
+                </g>
+              </svg>
+            )}
           </div>
         ))}
       </div>
