@@ -22,10 +22,7 @@ export type OcDecoderStatus = {
   reason: "upstream_decoder_unavailable" | "upstream_decoder_live" | "probe_failed";
 };
 
-async function materializeOcEvidence(
-  input: unknown,
-  subject: unknown,
-): Promise<OcEvidence> {
+async function materializeOcEvidence(input: unknown, subject: unknown): Promise<OcEvidence> {
   const parsed = ocEvidenceInputSchema.parse(input);
   const boundSubject = ocSubjectSchema.parse(subject);
   const eventId = `oc_${await sha256Hex(
