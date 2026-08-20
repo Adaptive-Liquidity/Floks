@@ -7,7 +7,7 @@ function stringify(value: unknown): string {
   if (typeof value === "string") return JSON.stringify(value);
   if (typeof value === "number") return Number.isFinite(value) ? JSON.stringify(value) : "null";
   if (typeof value === "boolean") return value ? "true" : "false";
-  if (Array.isArray(value)) return `[${value.map(stringify).join(",")}]`;
+  if (Array.isArray(value)) return `[${Array.from(value, stringify).join(",")}]`;
   if (typeof value === "object") {
     const object = value as Record<string, unknown>;
     const keys = Object.keys(object)
