@@ -129,8 +129,11 @@
   }
 
   .bird-face-rollback {
-    animation: bird-rollback 0.7s ease-out forwards;
     filter: saturate(0.5) brightness(0.7);
+  }
+
+  .bird-face-rollback-anim {
+    animation: bird-rollback 0.7s ease-out forwards;
   }
 
   .bird-face-sleep {

@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { aliveRank, eyesClosed, eyesStill, isLiveNode, nodeStateLabel } from "./node-state.ts";
+import {
+  aliveRank,
+  eyesClosed,
+  eyesStill,
+  isLiveNode,
+  nodeFaceFilterClass,
+  nodeStateLabel,
+} from "./node-state.ts";
 
 test("working is public executing and live", () => {
   assert.equal(nodeStateLabel("working"), "executing");
@@ -28,6 +35,14 @@ test("rolled back is closed; flock sleep does not close live nodes", () => {
   assert.equal(eyesClosed("working", true), false);
   assert.equal(eyesClosed("racing", true), false);
   assert.equal(eyesClosed("attested", true), false);
+});
+
+test("rolled_back face stays dim without a client transition", () => {
+  assert.equal(nodeFaceFilterClass("rolled_back"), "bird-face-rollback");
+  assert.equal(nodeFaceFilterClass("offline"), "bird-face-sleep");
+  assert.equal(nodeFaceFilterClass("working"), undefined);
+  assert.equal(nodeFaceFilterClass("idle", true), "bird-face-sleep");
+  assert.equal(nodeFaceFilterClass("working", true), undefined);
 });
 
 test("aliveRank prefers executing and racing", () => {

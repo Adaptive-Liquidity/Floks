@@ -1,7 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { isBrightBird } from "@/lib/colors";
-import { eyesClosed, eyesStill, isLiveNode } from "@/lib/node-state";
+import { eyesClosed, eyesStill, isLiveNode, nodeFaceFilterClass } from "@/lib/node-state";
 import { useGaze } from "@/components/gaze";
 import type { BirdState } from "@/lib/types";
 
@@ -104,13 +104,13 @@ export function BirdFace({
         state === "attested" && !closed && "bird-face-attested",
         state === "denied" && "bird-face-denied",
         state === "bound" && "bird-face-bound",
-        rollbackAnim && "bird-face-rollback",
-        closed && state !== "rolled_back" && "bird-face-sleep",
+        nodeFaceFilterClass(state, sleeping),
+        rollbackAnim && "bird-face-rollback-anim",
         className,
       )}
       style={{
         backgroundColor: color,
-        animationDelay: state === "rolled_back" ? "0s" : `${delay}s`,
+        animationDelay: rollbackAnim ? "0s" : `${delay}s`,
       }}
       data-state={closed ? "sleep" : state}
       aria-hidden="true"
