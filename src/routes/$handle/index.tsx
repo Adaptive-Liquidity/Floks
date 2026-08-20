@@ -1,6 +1,7 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { FlockPageView } from "@/components/flock-page";
+import { getClusterGrades } from "@/lib/grade.server";
 import { RESERVED_HANDLES } from "@/lib/handles";
 import { getAppOrigin } from "@/lib/origin.server";
 import { getClusterCards, getFlockByHandle, getLatestChirp, getRackCards } from "@/lib/queries";
@@ -16,11 +17,14 @@ const loadFlockPage = createServerFn({ method: "GET" })
       getRackCards(flock.id),
       getLatestChirp(flock.id),
     ]);
+    const grade = await getClusterGrades(flock.handle, clusters);
     return {
       flock,
       clusters,
       racks,
       latest,
+      clusterGrades: grade.byClusterId,
+      grade: grade.aggregate,
       nodeCount: clusters.reduce((n, c) => n + c.node_count, 0),
       origin: getAppOrigin(),
     };
@@ -35,9 +39,10 @@ export const Route = createFileRoute("/$handle/")({
   component: FlockRoute,
   head: ({ loaderData }) => {
     if (!loaderData) return { meta: [{ title: "Flok" }] };
-    const { flock, origin, clusters, nodeCount } = loaderData;
+    const { flock, origin, clusters, nodeCount, grade } = loaderData;
     const title = `${flock.title} · ${flock.handle}`;
-    const description = flock.bio || `${clusters.length} clusters · ${nodeCount} nodes · SPX404`;
+    const description =
+      flock.bio || `${clusters.length} clusters · ${nodeCount} nodes · ${grade.grade}`;
     const image = `${origin}/${flock.handle}/opengraph-image`;
     return {
       meta: [
@@ -58,7 +63,8 @@ export const Route = createFileRoute("/$handle/")({
 });
 
 function FlockRoute() {
-  const { flock, clusters, racks, latest, nodeCount, origin } = Route.useLoaderData();
+  const { flock, clusters, racks, latest, clusterGrades, nodeCount, origin } =
+    Route.useLoaderData();
   return (
     <FlockPageView
       flock={flock}
@@ -66,6 +72,7 @@ function FlockRoute() {
       racks={racks}
       latest={latest}
       nodeCount={nodeCount}
+      clusterGrades={clusterGrades}
       pageUrl={`${origin}/${flock.handle}`}
     />
   );

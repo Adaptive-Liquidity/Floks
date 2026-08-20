@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { getClusterGrades } from "@/lib/grade.server";
 import { jsonError, logRequest } from "@/lib/http";
 import { getAppOrigin, publicHost } from "@/lib/origin.server";
 import { getClusterCards, getFlockByHandle } from "@/lib/queries";
@@ -14,12 +15,14 @@ export const Route = createFileRoute("/$handle/opengraph-image")({
           return jsonError(404, "No crew with that handle.", "flock_missing");
         }
         const clusters = await getClusterCards(flock.id);
+        const grade = await getClusterGrades(flock.handle, clusters);
         const nodeCount = clusters.reduce((n, c) => n + c.node_count, 0);
         const host = publicHost(getAppOrigin(request));
         try {
           const png = await renderFlockCardPng({
             flock,
             clusters: clusters.map((c) => ({ name: c.name, faces: c.faces })),
+            grade: grade.aggregate,
             nodeCount,
             host,
           });
