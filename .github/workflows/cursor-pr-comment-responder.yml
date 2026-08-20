@@ -1,0 +1,109 @@
+name: Cursor PR comment responder
+
+# Lets a Cursor CLI agent reply to comments on pull requests that are open and
+# waiting to merge into `main`.
+#
+# Design / safety:
+# - Opt-in per comment: only runs when the comment STARTS WITH `/cursor`, so it
+#   never fires on ordinary review chatter (keeps cost and noise down).
+# - Trusted authors only: comment author must be OWNER / MEMBER / COLLABORATOR.
+# - `main` only, no forks: a guard step resolves the PR and skips unless the
+#   base branch is `main`, the PR is OPEN, and the head is in this same repo.
+# - Least privilege: the agent step gets NO write token. It only drafts reply
+#   text; a separate deterministic step posts it with the GITHUB_TOKEN.
+# - Untrusted values (comment body/author) are passed via env, never inlined
+#   into a shell/`${{ }}` expression, to avoid script injection.
+#
+# NOTE: `issue_comment` workflows only execute from the repository's DEFAULT
+# branch, so this file must be on `main` to take effect.
+#
+# Required once, by a repo/org admin:
+#   gh secret set CURSOR_API_KEY   # from cursor.com dashboard → API keys
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions: {}
+
+concurrency:
+  group: cursor-pr-comment-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  respond:
+    name: Draft and post a reply
+    # Only PR comments (not issues), opt-in command, trusted author.
+    if: >-
+      ${{ github.event.issue.pull_request &&
+          startsWith(github.event.comment.body, '/cursor') &&
+          contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Resolve PR and enforce base=main, open, no forks
+        id: guard
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          data="$(gh pr view "$PR_NUMBER" \
+            --json baseRefName,isCrossRepository,state)"
+          base="$(echo "$data" | jq -r '.baseRefName')"
+          cross="$(echo "$data" | jq -r '.isCrossRepository')"
+          state="$(echo "$data" | jq -r '.state')"
+          echo "base=$base cross=$cross state=$state"
+          if [ "$base" = "main" ] && [ "$cross" = "false" ] && [ "$state" = "OPEN" ]; then
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Skipping: only open, same-repo PRs targeting main are handled."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout PR merge ref
+        if: steps.guard.outputs.skip == 'false'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          ref: refs/pull/${{ github.event.issue.number }}/merge
+
+      - name: Install Cursor CLI
+        if: steps.guard.outputs.skip == 'false'
+        run: |
+          set -euo pipefail
+          curl https://cursor.com/install -fsS | bash
+          echo "$HOME/.cursor/bin" >> "$GITHUB_PATH"
+
+      - name: Draft a reply (no write credentials)
+        if: steps.guard.outputs.skip == 'false'
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          COMMENT_AUTHOR: ${{ github.event.comment.user.login }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          instructions='You are replying to a comment on a GitHub pull request that targets the `main` branch of this repository. The repository is checked out as your working directory; use it as context. Write a concise, helpful reply that directly addresses the comment and explains the reasoning or the change that is needed. Do NOT run git, do NOT push, and do NOT open pull requests. Output ONLY the reply text as GitHub-flavored Markdown, with no preamble.'
+          # Untrusted values (comment body/author) stay in env and are only
+          # assembled into a single, fully quoted argv here — never re-evaluated
+          # by the shell and never inlined via a ${{ }} expansion.
+          full_prompt="$(printf '%s\n\nPull request: #%s\nComment by @%s:\n%s\n' \
+            "$instructions" "$PR_NUMBER" "$COMMENT_AUTHOR" "$COMMENT_BODY")"
+          agent -p "$full_prompt" --model gpt-5 > cursor-reply.md
+          # Fail loudly rather than posting an empty comment.
+          test -s cursor-reply.md
+
+      - name: Post the reply
+        if: steps.guard.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          gh pr comment "$PR_NUMBER" --body-file cursor-reply.md
