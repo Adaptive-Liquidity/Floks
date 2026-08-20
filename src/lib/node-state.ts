@@ -64,6 +64,23 @@ export function nodeStateLabel(state: BirdState, sleeping = false): string {
 }
 
 /**
+ * Settled face filter for a node. Rolled-back nodes stay dim even when the
+ * rollback keyframe has not run (seed and reload).
+ *
+ * @param state - The bird state to classify
+ * @param sleeping - Whether the bird is sleeping
+ * @returns The filter class, or `undefined` when the face stays full saturation
+ */
+export function nodeFaceFilterClass(
+  state: BirdState,
+  sleeping = false,
+): "bird-face-rollback" | "bird-face-sleep" | undefined {
+  if (state === "rolled_back") return "bird-face-rollback";
+  if (eyesClosed(state, sleeping)) return "bird-face-sleep";
+  return undefined;
+}
+
+/**
  * Determines the CSS class for a bird's state.
  *
  * @param state - The bird state to classify

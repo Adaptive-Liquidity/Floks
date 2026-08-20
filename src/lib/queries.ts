@@ -1,7 +1,8 @@
 import { getSql } from "@/lib/db";
-import { mostAlive, planClusters } from "@/lib/cluster";
+import { mostAlive, planClusters, slugifyCluster } from "@/lib/cluster";
 import { colorForIndex } from "@/lib/colors";
 import { newId } from "@/lib/ids";
+import { planRacks, slugifyRack } from "@/lib/rack";
 import { hashToken } from "@/lib/tokens";
 import { toIso } from "@/lib/time";
 import type {
@@ -13,8 +14,11 @@ import type {
   ClusterCard,
   Flock,
   FlockCard,
+  RackCard,
   Visibility,
 } from "@/lib/types";
+import type { RackInput } from "@/lib/rack";
+
 import { ensureSeeded } from "@/lib/seed";
 
 type FlockRow = {
@@ -327,6 +331,169 @@ async function syncFlockClusters(
       await sql`delete from clusters where id = ${extra.id}`;
     }
   }
+  await pruneThinRacks(flockId);
+}
+
+export async function getRackCards(flockId: string): Promise<RackCard[]> {
+  const sql = await getSql();
+  const clusters = await getClusterCards(flockId);
+  const byId = new Map(clusters.map((c) => [c.id, c]));
+  const racks = await sql<{
+    id: string;
+    name: string;
+    slug: string;
+    sort_order: number;
+  }>`
+    select id, name, slug, sort_order
+    from racks
+    where flock_id = ${flockId}
+    order by sort_order asc, name asc
+  `;
+  const slots = await sql<{
+    rack_id: string;
+    cluster_id: string;
+    sort_order: number;
+  }>`
+    select s.rack_id, s.cluster_id, s.sort_order
+    from rack_slots s
+    join racks r on r.id = s.rack_id
+    where r.flock_id = ${flockId}
+    order by s.sort_order asc
+  `;
+  const slotsByRack = new Map<string, { cluster_id: string; sort_order: number }[]>();
+  for (const slot of slots) {
+    const list = slotsByRack.get(slot.rack_id) ?? [];
+    list.push(slot);
+    slotsByRack.set(slot.rack_id, list);
+  }
+  return racks
+    .map((rack) => {
+      const roosts = (slotsByRack.get(rack.id) ?? [])
+        .map((slot) => byId.get(slot.cluster_id))
+        .filter((cluster): cluster is ClusterCard => Boolean(cluster));
+      return {
+        id: rack.id,
+        name: rack.name,
+        slug: rack.slug,
+        sort_order: Number(rack.sort_order),
+        roosts,
+      };
+    })
+    .filter((rack) => rack.roosts.length >= 2);
+}
+
+export async function getRackBySlug(flockId: string, slug: string): Promise<RackCard | null> {
+  const cards = await getRackCards(flockId);
+  return cards.find((c) => c.slug === slug) ?? null;
+}
+
+export async function pruneThinRacks(flockId: string): Promise<void> {
+  const sql = await getSql();
+  await sql`
+    delete from racks
+    where flock_id = ${flockId}
+      and (
+        select count(*)::int from rack_slots s where s.rack_id = racks.id
+      ) < 2
+  `;
+}
+
+function resolveCluster(cards: ClusterCard[], label: string): ClusterCard | undefined {
+  const key = label.trim().toLowerCase();
+  const slug = slugifyCluster(label);
+  return cards.find((c) => c.slug === key || c.slug === slug || c.name.toLowerCase() === key);
+}
+
+export async function upsertFlockRacks(
+  flockId: string,
+  racks: RackInput[],
+): Promise<{ ok: true; racks: RackCard[] } | { ok: false; error: string; code: string }> {
+  const planned = planRacks(racks);
+  if (!planned.ok) return planned;
+
+  const clusters = await getClusterCards(flockId);
+  const resolved: { plan: (typeof planned.plans)[number]; roosts: ClusterCard[] }[] = [];
+  for (const plan of planned.plans) {
+    const roosts: ClusterCard[] = [];
+    for (const label of plan.clusters) {
+      const found = resolveCluster(clusters, label);
+      if (!found) {
+        return {
+          ok: false,
+          error: `Unknown roost "${label}". Pin clusters that already exist.`,
+          code: "cluster_missing",
+        };
+      }
+      if (roosts.some((r) => r.id === found.id)) {
+        return {
+          ok: false,
+          error: "A rack cannot pin the same roost twice.",
+          code: "duplicate_roost",
+        };
+      }
+      roosts.push(found);
+    }
+    resolved.push({ plan, roosts });
+  }
+
+  const sql = await getSql();
+  const keep = new Set<string>();
+  for (const { plan, roosts } of resolved) {
+    const existing = await sql<{ id: string }>`
+      select id from racks where flock_id = ${flockId} and slug = ${plan.slug} limit 1
+    `;
+    const rackId = existing[0]?.id ?? newId();
+    keep.add(rackId);
+    if (existing[0]) {
+      await sql`
+        update racks
+        set name = ${plan.name}, sort_order = ${plan.sort_order}
+        where id = ${rackId}
+      `;
+      await sql`delete from rack_slots where rack_id = ${rackId}`;
+    } else {
+      await sql`
+        insert into racks (id, flock_id, name, slug, sort_order)
+        values (${rackId}, ${flockId}, ${plan.name}, ${plan.slug}, ${plan.sort_order})
+      `;
+    }
+    for (const [index, roost] of roosts.entries()) {
+      await sql`
+        insert into rack_slots (rack_id, cluster_id, sort_order)
+        values (${rackId}, ${roost.id}, ${index})
+      `;
+    }
+  }
+
+  const extras = await sql<{ id: string }>`select id from racks where flock_id = ${flockId}`;
+  for (const extra of extras) {
+    if (!keep.has(extra.id)) {
+      await sql`delete from racks where id = ${extra.id}`;
+    }
+  }
+
+  return { ok: true, racks: await getRackCards(flockId) };
+}
+
+export async function upsertOneRack(
+  flockId: string,
+  rack: RackInput,
+): Promise<{ ok: true; racks: RackCard[] } | { ok: false; error: string; code: string }> {
+  const planned = planRacks([rack]);
+  if (!planned.ok) return planned;
+  const current = await getRackCards(flockId);
+  const slug = planned.plans[0]?.slug ?? slugifyRack(rack.slug?.trim() || rack.name || "");
+  const next = [
+    ...current
+      .filter((item) => item.slug !== slug)
+      .map((item) => ({
+        name: item.name,
+        slug: item.slug,
+        clusters: item.roosts.map((roost) => roost.slug),
+      })),
+    { ...rack, slug },
+  ];
+  return upsertFlockRacks(flockId, next);
 }
 
 export async function getFlockByTokenHash(tokenHash: string): Promise<Flock | null> {
