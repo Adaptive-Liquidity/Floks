@@ -1,0 +1,59 @@
+GLOBAL APP STATE
+- currentRole: provider | buyer
+- currentRoute
+- demoMode: on | off
+- activeRunId
+- activeAgentId
+- activeContractId
+- commandPaletteOpen
+- notificationsOpen
+- inspectDrawerOpen
+
+RUN STATE
+- idle
+- queued
+- decomposing
+- executing
+- aggregating
+- scoring
+- decision_ready
+- completed
+- disputed
+- failed
+
+NODE STATE
+- pending
+- scheduled
+- running
+- success
+- failed
+- blocked
+- retrying
+
+CONTRACT STATE
+- draft
+- submitted
+- accepted
+- executing
+- awaiting_review
+- accepted_result
+- disputed
+- revised
+- settled
+
+VERIFICATION STATE
+- uploaded
+- parsing
+- analyzed
+- sandboxing
+- scored
+- governing
+- verified
+- restricted
+- rejected
+
+DRAWER / OVERLAY STATE
+- closed
+- opening
+- open
+- closing

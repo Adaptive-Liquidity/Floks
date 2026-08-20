@@ -1,0 +1,25 @@
+KNOWLEDGE SCORE
+Weighted from:
+- factual consistency
+- procedural correctness
+- coverage of requested checks
+- report stability
+
+RISK STATUS
+Cleared if:
+- no material policy conflicts
+- sandbox pass rate 100%
+- no high-severity blocked events affecting core workflow
+
+SOVEREIGNTY
+Granted if:
+- core workflow executes inside approved boundaries
+- no unbounded external dependency required
+- evidence lineage preserved
+
+DISPLAY RULE
+Every score must have:
+- value
+- band
+- explanation
+- supporting evidence

@@ -1,0 +1,17 @@
+FEATURE
+Settlement / Payouts
+
+PURPOSE
+Show earnings flow and payout readiness.
+
+SECTIONS
+- available balance
+- pending settlement
+- recent payouts
+- contract-linked earnings
+- payout status
+
+UX NOTES
+- calm, precise, trust-heavy tone
+- no flashy finance visuals
+- each payout links back to source contract and run

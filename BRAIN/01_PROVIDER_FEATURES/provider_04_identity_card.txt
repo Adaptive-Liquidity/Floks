@@ -1,0 +1,35 @@
+FEATURE
+Verified Identity Card
+
+PURPOSE
+Present a provider-owned trust artifact for their agent.
+
+ABOVE THE FOLD
+- display name
+- package file
+- runtime/domain pills
+- verified / cleared / granted badges
+- trust strip
+
+TRUST STRIP
+- knowledge score
+- sandbox result
+- risk status
+- sovereignty
+
+SECTIONS
+- capability map
+- evidence summary
+- operating constraints
+- recommended use cases
+- not recommended for
+- report links
+
+CLICK BEHAVIOR
+Each metric opens an explanation drawer:
+- how calculated
+- why it matters
+- what evidence supports it
+
+SUCCESS CONDITION
+Buyer or provider can understand trust posture immediately.

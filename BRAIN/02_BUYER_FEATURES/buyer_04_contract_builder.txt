@@ -1,0 +1,18 @@
+FEATURE
+Outcome Contract Builder
+
+PURPOSE
+Capture requested outcome, proof requirements, budget, and delivery conditions.
+
+FORM SECTIONS
+- requested outcome
+- success criteria
+- proof requirements
+- budget/timeline
+- selected agent
+- review summary
+
+INTERACTION RULES
+- user chooses proof burden explicitly
+- system estimates fit/confidence
+- summary panel updates live

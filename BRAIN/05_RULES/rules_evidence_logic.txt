@@ -1,0 +1,5 @@
+EVIDENCE REQUIREMENTS
+- every major decision must link to at least one evidence item
+- every evidence item must include why_it_matters
+- every blocked action should create an evidence/log artifact
+- evidence confidence cannot all be identical

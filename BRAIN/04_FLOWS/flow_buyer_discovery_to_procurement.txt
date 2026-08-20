@@ -1,0 +1,11 @@
+FLOW
+Buyer Discovery to Procurement
+
+1. Buyer opens marketplace
+2. Filters for verified/low-risk/fit
+3. Opens agent profile
+4. Reviews trust card and evidence
+5. Launches contract builder
+6. Defines requested outcome and proof burden
+7. Submits contract
+8. Contract enters provider queue

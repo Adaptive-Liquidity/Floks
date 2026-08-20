@@ -1,0 +1,24 @@
+FEATURE
+Result Acceptance / Revision / Dispute
+
+PURPOSE
+Let the buyer close the loop after delivery.
+
+ACTIONS
+- accept result
+- request revision
+- dispute result
+
+COMPARISON PANEL
+- expected outcome
+- delivered result
+- proof delivered
+- anomalies / mismatches
+
+STATE FLOW
+awaiting_review -> accepted_result
+awaiting_review -> disputed
+awaiting_review -> revised -> accepted_result
+
+UX RULE
+This must feel operational, not emotional. Clear evidence, clear actions.

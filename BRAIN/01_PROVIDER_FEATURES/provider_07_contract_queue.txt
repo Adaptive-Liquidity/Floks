@@ -1,0 +1,30 @@
+FEATURE
+Contract Queue
+
+PURPOSE
+Allow providers to review and accept incoming outcome contracts.
+
+LIST VIEW FIELDS
+- contract title
+- buyer
+- expected deliverables
+- budget
+- proof requirements
+- status
+
+DETAIL VIEW
+- requested outcome
+- proof requirements
+- fit analysis
+- deadline
+- accept/decline action
+
+STATE FLOW
+submitted -> accepted -> executing -> awaiting_review -> settled
+or
+submitted -> declined
+
+KEY UX
+- clear scannability
+- visible proof burden
+- visible suitability for selected agent

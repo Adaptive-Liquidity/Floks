@@ -1,0 +1,26 @@
+FEATURE
+Live Execution Visibility
+
+PURPOSE
+Show the buyer a high-trust live run with full observability.
+
+LAYOUT
+Top:
+- run title + decision preview + trust strip
+Center:
+- execution graph
+Right:
+- live evidence feed
+Bottom:
+- timeline rail and cost/runtime strip
+
+VISIBLE MOMENTS
+- decomposition fan-out
+- nodes running in parallel
+- evidence appearing live
+- blocked actions surfaced
+- score resolution
+- final decision
+
+SUCCESS CONDITION
+Viewer immediately understands that one request triggered many coordinated processes.

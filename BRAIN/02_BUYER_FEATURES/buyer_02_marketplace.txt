@@ -1,0 +1,24 @@
+FEATURE
+Outcome Marketplace
+
+PURPOSE
+Let buyers discover verified agentic outcomes, not generic services.
+
+CARD CONTENT
+- requested outcome template
+- matched agent
+- verification signals
+- expected proof
+- confidence range
+- estimated duration/budget
+
+FILTERS
+- verified only
+- sovereignty granted
+- low risk
+- domain
+- price band
+- turnaround
+
+UX RULE
+Frame everything outcome-first, not freelancer-first.

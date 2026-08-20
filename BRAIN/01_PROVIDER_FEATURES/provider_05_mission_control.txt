@@ -1,0 +1,34 @@
+FEATURE
+Mission Control
+
+PURPOSE
+Operate a workforce of specialist agents through an orchestration graph.
+
+CAPABILITIES
+- view lead agent
+- view specialist sub-agents
+- observe task decomposition
+- inspect node status
+- reroute failed nodes
+- aggregate outputs
+- monitor cost/time/confidence
+
+UI STRUCTURE
+Center:
+- graph canvas with lead node and specialist nodes
+Left:
+- run selector + summary
+Right:
+- selected node inspector
+Bottom:
+- aggregated output + status rail
+
+GRAPH RULES
+- nodes represent agents or task units
+- edges represent delegation or data dependency
+- running nodes pulse
+- failed nodes show reroute option
+- completed nodes show confidence and duration
+
+SUCCESS CONDITION
+Provider sees concurrent execution and can inspect each unit of work.

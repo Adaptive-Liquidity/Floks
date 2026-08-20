@@ -1,0 +1,25 @@
+FEATURE
+Agent Profile / Trust Card
+
+PURPOSE
+Give buyers confidence before procurement.
+
+ABOVE THE FOLD
+- name
+- summary
+- trust strip
+- fit for task
+- capability summary
+
+FIT FOR TASK
+Show:
+- highly suited for
+- acceptable for
+- not recommended for
+
+DETAIL SECTIONS
+- evidence
+- constraints
+- governance rationale
+- previous outcome record
+- exportable trust summary

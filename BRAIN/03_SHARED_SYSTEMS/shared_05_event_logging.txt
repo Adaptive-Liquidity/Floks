@@ -1,0 +1,33 @@
+EVENT NAMING
+namespace.resource.action
+
+EXAMPLES
+- agent.upload.started
+- agent.upload.completed
+- verification.stage.entered
+- verification.score.resolved
+- run.decomposition.completed
+- run.node.started
+- run.node.blocked
+- evidence.generated
+- decision.issued
+- contract.disputed
+- report.exported
+
+EVENT PAYLOAD
+- id
+- ts
+- actor_type
+- actor_id
+- route
+- entity_ids[]
+- previous_state
+- next_state
+- payload
+
+RULES
+- every user action logs
+- every system transition logs
+- every decision logs
+- every blocked event logs
+- every evidence creation logs

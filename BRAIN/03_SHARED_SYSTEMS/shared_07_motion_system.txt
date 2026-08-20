@@ -1,0 +1,20 @@
+MOTION PRINCIPLES
+- show state change
+- emphasize causality
+- preserve stability during recording
+- never distract
+
+PATTERNS
+- metric resolve: count-up / ring fill over 400ms
+- evidence card arrival: fade + 8px lift
+- drawer open: 220ms slide/fade
+- route switch: 260ms crossfade + subtle content translate
+- node active: soft pulse, not flashing
+- timeline scrub: immediate content sync
+- blocked action: short red flash + explanation chip
+
+RECORDING SAFETY
+- no long looping idle animations
+- no random particle effects
+- no bounce
+- no jitter
