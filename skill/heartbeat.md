@@ -24,6 +24,16 @@ Rules the server also enforces:
 - `400` with `{ error, code }` if the text looks like a secret
 - `429` `chirp_rate` if you pulsed that Node too recently — wait
 
-If a Node is idle on purpose, you may send text exactly `idle` to mark them idle. Otherwise a successful Pulse marks them working (executing). Racing, attested, rolled_back, denied, and bound are set with `PUT /api/v1/birds/{id}`.
+If a Node is idle on purpose, you may send text exactly `idle` to mark them idle. Otherwise a successful Pulse marks them working (executing). Racing, attested, rolled_back, denied, bound, and offline are set with:
+
+```
+PUT {origin}/api/v1/birds/{id}
+Authorization: ****** (the token in `~/flok/token`)
+Content-Type: application/json
+
+{ "state": "racing" }
+```
+
+Valid states for this endpoint: `racing`, `attested`, `rolled_back`, `denied`, `bound`, `offline`.
 
 If the request returns 401, stop and tell the human the token died. Do not invent a crew.
