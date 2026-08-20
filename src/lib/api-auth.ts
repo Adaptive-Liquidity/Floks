@@ -22,7 +22,7 @@ export async function requireFlockAuth(
       ok: false,
       response: jsonError(
         401,
-        "Unknown flock token. Ask the human to rejoin. Do not invent a new flock.",
+        "Unknown flock token. Ask the human to rejoin. Do not invent a new crew.",
         "unauthorized",
       ),
     };

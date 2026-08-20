@@ -34,7 +34,7 @@ export const Route = createFileRoute("/$handle/")({
     if (!loaderData) return { meta: [{ title: "Flok" }] };
     const { flock, origin } = loaderData;
     const title = `${flock.title} · ${flock.handle}`;
-    const description = flock.bio || `A flock of Grok Bots published on Flok.`;
+    const description = flock.bio || `A Grok Bot crew published on Flok.`;
     const image = `${origin}/${flock.handle}/opengraph-image`;
     return {
       meta: [

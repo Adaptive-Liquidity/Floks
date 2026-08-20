@@ -54,7 +54,7 @@ function ClonePage() {
       <SiteHeader />
       <main className="flex-1 pt-4">
         <p className="font-mono text-sm text-fg-muted">{flock.handle}</p>
-        <h1 className="mt-2 text-4xl font-medium">Clone this flock</h1>
+        <h1 className="mt-2 text-4xl font-medium">Clone this crew</h1>
         <p className="mt-3 text-fg-muted">
           A paste prompt that stands up a similar crew on your Grok Bot. It does not copy logins,
           files, inboxes, or credentials.

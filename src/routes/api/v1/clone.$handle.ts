@@ -11,7 +11,7 @@ export const Route = createFileRoute("/api/v1/clone/$handle")({
         const flock = await getFlockByHandle(params.handle);
         if (!flock) {
           logRequest("GET", "/api/v1/clone/:handle", 404);
-          return jsonError(404, "No flock with that handle.", "flock_missing");
+          return jsonError(404, "No crew with that handle.", "flock_missing");
         }
         const birds = await getBirdsForFlock(flock.id);
         const packBirds = birds.map((b) => ({

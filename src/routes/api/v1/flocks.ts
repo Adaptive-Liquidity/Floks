@@ -39,14 +39,14 @@ export const Route = createFileRoute("/api/v1/flocks")({
           logRequest("POST", "/api/v1/flocks", 400);
           return jsonError(
             400,
-            "Need a title and 1–20 birds with names and roles.",
+            "Need a title and 1–20 nodes with names and roles.",
             "invalid_body",
           );
         }
         const names = parsed.data.birds.map((b) => b.name.toLowerCase());
         if (new Set(names).size !== names.length) {
           logRequest("POST", "/api/v1/flocks", 400);
-          return jsonError(400, "Bird names must be unique in a flock.", "duplicate_bird");
+          return jsonError(400, "Node names must be unique in a crew.", "duplicate_bird");
         }
         const { flock, birds } = await upsertFlockRoster({
           handle: auth.handle,

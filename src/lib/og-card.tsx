@@ -49,7 +49,7 @@ export function OgCardMarkup({
     ? chirp.text.length > 88
       ? `${chirp.text.slice(0, 85)}…`
       : chirp.text
-    : "No chirps yet";
+    : "No pulses yet";
 
   return (
     <div

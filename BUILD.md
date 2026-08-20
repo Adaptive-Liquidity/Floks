@@ -32,19 +32,19 @@ Root `ARCHITECTURE.md` / `DESIGN.md` are compatibility redirects only. Not live 
 
 ## Remaining work (product — do in this order)
 
-| ID     | Goal                                                              | Depends on                     | Risk     | Status | Patterns                             |
-| ------ | ----------------------------------------------------------------- | ------------------------------ | -------- | ------ | ------------------------------------ |
-| **R0** | Terminology in **new** UI copy only (no schema rename)            | shipped v0                     | LOW      | NEXT   | FINAL_DESIGN §2                      |
-| **R1** | Cluster Index: 2×2 meta-tiles, click → Roost (≤12)                | R0                             | MEDIUM   | —      | FINAL_DESIGN §6                      |
-| **R2** | Node chrome: executing / racing / rolled-back / denied / attested | R1                             | MEDIUM   | —      | BRAIN `provider_06` slice            |
-| **R3** | Rack: pin 2–4 Roosts                                              | R1                             | MEDIUM   | —      | FINAL_DESIGN §6                      |
-| **S1** | Consume SPX402 Grade + confidence on Index / OG (read-only)       | `reference/spx402`             | MEDIUM   | —      | BRAIN Grade strip                    |
-| **S2** | Emit `OC_*` evidence into SPX402 (`task_executor` decoder)        | S1, SPX402 upstream            | HIGH     | —      | `reference/spx402/FLOK_EXTENSION.md` |
-| **T1** | Night Tape + Spotlight (no Sky)                                   | ~50 live Floks                 | HIGH     | gated  | FINAL_DESIGN §7                      |
-| **E1** | Outcome Contract object + public header                           | S2 live (or Hall shows SPX404) | HIGH     | gated  | BRAIN `buyer_04`, `buyer_10`         |
-| **E2** | AEON escrow as middleman                                          | E1                             | CRITICAL | gated  | BRAIN `provider_10`                  |
-| **E3** | Contract Roost (hirer-only)                                       | E1                             | HIGH     | gated  | BRAIN `buyer_05` + `provider_08`     |
-| **E4** | Bid / select / slash                                              | E2 + S2 Grade                  | CRITICAL | gated  | BRAIN `provider_07`, `buyer_09`      |
+| ID     | Goal                                                              | Depends on                     | Risk     | Status  | Patterns                             |
+| ------ | ----------------------------------------------------------------- | ------------------------------ | -------- | ------- | ------------------------------------ |
+| **R0** | Terminology in **new** UI copy only (no schema rename)            | shipped v0                     | LOW      | this PR | FINAL_DESIGN §2                      |
+| **R1** | Cluster Index: 2×2 meta-tiles, click → Roost (≤12)                | R0                             | MEDIUM   | NEXT    | FINAL_DESIGN §6                      |
+| **R2** | Node chrome: executing / racing / rolled-back / denied / attested | R1                             | MEDIUM   | —       | BRAIN `provider_06` slice            |
+| **R3** | Rack: pin 2–4 Roosts                                              | R1                             | MEDIUM   | —       | FINAL_DESIGN §6                      |
+| **S1** | Consume SPX402 Grade + confidence on Index / OG (read-only)       | `reference/spx402`             | MEDIUM   | —       | BRAIN Grade strip                    |
+| **S2** | Emit `OC_*` evidence into SPX402 (`task_executor` decoder)        | S1, SPX402 upstream            | HIGH     | —       | `reference/spx402/FLOK_EXTENSION.md` |
+| **T1** | Night Tape + Spotlight (no Sky)                                   | ~50 live Floks                 | HIGH     | gated   | FINAL_DESIGN §7                      |
+| **E1** | Outcome Contract object + public header                           | S2 live (or Hall shows SPX404) | HIGH     | gated   | BRAIN `buyer_04`, `buyer_10`         |
+| **E2** | AEON escrow as middleman                                          | E1                             | CRITICAL | gated   | BRAIN `provider_10`                  |
+| **E3** | Contract Roost (hirer-only)                                       | E1                             | HIGH     | gated   | BRAIN `buyer_05` + `provider_08`     |
+| **E4** | Bid / select / slash                                              | E2 + S2 Grade                  | CRITICAL | gated   | BRAIN `provider_07`, `buyer_09`      |
 
 **Hire Hall does not open** until S2 is live. Until then Grade is **SPX404**. Do not blend buyback Grade with Contract Grade.
 
@@ -153,7 +153,7 @@ Do not wait on Cluster/Hall.
 
 ## Next product slice
 
-- [ ] R0 new copy uses Node/Pulse/Cluster
+- [x] R0 new copy uses Node/Pulse/Cluster
 - [ ] R1 Cluster Index + Roost
 - [ ] S1 Grade or SPX404 on the Index tile
 - [ ] Hall still closed until S2

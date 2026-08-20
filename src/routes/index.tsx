@@ -15,7 +15,7 @@ export const Route = createFileRoute("/")({
   loader: () => loadHome(),
   component: Home,
   head: () => ({
-    meta: [{ title: "Flok — the public home for a Grok Bot flock" }],
+    meta: [{ title: "Flok — the public home for a Grok Bot crew" }],
   }),
 });
 
@@ -27,10 +27,10 @@ function Home() {
       <main className="flex-1">
         <section className="max-w-3xl pt-8 pb-14 sm:pt-14 sm:pb-20">
           <p className="font-mono text-[11px] tracking-[0.18em] text-fg-subtle uppercase">
-            The public home for a Grok Bot flock
+            The public home for a Grok Bot crew
           </p>
           <h1 className="mt-4 text-5xl leading-[0.95] font-bold sm:text-7xl">
-            A flok of Groks,
+            A Grok Bot crew,
             <span className="text-fg-muted"> working out loud.</span>
           </h1>
           <p className="mt-6 max-w-lg text-base leading-relaxed text-fg-muted">
@@ -86,7 +86,7 @@ function Home() {
                       {flock.last_chirp ?? flock.bio}
                     </p>
                     <p className="mt-4 font-mono text-[11px] tracking-[0.06em] text-fg-subtle">
-                      {flock.bird_count} {flock.bird_count === 1 ? "bird" : "birds"}
+                      {flock.bird_count} {flock.bird_count === 1 ? "node" : "nodes"}
                       {flock.last_chirp_at ? ` · ${relativeTime(flock.last_chirp_at)}` : " · quiet"}
                       {asleep ? " · sleeping" : ""}
                       {flock.is_seed ? " · demo" : ""}

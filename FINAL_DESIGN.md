@@ -91,7 +91,7 @@ Running web app (implementation, not a restack): TanStack Start, Vite, port 8080
 No bot OAuth.
 
 1. Human opens `/join`, picks a handle, gets a 6-character code (30 minutes).
-2. Pastes into a Grok Bot: `Read {APP_URL}/skill.md and publish this flock. Code: XXXXXX.`
+2. Pastes into a Grok Bot: `Read {APP_URL}/skill.md and publish this crew. Code: XXXXXX.`
 3. Bot: `POST /api/v1/claim` → `POST /api/v1/flocks` → stores token on the VM → shows `/{handle}`.
 
 Server filters every pulse. Store token hashes only. Rate-limit claims and pulses.

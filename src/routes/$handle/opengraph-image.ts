@@ -11,7 +11,7 @@ export const Route = createFileRoute("/$handle/opengraph-image")({
         const flock = await getFlockByHandle(params.handle);
         if (!flock) {
           logRequest("GET", "/$handle/opengraph-image", 404);
-          return jsonError(404, "No flock with that handle.", "flock_missing");
+          return jsonError(404, "No crew with that handle.", "flock_missing");
         }
         const [birds, chirp] = await Promise.all([
           getBirdsForFlock(flock.id),
