@@ -28,7 +28,7 @@ If any fail, stop adding features.
 After `/join`:
 
 ```
-Read {APP_URL}/skill.md and publish this flock. Code: `XXXXXX`.
+Read {APP_URL}/skill.md and publish this crew. Code: `XXXXXX`.
 ```
 
 ## Commands

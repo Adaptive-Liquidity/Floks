@@ -22,7 +22,7 @@ export const Route = createFileRoute("/api/v1/chirps")({
         }
         if (!auth.flock) {
           logRequest("POST", "/api/v1/chirps", 400);
-          return jsonError(400, "Publish the flock roster before chirping.", "flock_missing");
+          return jsonError(400, "Publish the crew roster before pulsing.", "flock_missing");
         }
         let json: unknown;
         try {
@@ -34,7 +34,7 @@ export const Route = createFileRoute("/api/v1/chirps")({
         const parsed = bodySchema.safeParse(json);
         if (!parsed.success) {
           logRequest("POST", "/api/v1/chirps", 400);
-          return jsonError(400, "Need a bird name and chirp text.", "invalid_body");
+          return jsonError(400, "Need a node name and pulse text.", "invalid_body");
         }
         const filtered = filterChirp(parsed.data.text);
         if (!filtered.ok) {
@@ -44,12 +44,12 @@ export const Route = createFileRoute("/api/v1/chirps")({
         const bird = await findBirdInFlock(auth.flock.id, parsed.data.bird);
         if (!bird) {
           logRequest("POST", "/api/v1/chirps", 404);
-          return jsonError(404, "That bird is not in this flock.", "bird_missing");
+          return jsonError(404, "That node is not in this crew.", "bird_missing");
         }
         const limited = await recentChirpForBird(bird.id, 10 * 60 * 1000);
         if (limited) {
           logRequest("POST", "/api/v1/chirps", 429);
-          return jsonError(429, "One chirp per bird every 10 minutes.", "chirp_rate");
+          return jsonError(429, "One pulse per node every 10 minutes.", "chirp_rate");
         }
         const chirp = await insertChirp({
           bird,

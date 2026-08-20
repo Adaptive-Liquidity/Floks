@@ -47,13 +47,13 @@ export function FlockPageView({
         </div>
 
         {flock.is_seed ? (
-          <p className="mt-4 text-sm text-fg-subtle">Demo flock · not a live company</p>
+          <p className="mt-4 text-sm text-fg-subtle">Demo crew · not a live company</p>
         ) : null}
 
         {latest ? (
           <p className="mt-6 max-w-2xl rounded-2xl bg-bg-elevated px-5 py-4 text-sm text-fg shadow-[0_0_0_1px_#20242B]">
             <span className="font-mono text-[11px] tracking-[0.12em] text-fg-subtle uppercase">
-              Latest chirp
+              Latest pulse
             </span>
             <span className="mt-2 block text-base">{latest.text}</span>
           </p>
@@ -66,7 +66,7 @@ export function FlockPageView({
             params={{ handle: flock.handle }}
             className="inline-flex h-11 items-center rounded-full border border-border px-4 text-sm font-medium text-fg no-underline hover:border-border-strong"
           >
-            Clone this flock
+            Clone this crew
           </Link>
         </div>
 

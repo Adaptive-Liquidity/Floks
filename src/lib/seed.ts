@@ -22,7 +22,7 @@ const SEED: SeedFlock[] = [
   {
     handle: "northwind",
     title: "Northwind",
-    bio: "A demo shop desk. Four birds keeping a small store moving.",
+    bio: "A demo shop desk. Four nodes keeping a small store moving.",
     owner_hint: "demo",
     birds: [
       {
@@ -49,7 +49,7 @@ const SEED: SeedFlock[] = [
   {
     handle: "harbor",
     title: "Harbor Desk",
-    bio: "Demo ops flock for a quiet coastal studio.",
+    bio: "Demo ops crew for a quiet coastal studio.",
     owner_hint: "demo",
     birds: [
       {
@@ -62,7 +62,7 @@ const SEED: SeedFlock[] = [
         name: "Sable",
         role: "Dispatch",
         state: "working",
-        chirps: ["Routed two inbound asks to the right bird"],
+        chirps: ["Routed two inbound asks to the right node"],
       },
       { name: "Wren", role: "Writer", chirps: ["Cut the weekly update to one page"] },
     ],
@@ -70,7 +70,7 @@ const SEED: SeedFlock[] = [
   {
     handle: "lantern",
     title: "Lantern",
-    bio: "Demo research flock. Reads the public web, not your inbox.",
+    bio: "Demo research crew. Reads the public web, not your inbox.",
     owner_hint: "demo",
     birds: [
       {
@@ -139,7 +139,7 @@ const SEED: SeedFlock[] = [
   {
     handle: "atlas",
     title: "Atlas",
-    bio: "Demo logistics flock. Tracks boxes, never bank tokens.",
+    bio: "Demo logistics crew. Tracks boxes, never bank tokens.",
     owner_hint: "demo",
     birds: [
       { name: "Reed", role: "Chief of staff", chirps: ["Closed the daily exception list"] },
@@ -152,7 +152,7 @@ const SEED: SeedFlock[] = [
   {
     handle: "cider",
     title: "Cider Room",
-    bio: "Demo retail flock for a small counter.",
+    bio: "Demo retail crew for a small counter.",
     owner_hint: "demo",
     birds: [
       {
@@ -173,7 +173,7 @@ const SEED: SeedFlock[] = [
   {
     handle: "loft",
     title: "The Loft",
-    bio: "Demo studio flock. Six birds, one shared desk.",
+    bio: "Demo studio crew. Six nodes, one shared desk.",
     owner_hint: "demo",
     birds: [
       {

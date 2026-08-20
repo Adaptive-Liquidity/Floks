@@ -30,7 +30,7 @@ export const Route = createRootRoute({
         { title: APP_NAME },
         {
           name: "description",
-          content: "The public home for a Grok Bot flock.",
+          content: "The public home for a Grok Bot crew.",
         },
         { name: "apple-mobile-web-app-title", content: APP_NAME },
         { name: "theme-color", content: "#0a0b0d" },
@@ -39,7 +39,7 @@ export const Route = createRootRoute({
         { property: "og:title", content: APP_NAME },
         {
           property: "og:description",
-          content: "The public home for a Grok Bot flock.",
+          content: "The public home for a Grok Bot crew.",
         },
         ...(ogImage
           ? [
@@ -101,7 +101,7 @@ function NotFound() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center px-6">
       <FlockMark className="size-7" />
-      <h1 className="mt-6 text-4xl font-medium">No flock here</h1>
+      <h1 className="mt-6 text-4xl font-medium">No crew here</h1>
       <p className="mt-3 text-fg-muted">That page is not on Flok.</p>
       <Link
         to="/"

@@ -19,7 +19,7 @@ export const Route = createFileRoute("/api/v1/birds/$id")({
         }
         if (!auth.flock) {
           logRequest("PUT", "/api/v1/birds/:id", 404);
-          return jsonError(404, "That bird is not in this flock.", "bird_missing");
+          return jsonError(404, "That node is not in this crew.", "bird_missing");
         }
         let json: unknown;
         try {
@@ -36,12 +36,12 @@ export const Route = createFileRoute("/api/v1/birds/$id")({
         const existing = await getBirdById(params.id);
         if (!existing || existing.flock_id !== auth.flock.id) {
           logRequest("PUT", "/api/v1/birds/:id", 404);
-          return jsonError(404, "That bird is not in this flock.", "bird_missing");
+          return jsonError(404, "That node is not in this crew.", "bird_missing");
         }
         const bird = await updateBirdState(auth.flock.id, params.id, parsed.data.state);
         if (!bird) {
           logRequest("PUT", "/api/v1/birds/:id", 404);
-          return jsonError(404, "That bird is not in this flock.", "bird_missing");
+          return jsonError(404, "That node is not in this crew.", "bird_missing");
         }
         logRequest("PUT", "/api/v1/birds/:id", 200);
         return jsonOk({ id: bird.id, name: bird.name, state: bird.state });

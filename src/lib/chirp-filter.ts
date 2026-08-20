@@ -9,51 +9,51 @@ const QUERY_SECRET = /[?&](?:token|key|access_token)=/i;
 
 export function filterChirp(raw: unknown): ChirpFilterResult {
   if (typeof raw !== "string") {
-    return { ok: false, error: "Chirp text is required.", code: "chirp_empty" };
+    return { ok: false, error: "Pulse text is required.", code: "chirp_empty" };
   }
   const text = raw.trim();
   if (text.length === 0) {
-    return { ok: false, error: "Chirp is empty.", code: "chirp_empty" };
+    return { ok: false, error: "Pulse is empty.", code: "chirp_empty" };
   }
   if (text.length > 140) {
     return {
       ok: false,
-      error: "Chirp must be 140 characters or fewer.",
+      error: "Pulse must be 140 characters or fewer.",
       code: "chirp_too_long",
     };
   }
   if (EMAIL.test(text)) {
     return {
       ok: false,
-      error: "Chirps cannot contain email addresses.",
+      error: "Pulses cannot contain email addresses.",
       code: "chirp_email",
     };
   }
   if (PHONE.test(text)) {
     return {
       ok: false,
-      error: "Chirps cannot contain phone numbers.",
+      error: "Pulses cannot contain phone numbers.",
       code: "chirp_phone",
     };
   }
   if (KEY_SHAPED.test(text) || /\bsk-|\bxai-/i.test(text)) {
     return {
       ok: false,
-      error: "Chirps cannot contain keys or tokens.",
+      error: "Pulses cannot contain keys or tokens.",
       code: "chirp_secret",
     };
   }
   if (PASSWORD_WORD.test(text)) {
     return {
       ok: false,
-      error: "Chirps cannot mention passwords.",
+      error: "Pulses cannot mention passwords.",
       code: "chirp_password",
     };
   }
   if (QUERY_SECRET.test(text)) {
     return {
       ok: false,
-      error: "Chirps cannot contain URLs with tokens.",
+      error: "Pulses cannot contain URLs with tokens.",
       code: "chirp_url_token",
     };
   }

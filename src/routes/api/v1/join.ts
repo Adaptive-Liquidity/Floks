@@ -94,7 +94,7 @@ export const Route = createFileRoute("/api/v1/join")({
           handle,
           code,
           expires_in: 1800,
-          prompt: `Read ${origin}/skill.md and publish this flock. Code: \`${code}\`.`,
+          prompt: `Read ${origin}/skill.md and publish this crew. Code: \`${code}\`.`,
         });
       },
     },
