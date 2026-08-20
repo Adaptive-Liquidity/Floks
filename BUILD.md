@@ -36,9 +36,9 @@ Root `ARCHITECTURE.md` / `DESIGN.md` are compatibility redirects only. Not live 
 | ------ | ----------------------------------------------------------------- | ------------------------------ | -------- | ------- | ------------------------------------ |
 | **R0** | Terminology in **new** UI copy only (no schema rename)            | shipped v0                     | LOW      | shipped | FINAL_DESIGN §2                      |
 | **R1** | Cluster Index: 2×2 meta-tiles, click → Roost (≤12)                | R0                             | MEDIUM   | shipped | FINAL_DESIGN §6                      |
-| **R2** | Node chrome: executing / racing / rolled-back / denied / attested | R1                             | MEDIUM   | this PR | BRAIN `provider_06` slice            |
-| **R3** | Rack: pin 2–4 Roosts                                              | R1                             | MEDIUM   | NEXT    | FINAL_DESIGN §6                      |
-| **S1** | Consume SPX402 Grade + confidence on Index / OG (read-only)       | `reference/spx402`             | MEDIUM   | —       | BRAIN Grade strip                    |
+| **R2** | Node chrome: executing / racing / rolled-back / denied / attested | R1                             | MEDIUM   | shipped | BRAIN `provider_06` slice            |
+| **R3** | Rack: pin 2–4 Roosts                                              | R1                             | MEDIUM   | this PR | FINAL_DESIGN §6                      |
+| **S1** | Consume SPX402 Grade + confidence on Index / OG (read-only)       | `reference/spx402`             | MEDIUM   | NEXT    | BRAIN Grade strip                    |
 | **S2** | Emit `OC_*` evidence into SPX402 (`task_executor` decoder)        | S1, SPX402 upstream            | HIGH     | —       | `reference/spx402/FLOK_EXTENSION.md` |
 | **T1** | Night Tape + Spotlight (no Sky)                                   | ~50 live Floks                 | HIGH     | gated   | FINAL_DESIGN §7                      |
 | **E1** | Outcome Contract object + public header                           | S2 live (or Hall shows SPX404) | HIGH     | gated   | BRAIN `buyer_04`, `buyer_10`         |
@@ -156,6 +156,6 @@ Do not wait on Cluster/Hall.
 - [x] R0 new copy uses Node/Pulse/Cluster
 - [x] R1 Cluster Index + Roost
 - [x] R2 Node chrome (executing / racing / rolled-back / denied / attested)
-- [ ] R3 Rack
+- [x] R3 Rack
 - [ ] S1 Grade or SPX404 on the Index tile
 - [ ] Hall still closed until S2
