@@ -112,7 +112,6 @@ function createNeonSql(): Promise<Sql> {
           // Preserve the original error if the connection can no longer roll back.
         }
         throw error;
-      }
       } finally {
         client.release();
       }

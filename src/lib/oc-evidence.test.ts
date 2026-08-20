@@ -99,6 +99,14 @@ test("OC constructor rejects caller-owned trust fields", async () => {
   await assert.rejects(createOcEvidence({ ...INPUT, extra: "not allowed" }));
 });
 
+test("OC_FULFILLED requires a capsule_id", async () => {
+  const { capsule_id: _omitted, ...fulfilledWithoutCapsule } = INPUT;
+  assert.equal(ocEvidenceInputSchema.safeParse(fulfilledWithoutCapsule).success, false);
+  await assert.rejects(createOcEvidence(fulfilledWithoutCapsule));
+  await event("OC_FULFILLED");
+  await event("OC_OPENED", { capsule_id: undefined });
+});
+
 test("OC lifecycle accepts only opened, awarded, then one terminal event", async () => {
   const opened = await event("OC_OPENED");
   const awarded = await event("OC_AWARDED");

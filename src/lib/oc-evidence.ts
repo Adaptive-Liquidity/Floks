@@ -53,7 +53,11 @@ export const ocEvidenceInputSchema = z
     idempotency_key: identifierSchema,
     capsule_id: identifierSchema.optional(),
   })
-  .strict();
+  .strict()
+  .refine((input) => input.type !== "OC_FULFILLED" || input.capsule_id !== undefined, {
+    error: "OC_FULFILLED requires capsule_id",
+    path: ["capsule_id"],
+  });
 
 export type OcEvidenceInput = z.infer<typeof ocEvidenceInputSchema>;
 
