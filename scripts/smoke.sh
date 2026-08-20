@@ -57,6 +57,14 @@ if grep -a -q '/__grok/manifest' "$page_file"; then
   echo "unexpected /__grok/manifest on crew page" >&2
   exit 1
 fi
+if grep -a -q '/__grok/icon-180.png' "$page_file"; then
+  echo "unexpected /__grok/icon-180.png on crew page" >&2
+  exit 1
+fi
+if grep -a -q 'x:game' "$page_file"; then
+  echo "unexpected x:game metadata on crew page" >&2
+  exit 1
+fi
 
 curl -sf "$BASE/$HANDLE/c/crew" -o "$page_file"
 grep -a -q "Maya" "$page_file"

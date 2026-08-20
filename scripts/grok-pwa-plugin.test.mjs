@@ -143,7 +143,7 @@ test("uses the app name in the injected title tag", () => {
 test("product default preserves per-page og:image (platform off)", () => {
   const html =
     '<html><head><title>Crew</title><meta property="og:image" content="https://example.com/acme/opengraph-image"></head><body></body></html>';
-  const out = injectGrokPwaHead(html, { site: {}, host: "example.com", platform: false });
+  const out = injectGrokPwaHead(html, { site: {}, host: "example.com", platform: false, env: {} });
   assert.equal(out, html);
   assert.doesNotMatch(out, /grok-app-builder\/extensions\.js/);
   assert.doesNotMatch(out, /\/__grok\/manifest/);
