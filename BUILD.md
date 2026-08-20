@@ -126,7 +126,6 @@ npm run verify       # format + lint + typecheck + tests + vite build (no migrat
 bash scripts/smoke.sh
 ```
 
-
 ---
 
 ## Phase 7 — still required (quality / launch)
