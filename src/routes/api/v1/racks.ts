@@ -32,7 +32,11 @@ export const Route = createFileRoute("/api/v1/racks")({
         const parsed = bodySchema.safeParse(json);
         if (!parsed.success) {
           logRequest("PUT", "/api/v1/racks", 400);
-          return jsonError(400, "A rack pins 2–4 roosts.", "invalid_body");
+          return jsonError(
+            400,
+            "Provide 2–4 roost names (1–40 characters each) and an optional rack name (1–40 characters).",
+            "invalid_body",
+          );
         }
         const pinned = await upsertOneRack(auth.flock.id, parsed.data);
         if (!pinned.ok) {
