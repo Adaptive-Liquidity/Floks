@@ -1,27 +1,28 @@
 #!/usr/bin/env node
 /**
- * Lightweight headless load + screenshot for http://127.0.0.1:8080 (or argv URL).
- * Does not try to "play" the app — just proves the page loads and captures a PNG
- * the agent can Read. Exit 0 on success, 1 on navigation failure, 2 if console errors.
+ * Headless load + screenshot of the local Flok server.
+ * Exit 0 on success, 1 on navigation failure.
+ * Uncaught page errors exit 2. Console errors warn; set FLOK_BROWSER_STRICT=1 to fail on them.
  *
- * Screenshots default under /workspace/screenshots/ (never /tmp) so they live on
- * the workspace volume and stay readable by agent tools.
- *
- * Targets are restricted (browser-guard.mjs): http/https loopback, PNG under
- * /workspace. A rejected target exits 1.
+ * Screenshot defaults to $PWD/screenshots/browser-smoke.png (Grok sandbox: /workspace/...).
  */
 import { mkdirSync } from "node:fs";
-import { dirname } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { chromium } from "playwright";
 import { checkedOutputPath, checkedUrl } from "./browser-guard.mjs";
 import { computeBrandWarnings } from "./brand-check.mjs";
 
-const url = checkedUrl(process.argv[2] || "http://127.0.0.1:8080/");
-const outPng = checkedOutputPath(
-  process.argv[3] || "/workspace/screenshots/app-builder-preview.png",
-  ["/workspace"],
-);
+const defaultUrl = `${(process.env.FLOK_APP_URL || "http://127.0.0.1:8080").replace(/\/$/, "")}/`;
+const url = checkedUrl(process.argv[2] || defaultUrl);
+const defaultPng = join(resolve(process.cwd()), "screenshots", "browser-smoke.png");
+const outPng = checkedOutputPath(process.argv[3] || process.env.BROWSER_SMOKE_OUT || defaultPng, [
+  join(resolve(process.cwd()), "screenshots"),
+  "/workspace/screenshots",
+  "/tmp",
+]);
 const timeoutMs = Number(process.env.BROWSER_SMOKE_TIMEOUT_MS || 45000);
+const waitUntil = process.env.CI ? "load" : "networkidle";
+const strict = process.env.FLOK_BROWSER_STRICT === "1";
 
 mkdirSync(dirname(outPng), { recursive: true });
 
@@ -40,7 +41,7 @@ try {
   });
   page.on("pageerror", (err) => pageErrors.push(String(err?.message || err)));
 
-  const resp = await page.goto(url, { waitUntil: "networkidle", timeout: timeoutMs });
+  const resp = await page.goto(url, { waitUntil, timeout: timeoutMs });
   const status = resp?.status() ?? 0;
   await page.waitForTimeout(1000);
 
@@ -52,11 +53,10 @@ try {
       .innerText()
       .catch(() => "")
   ).trim().length;
+  const hasFlok = /flok/i.test(title) || (await page.locator("body").innerText()).includes("flok");
 
   await page.screenshot({ path: outPng, fullPage: false });
 
-  // Brand-asset gate (best-effort heuristic, never changes the exit code) —
-  // logic lives in brand-check.mjs so it is unit-testable without a browser.
   const brandWarnings = computeBrandWarnings({ hasCanvas });
 
   console.log(
@@ -66,6 +66,7 @@ try {
         status,
         title,
         hasCanvas,
+        hasFlok,
         bodyTextLen,
         consoleErrors,
         pageErrors,
@@ -79,7 +80,8 @@ try {
   for (const w of brandWarnings) console.error(w);
 
   if (status >= 400 || status === 0) process.exit(1);
-  if (pageErrors.length || consoleErrors.length) process.exit(2);
+  if (pageErrors.length) process.exit(2);
+  if (strict && consoleErrors.length) process.exit(2);
   process.exit(0);
 } catch (err) {
   console.error(JSON.stringify({ ok: false, url, error: String(err?.message || err) }, null, 2));

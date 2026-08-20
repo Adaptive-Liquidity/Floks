@@ -52,14 +52,15 @@ Root `ARCHITECTURE.md` / `DESIGN.md` are compatibility redirects only. Not live 
 
 ## Repo hygiene
 
-| Item                                           | Decision                                          | Status            |
-| ---------------------------------------------- | ------------------------------------------------- | ----------------- |
-| Better Auth                                    | **B** — keep infra; no public login chrome        | done (Phase 2)    |
-| `/health`                                      | Removed; `/api/health` only                       | done (Phase 2)    |
-| `POST /api/v1/seed`                            | 403 unless `FLOK_ALLOW_SEED=1` and not production | done (Phase 2)    |
-| multiplayer / unused deps / `src/assets/fonts` | Removed                                           | done (Phase 2)    |
-| Package name                                   | `flok`                                            | done (Phase 2)    |
-| CI / `npm run verify` / `build:ci`             | GitHub Actions + local `npm run verify`           | this PR (Phase 3) |
+| Item                                           | Decision                                           | Status            |
+| ---------------------------------------------- | -------------------------------------------------- | ----------------- |
+| Better Auth                                    | **B** — keep infra; no public login chrome         | done (Phase 2)    |
+| `/health`                                      | Removed; `/api/health` only                        | done (Phase 2)    |
+| `POST /api/v1/seed`                            | 403 unless `FLOK_ALLOW_SEED=1` and not production  | done (Phase 2)    |
+| multiplayer / unused deps / `src/assets/fonts` | Removed                                            | done (Phase 2)    |
+| Package name                                   | `flok`                                             | done (Phase 2)    |
+| CI / `npm run verify` / `build:ci`             | GitHub Actions + local `npm run verify`            | done (Phase 3)    |
+| Unit tests + CI browser smoke                  | filter, handles, tokens, seed gate, OG, Playwright | this PR (Phase 4) |
 
 ---
 
