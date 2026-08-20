@@ -1,3 +1,4 @@
+import { aliveRank } from "./node-state.ts";
 import type { BirdState } from "@/lib/types";
 
 export const CLUSTER_CAP = 12;
@@ -63,9 +64,8 @@ export function planClusters(birds: { name: string; cluster?: string | null }[])
 export function mostAlive<T extends { state: BirdState; last_chirp_at: string | null }>(
   nodes: T[],
 ): T[] {
-  const rank = (state: BirdState) => (state === "working" ? 0 : state === "idle" ? 1 : 2);
   return [...nodes].sort((a, b) => {
-    const byState = rank(a.state) - rank(b.state);
+    const byState = aliveRank(a.state) - aliveRank(b.state);
     if (byState !== 0) return byState;
     return (b.last_chirp_at ?? "").localeCompare(a.last_chirp_at ?? "");
   });

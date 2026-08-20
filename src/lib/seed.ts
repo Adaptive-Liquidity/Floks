@@ -1,4 +1,5 @@
 import { getSql } from "@/lib/db";
+import type { BirdState } from "@/lib/types";
 import { colorForIndex } from "@/lib/colors";
 import { planClusters } from "@/lib/cluster";
 import { newId } from "@/lib/ids";
@@ -7,7 +8,7 @@ import { hashToken } from "@/lib/tokens";
 type SeedBird = {
   name: string;
   role: string;
-  state?: "working" | "idle" | "offline";
+  state?: BirdState;
   cluster?: string;
   chirps: string[];
 };
@@ -45,7 +46,7 @@ const SEED: SeedFlock[] = [
         state: "working",
         chirps: ["Reconciled yesterday’s open tickets"],
       },
-      { name: "Poe", role: "Research", chirps: ["Summarized three public competitor pages"] },
+      { name: "Poe", role: "Research", state: "bound", chirps: ["Hit the public-read Bound"] },
     ],
   },
   {
@@ -185,31 +186,40 @@ const SEED: SeedFlock[] = [
         cluster: "Studio",
         chirps: ["Published the weekly roster"],
       },
-      { name: "Maya", role: "Sales", cluster: "Desk", chirps: ["Drafted twelve follow-ups"] },
+      {
+        name: "Maya",
+        role: "Sales",
+        state: "idle",
+        cluster: "Desk",
+        chirps: ["Drafted twelve follow-ups"],
+      },
       {
         name: "Sol",
         role: "Engineer",
-        state: "idle",
+        state: "racing",
         cluster: "Studio",
-        chirps: ["Patched the morning lint failures"],
+        chirps: ["Forked two patches, racing the lint"],
       },
       {
         name: "Kite",
         role: "Support",
+        state: "denied",
         cluster: "Desk",
-        chirps: ["Triaged the public inbox to three threads"],
+        chirps: ["Blocked a private inbox read"],
       },
       {
         name: "Noor",
         role: "Research",
+        state: "rolled_back",
         cluster: "Desk",
-        chirps: ["Compared two open-source eval suites"],
+        chirps: ["Rolled back a bad public scrape"],
       },
       {
         name: "Elm",
         role: "Writer",
+        state: "attested",
         cluster: "Studio",
-        chirps: ["Cut the launch note to 180 words"],
+        chirps: ["Attested the launch note, 180 words"],
       },
     ],
   },

@@ -69,9 +69,22 @@ function OgClusterTile({ cluster }: { cluster: OgCluster }) {
               borderRadius: 24,
               backgroundColor: face.color,
               opacity: face.name ? 1 : 0.55,
+              boxShadow:
+                face.state === "attested"
+                  ? "0 0 0 2px #C6F84E"
+                  : face.state === "working"
+                    ? "0 0 0 1px rgba(198,248,78,0.45)"
+                    : face.state === "denied"
+                      ? "0 0 0 1px rgba(247,179,61,0.55)"
+                      : face.state === "bound"
+                        ? "0 0 0 2px rgba(92,100,110,0.7)"
+                        : undefined,
             }}
           >
-            <EyePair looking={(i % 3) - 1} closed={!face.name || face.state === "offline"} />
+            <EyePair
+              looking={face.state === "racing" ? 1 : (i % 3) - 1}
+              closed={!face.name || face.state === "offline" || face.state === "rolled_back"}
+            />
           </div>
         ))}
       </div>

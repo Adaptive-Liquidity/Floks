@@ -1,12 +1,6 @@
 import { relativeTime } from "@/lib/time";
+import { nodeStateClass, nodeStateLabel } from "@/lib/node-state";
 import type { BirdWithChirp } from "@/lib/types";
-import { cn } from "@/lib/cn";
-
-const STATE_CLASS: Record<BirdWithChirp["state"], string> = {
-  working: "text-working",
-  idle: "text-idle",
-  offline: "text-offline",
-};
 
 export function BirdRow({ bird }: { bird: BirdWithChirp }) {
   return (
@@ -24,7 +18,7 @@ export function BirdRow({ bird }: { bird: BirdWithChirp }) {
         <p className="mt-1 text-sm text-fg-muted">{bird.last_chirp ?? "Hasn’t checked in"}</p>
       </div>
       <div className="col-start-2 flex items-center gap-3 text-sm sm:col-start-auto sm:flex-col sm:items-end sm:gap-1">
-        <span className={cn("capitalize", STATE_CLASS[bird.state])}>{bird.state}</span>
+        <span className={nodeStateClass(bird.state)}>{nodeStateLabel(bird.state)}</span>
         <span className="tabular-nums text-fg-subtle">{relativeTime(bird.last_chirp_at)}</span>
       </div>
     </li>

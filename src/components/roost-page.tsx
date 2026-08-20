@@ -3,6 +3,7 @@ import { BirdTile } from "@/components/bird-tile";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { CLUSTER_CAP } from "@/lib/cluster";
+import { isLiveNode } from "@/lib/node-state";
 import { isSleeping, relativeTime } from "@/lib/time";
 import type { BirdWithChirp, Chirp, ClusterCard, Flock } from "@/lib/types";
 
@@ -69,7 +70,7 @@ export function RoostPageView({
                     role={bird.role}
                     color={bird.color}
                     state={bird.state}
-                    sleeping={sleeping && bird.state !== "working"}
+                    sleeping={sleeping && !isLiveNode(bird.state)}
                     chirp={bird.last_chirp}
                     at={bird.last_chirp_at}
                     size="md"

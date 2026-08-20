@@ -1,6 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { isBrightBird } from "@/lib/colors";
+import { eyesClosed, eyesStill, isLiveNode } from "@/lib/node-state";
 import { useGaze } from "@/components/gaze";
 import type { BirdState } from "@/lib/types";
 
@@ -39,11 +40,15 @@ export function BirdFace({
   const [look, setLook] = useState({ x: 0, y: 0 });
   const uid = useId();
   const delay = useMemo(() => delayFor(name + uid), [name, uid]);
-  const closed = sleeping || state === "offline";
+  const closed = eyesClosed(state, sleeping);
+  const still = eyesStill(state);
+  const live = isLiveNode(state) && !closed;
   const ink = isBrightBird(color) ? "#0A0B0D" : "#0A0B0D";
+  const race = state === "racing" && !closed;
+  const idleBlink = state === "idle" && !closed && !still;
 
   useEffect(() => {
-    if (closed) {
+    if (closed || still || race) {
       setLook({ x: 0, y: 0 });
       return;
     }
@@ -56,7 +61,7 @@ export function BirdFace({
     const nx = Math.max(-1, Math.min(1, (gaze.x - cx) / Math.max(120, box.width * 3)));
     const ny = Math.max(-1, Math.min(1, (gaze.y - cy) / Math.max(120, box.height * 3)));
     setLook({ x: nx, y: ny });
-  }, [gaze, closed]);
+  }, [gaze, closed, still, race]);
 
   return (
     <div
@@ -64,8 +69,13 @@ export function BirdFace({
       className={cn(
         "bird-face relative overflow-hidden",
         SIZE[size],
-        state === "working" && !closed && "bird-face-live",
-        closed && "bird-face-sleep",
+        state === "working" && live && "bird-face-live",
+        race && "bird-face-race",
+        state === "attested" && !closed && "bird-face-attested",
+        state === "denied" && "bird-face-denied",
+        state === "bound" && "bird-face-bound",
+        state === "rolled_back" && "bird-face-rollback",
+        closed && state !== "rolled_back" && "bird-face-sleep",
         className,
       )}
       style={{
@@ -77,14 +87,15 @@ export function BirdFace({
     >
       <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full">
         <g
-          className={cn("bird-look", !closed && !gaze && "bird-look-wander")}
+          className="bird-look"
           style={
-            closed
+            closed || still
               ? undefined
-              : {
-                  transform: `translate(${look.x * 10}px, ${look.y * 7}px)`,
-                  animationDelay: `${delay}s`,
-                }
+              : race
+                ? undefined
+                : {
+                    transform: `translate(${look.x * 10}px, ${look.y * 7}px)`,
+                  }
           }
         >
           {closed ? (
@@ -95,8 +106,12 @@ export function BirdFace({
           ) : (
             <>
               <g
-                className="bird-eye"
-                style={{ transformOrigin: "34px 44px", animationDelay: `${delay}s` }}
+                className={cn(idleBlink && "bird-eye")}
+                style={{
+                  transformOrigin: "34px 44px",
+                  animationDelay: `${delay}s`,
+                  transform: race ? "translate(-6px, 1px)" : undefined,
+                }}
               >
                 <rect
                   x="26"
@@ -109,8 +124,12 @@ export function BirdFace({
                 />
               </g>
               <g
-                className="bird-eye"
-                style={{ transformOrigin: "64px 46px", animationDelay: `${delay + 0.08}s` }}
+                className={cn(idleBlink && "bird-eye")}
+                style={{
+                  transformOrigin: "64px 46px",
+                  animationDelay: `${delay + 0.08}s`,
+                  transform: race ? "translate(6px, -1px)" : undefined,
+                }}
               >
                 <rect
                   x="56"
@@ -125,6 +144,19 @@ export function BirdFace({
             </>
           )}
         </g>
+        {race ? (
+          <g fill={ink}>
+            <rect x="63" y="9" width="5" height="13" rx="1.2" />
+            <rect x="73" y="9" width="5" height="13" rx="1.2" />
+          </g>
+        ) : null}
+        {state === "denied" ? (
+          <g stroke={ink} strokeWidth="3.2" opacity="0.55">
+            <line x1="16" y1="76" x2="84" y2="20" />
+            <line x1="24" y1="88" x2="90" y2="34" />
+            <line x1="8" y1="62" x2="72" y2="10" />
+          </g>
+        ) : null}
       </svg>
     </div>
   );

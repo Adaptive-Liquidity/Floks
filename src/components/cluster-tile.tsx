@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { BirdFace } from "@/components/bird-face";
+import { isLiveNode } from "@/lib/node-state";
 import { isSleeping, relativeTime } from "@/lib/time";
 import type { ClusterCard, ClusterFace } from "@/lib/types";
 
@@ -23,7 +24,7 @@ export function ClusterTile({ handle, cluster }: { handle: string; cluster: Clus
             <BirdFace
               color={face.color}
               state={face.state}
-              sleeping={empty || asleep || face.state === "offline" || !face.name}
+              sleeping={empty || !face.name || (asleep && !isLiveNode(face.state))}
               name={face.name || "stub"}
               size="lg"
               className="h-full w-full !size-full"
