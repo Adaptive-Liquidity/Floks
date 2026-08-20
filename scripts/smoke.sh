@@ -45,7 +45,28 @@ curl -sf -X POST "$BASE/api/v1/chirps" \
 
 page_file="$(mktemp)"
 curl -sf "$BASE/$HANDLE" -o "$page_file"
+grep -a -q "Clusters" "$page_file"
+grep -a -q "Crew" "$page_file"
+
+curl -sf "$BASE/$HANDLE/c/crew" -o "$page_file"
 grep -a -q "Maya" "$page_file"
+grep -a -q "Roost" "$page_file"
+
+curl -sf -X POST "$BASE/api/v1/flocks" \
+  -H "authorization: Bearer $token" \
+  -H 'content-type: application/json' \
+  -d '{"title":"Smoke","bio":"Two birds. One test.","birds":[{"name":"Jarvis","role":"Chief of staff","cluster":"Studio"},{"name":"Maya","role":"Sales","cluster":"Desk"}]}' \
+  >/tmp/flok-flock.json
+
+curl -sf "$BASE/$HANDLE" -o "$page_file"
+grep -a -q "Studio" "$page_file"
+grep -a -q "Desk" "$page_file"
+
+curl -sf "$BASE/$HANDLE/c/desk" -o "$page_file"
+grep -a -q "Maya" "$page_file"
+
+crew_code="$(curl -s -o /dev/null -w "%{http_code}" "$BASE/$HANDLE/c/crew")"
+test "$crew_code" = "404"
 rm -f "$page_file"
 
 og_code="$(curl -s -o /tmp/flok-og.png -w "%{http_code}" "$BASE/$HANDLE/opengraph-image")"

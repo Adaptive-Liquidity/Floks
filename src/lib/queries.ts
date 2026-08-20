@@ -1,4 +1,5 @@
 import { getSql } from "@/lib/db";
+import { mostAlive, planClusters } from "@/lib/cluster";
 import { colorForIndex } from "@/lib/colors";
 import { newId } from "@/lib/ids";
 import { hashToken } from "@/lib/tokens";
@@ -9,6 +10,7 @@ import type {
   BirdWithChirp,
   Chirp,
   ChirpSource,
+  ClusterCard,
   Flock,
   FlockCard,
   Visibility,
@@ -30,6 +32,7 @@ type FlockRow = {
 type BirdRow = {
   id: string;
   flock_id: string;
+  cluster_id: string | null;
   name: string;
   role: string;
   color: string;
@@ -66,6 +69,7 @@ function mapBird(row: BirdRow): Bird {
   return {
     id: row.id,
     flock_id: row.flock_id,
+    cluster_id: row.cluster_id ?? null,
     name: row.name,
     role: row.role,
     color: row.color,
@@ -184,7 +188,7 @@ export async function getBirdsForFlock(flockId: string): Promise<BirdWithChirp[]
   const sql = await getSql();
   const rows = await sql<BirdRow & { last_chirp: string | null }>`
     select
-      b.id, b.flock_id, b.name, b.role, b.color, b.sort_order,
+      b.id, b.flock_id, b.cluster_id, b.name, b.role, b.color, b.sort_order,
       b.grok_bot_label, b.state, b.last_chirp_at,
       (select c.text from chirps c where c.bird_id = b.id order by c.created_at desc limit 1) as last_chirp
     from birds b
@@ -207,6 +211,122 @@ export async function getLatestChirp(flockId: string): Promise<Chirp | null> {
     limit 1
   `;
   return rows[0] ? mapChirp(rows[0]) : null;
+}
+
+export async function getClusterCards(flockId: string): Promise<ClusterCard[]> {
+  const sql = await getSql();
+  const clusters = await sql<{
+    id: string;
+    name: string;
+    slug: string;
+    sort_order: number;
+  }>`
+    select id, name, slug, sort_order
+    from clusters
+    where flock_id = ${flockId}
+    order by sort_order asc, name asc
+  `;
+  const birds = await getBirdsForFlock(flockId);
+  return clusters.map((cluster) => {
+    const members = birds.filter((b) => b.cluster_id === cluster.id);
+    const alive = mostAlive(members);
+    return {
+      id: cluster.id,
+      name: cluster.name,
+      slug: cluster.slug,
+      sort_order: Number(cluster.sort_order),
+      node_count: members.length,
+      faces: alive.slice(0, 4).map((b) => ({
+        name: b.name,
+        color: b.color,
+        state: b.state,
+      })),
+      last_chirp_at: members.reduce<string | null>((latest, b) => {
+        if (!b.last_chirp_at) return latest;
+        if (!latest || b.last_chirp_at > latest) return b.last_chirp_at;
+        return latest;
+      }, null),
+    };
+  });
+}
+
+export async function getClusterBySlug(flockId: string, slug: string): Promise<ClusterCard | null> {
+  const cards = await getClusterCards(flockId);
+  return cards.find((c) => c.slug === slug) ?? null;
+}
+
+export async function getBirdsForCluster(clusterId: string): Promise<BirdWithChirp[]> {
+  const sql = await getSql();
+  const rows = await sql<BirdRow & { last_chirp: string | null }>`
+    select
+      b.id, b.flock_id, b.cluster_id, b.name, b.role, b.color, b.sort_order,
+      b.grok_bot_label, b.state, b.last_chirp_at,
+      (select c.text from chirps c where c.bird_id = b.id order by c.created_at desc limit 1) as last_chirp
+    from birds b
+    where b.cluster_id = ${clusterId}
+    order by b.sort_order asc, b.name asc
+  `;
+  return rows.map((row) => ({
+    ...mapBird(row),
+    last_chirp: row.last_chirp,
+  }));
+}
+
+export async function getLatestChirpForCluster(clusterId: string): Promise<Chirp | null> {
+  const sql = await getSql();
+  const rows = await sql<ChirpRow>`
+    select c.id, c.bird_id, c.flock_id, c.text, c.source, c.created_at
+    from chirps c
+    join birds b on b.id = c.bird_id
+    where b.cluster_id = ${clusterId}
+    order by c.created_at desc
+    limit 1
+  `;
+  return rows[0] ? mapChirp(rows[0]) : null;
+}
+
+async function syncFlockClusters(
+  flockId: string,
+  members: { name: string; id: string; cluster?: string | null }[],
+): Promise<void> {
+  const sql = await getSql();
+  const plans = planClusters(members);
+  const keep = new Set<string>();
+  const nameToId = new Map(members.map((m) => [m.name, m.id]));
+
+  for (const plan of plans) {
+    const existing = await sql<{ id: string }>`
+      select id from clusters where flock_id = ${flockId} and slug = ${plan.slug} limit 1
+    `;
+    const clusterId = existing[0]?.id ?? newId();
+    keep.add(clusterId);
+    if (existing[0]) {
+      await sql`
+        update clusters
+        set name = ${plan.name}, sort_order = ${plan.sort_order}
+        where id = ${clusterId}
+      `;
+    } else {
+      await sql`
+        insert into clusters (id, flock_id, name, slug, sort_order)
+        values (${clusterId}, ${flockId}, ${plan.name}, ${plan.slug}, ${plan.sort_order})
+      `;
+    }
+    for (const memberName of plan.members) {
+      const birdId = nameToId.get(memberName);
+      if (!birdId) continue;
+      await sql`update birds set cluster_id = ${clusterId} where id = ${birdId}`;
+    }
+  }
+
+  const extras = await sql<{ id: string }>`
+    select id from clusters where flock_id = ${flockId}
+  `;
+  for (const extra of extras) {
+    if (!keep.has(extra.id)) {
+      await sql`delete from clusters where id = ${extra.id}`;
+    }
+  }
 }
 
 export async function getFlockByTokenHash(tokenHash: string): Promise<Flock | null> {
@@ -243,6 +363,7 @@ export type IncomingBird = {
   name: string;
   role: string;
   grok_bot_label?: string;
+  cluster?: string;
 };
 
 export async function upsertFlockRoster(input: {
@@ -290,7 +411,7 @@ export async function upsertFlockRoster(input: {
   }
 
   const current = await sql<BirdRow>`
-    select id, flock_id, name, role, color, sort_order, grok_bot_label, state, last_chirp_at
+    select id, flock_id, cluster_id, name, role, color, sort_order, grok_bot_label, state, last_chirp_at
     from birds where flock_id = ${flockId}
   `;
   const byName = new Map(current.map((b) => [b.name.toLowerCase(), b]));
@@ -338,7 +459,14 @@ export async function upsertFlockRoster(input: {
   const flock = await getFlockByHandle(input.handle);
   const birds = await getBirdsForFlock(flockId);
   if (!flock) throw new Error("flock_missing_after_upsert");
-  return { flock, birds };
+  await syncFlockClusters(
+    flockId,
+    input.birds.map((bird) => {
+      const row = birds.find((b) => b.name.toLowerCase() === bird.name.toLowerCase());
+      return { name: bird.name, id: row?.id ?? "", cluster: bird.cluster };
+    }),
+  );
+  return { flock, birds: await getBirdsForFlock(flockId) };
 }
 
 export async function updateBirdState(
@@ -351,7 +479,7 @@ export async function updateBirdState(
     update birds
     set state = ${state}
     where id = ${birdId} and flock_id = ${flockId}
-    returning id, flock_id, name, role, color, sort_order, grok_bot_label, state, last_chirp_at
+    returning id, flock_id, cluster_id, name, role, color, sort_order, grok_bot_label, state, last_chirp_at
   `;
   await sql`update flocks set updated_at = now() where id = ${flockId}`;
   return rows[0] ? mapBird(rows[0]) : null;
@@ -392,7 +520,7 @@ export async function insertChirp(input: {
 export async function findBirdInFlock(flockId: string, name: string): Promise<Bird | null> {
   const sql = await getSql();
   const rows = await sql<BirdRow>`
-    select id, flock_id, name, role, color, sort_order, grok_bot_label, state, last_chirp_at
+    select id, flock_id, cluster_id, name, role, color, sort_order, grok_bot_label, state, last_chirp_at
     from birds
     where flock_id = ${flockId}
       and (lower(name) = ${name.toLowerCase()} or lower(grok_bot_label) = ${name.toLowerCase()})
@@ -404,7 +532,7 @@ export async function findBirdInFlock(flockId: string, name: string): Promise<Bi
 export async function getBirdById(id: string): Promise<Bird | null> {
   const sql = await getSql();
   const rows = await sql<BirdRow>`
-    select id, flock_id, name, role, color, sort_order, grok_bot_label, state, last_chirp_at
+    select id, flock_id, cluster_id, name, role, color, sort_order, grok_bot_label, state, last_chirp_at
     from birds where id = ${id} limit 1
   `;
   return rows[0] ? mapBird(rows[0]) : null;

@@ -1,19 +1,27 @@
-import type { Bird, Chirp, Flock } from "@/lib/types";
+import type { ClusterFace, Flock, OgCluster } from "@/lib/types";
 
-function EyePair({ looking = 0 }: { looking?: number }) {
-  const shift = looking * 4;
+function EyePair({ looking = 0, closed = false }: { looking?: number; closed?: boolean }) {
+  const shift = looking * 2;
+  if (closed) {
+    return (
+      <div style={{ display: "flex", gap: 10 }}>
+        <div style={{ width: 14, height: 4, borderRadius: 999, backgroundColor: "#0A0B0D" }} />
+        <div style={{ width: 14, height: 4, borderRadius: 999, backgroundColor: "#0A0B0D" }} />
+      </div>
+    );
+  }
   return (
     <div
       style={{
         display: "flex",
-        gap: 18,
+        gap: 10,
         transform: `translate(${shift}px, ${Math.abs(looking)}px)`,
       }}
     >
       <div
         style={{
-          width: 18,
-          height: 40,
+          width: 10,
+          height: 22,
           borderRadius: 999,
           backgroundColor: "#0A0B0D",
           transform: "rotate(-18deg)",
@@ -21,8 +29,8 @@ function EyePair({ looking = 0 }: { looking?: number }) {
       />
       <div
         style={{
-          width: 18,
-          height: 40,
+          width: 10,
+          height: 22,
           borderRadius: 999,
           backgroundColor: "#0A0B0D",
           transform: "rotate(-18deg)",
@@ -32,24 +40,71 @@ function EyePair({ looking = 0 }: { looking?: number }) {
   );
 }
 
+const STUB: ClusterFace = { name: "", color: "#16191F", state: "offline" };
+
+function OgClusterTile({ cluster }: { cluster: OgCluster }) {
+  const faces = [...cluster.faces];
+  while (faces.length < 4) faces.push(STUB);
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        width: 248,
+        backgroundColor: "#111318",
+        borderRadius: 28,
+        padding: 14,
+      }}
+    >
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, width: 220 }}>
+        {faces.slice(0, 4).map((face, i) => (
+          <div
+            key={`${cluster.name}-${i}`}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 107,
+              height: 107,
+              borderRadius: 24,
+              backgroundColor: face.color,
+              opacity: face.name ? 1 : 0.55,
+            }}
+          >
+            <EyePair looking={(i % 3) - 1} closed={!face.name || face.state === "offline"} />
+          </div>
+        ))}
+      </div>
+      <div
+        style={{
+          display: "flex",
+          marginTop: 12,
+          fontFamily: "IBM Plex Sans",
+          fontSize: 22,
+          fontWeight: 500,
+          color: "#F3F5F6",
+        }}
+      >
+        {cluster.name}
+      </div>
+    </div>
+  );
+}
+
 export function OgCardMarkup({
   flock,
-  birds,
-  chirp,
+  clusters,
+  nodeCount,
   host,
 }: {
   flock: Flock;
-  birds: Bird[];
-  chirp: Chirp | null;
+  clusters: OgCluster[];
+  nodeCount: number;
   host: string;
 }) {
-  const shown = birds.slice(0, 6);
-  const extra = birds.length - shown.length;
-  const latest = chirp
-    ? chirp.text.length > 88
-      ? `${chirp.text.slice(0, 85)}…`
-      : chirp.text
-    : "No pulses yet";
+  const shown = clusters.slice(0, 4);
+  const extra = clusters.length - shown.length;
+  const subtitle = `${clusters.length} ${clusters.length === 1 ? "cluster" : "clusters"} · ${nodeCount} ${nodeCount === 1 ? "node" : "nodes"} · SPX404`;
 
   return (
     <div
@@ -109,7 +164,7 @@ export function OgCardMarkup({
           fontSize: 56,
           lineHeight: 1.02,
           letterSpacing: "-0.03em",
-          marginTop: 22,
+          marginTop: 18,
         }}
       >
         {flock.title}
@@ -118,38 +173,24 @@ export function OgCardMarkup({
       <div
         style={{
           display: "flex",
-          gap: 14,
-          marginTop: 28,
+          fontFamily: "IBM Plex Sans",
+          fontSize: 22,
+          color: "#98A2AD",
+          marginTop: 8,
         }}
       >
-        {shown.map((bird, i) => (
-          <div
-            key={bird.id}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              width: 168,
-              height: 168,
-              borderRadius: 38,
-              backgroundColor: bird.color,
-              padding: "36px 28px 16px",
-              justifyContent: "space-between",
-              boxShadow: "inset 0 -18px 28px rgba(0,0,0,0.16)",
-            }}
-          >
-            <EyePair looking={(i % 3) - 1} />
-            <div
-              style={{
-                display: "flex",
-                fontFamily: "IBM Plex Sans",
-                fontSize: 20,
-                fontWeight: 500,
-                color: "#0A0B0D",
-              }}
-            >
-              {bird.name}
-            </div>
-          </div>
+        {subtitle}
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          gap: 14,
+          marginTop: 22,
+        }}
+      >
+        {shown.map((cluster) => (
+          <OgClusterTile key={cluster.name} cluster={cluster} />
         ))}
         {extra > 0 ? (
           <div
@@ -175,13 +216,12 @@ export function OgCardMarkup({
           gap: 14,
           borderTop: "1px solid #20242B",
           paddingTop: 18,
-          color: "#F3F5F6",
+          color: "#5C646E",
           fontSize: 22,
           fontFamily: "IBM Plex Sans",
         }}
       >
-        <div style={{ display: "flex", color: "#5C646E" }}>{host}</div>
-        <div style={{ display: "flex" }}>{latest}</div>
+        <div style={{ display: "flex" }}>{host}</div>
       </div>
     </div>
   );

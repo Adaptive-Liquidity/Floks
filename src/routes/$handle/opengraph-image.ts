@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { jsonError, logRequest } from "@/lib/http";
 import { getAppOrigin, publicHost } from "@/lib/origin.server";
-import { getBirdsForFlock, getFlockByHandle, getLatestChirp } from "@/lib/queries";
+import { getClusterCards, getFlockByHandle } from "@/lib/queries";
 import { renderFlockCardPng } from "@/lib/render-og.server";
 
 export const Route = createFileRoute("/$handle/opengraph-image")({
@@ -13,16 +13,14 @@ export const Route = createFileRoute("/$handle/opengraph-image")({
           logRequest("GET", "/$handle/opengraph-image", 404);
           return jsonError(404, "No crew with that handle.", "flock_missing");
         }
-        const [birds, chirp] = await Promise.all([
-          getBirdsForFlock(flock.id),
-          getLatestChirp(flock.id),
-        ]);
+        const clusters = await getClusterCards(flock.id);
+        const nodeCount = clusters.reduce((n, c) => n + c.node_count, 0);
         const host = publicHost(getAppOrigin(request));
         try {
           const png = await renderFlockCardPng({
             flock,
-            birds,
-            chirp,
+            clusters: clusters.map((c) => ({ name: c.name, faces: c.faces })),
+            nodeCount,
             host,
           });
           logRequest("GET", "/$handle/opengraph-image", 200);

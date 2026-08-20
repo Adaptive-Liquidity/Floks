@@ -21,6 +21,7 @@ import { Route as HandleIndexRouteImport } from './routes/$handle/index'
 import { Route as HandleCloneRouteImport } from './routes/$handle/clone'
 import { Route as HandleOpengraphImageRouteImport } from './routes/$handle/opengraph-image'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
+import { Route as HandleCSlugRouteImport } from './routes/$handle/c.$slug'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiV1ChirpsRouteImport } from './routes/api/v1/chirps'
 import { Route as ApiV1ClaimRouteImport } from './routes/api/v1/claim'
@@ -90,6 +91,11 @@ const ApiHealthRoute = ApiHealthRouteImport.update({
   path: '/api/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HandleCSlugRoute = HandleCSlugRouteImport.update({
+  id: '/c/$slug',
+  path: '/c/$slug',
+  getParentRoute: () => HandleRouteRoute,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -144,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/$handle/opengraph-image': typeof HandleOpengraphImageRoute
   '/api/health': typeof ApiHealthRoute
   '/$handle/': typeof HandleIndexRoute
+  '/$handle/c/$slug': typeof HandleCSlugRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/chirps': typeof ApiV1ChirpsRoute
   '/api/v1/claim': typeof ApiV1ClaimRoute
@@ -165,6 +172,7 @@ export interface FileRoutesByTo {
   '/$handle/opengraph-image': typeof HandleOpengraphImageRoute
   '/api/health': typeof ApiHealthRoute
   '/$handle': typeof HandleIndexRoute
+  '/$handle/c/$slug': typeof HandleCSlugRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/chirps': typeof ApiV1ChirpsRoute
   '/api/v1/claim': typeof ApiV1ClaimRoute
@@ -188,6 +196,7 @@ export interface FileRoutesById {
   '/$handle/opengraph-image': typeof HandleOpengraphImageRoute
   '/api/health': typeof ApiHealthRoute
   '/$handle/': typeof HandleIndexRoute
+  '/$handle/c/$slug': typeof HandleCSlugRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/chirps': typeof ApiV1ChirpsRoute
   '/api/v1/claim': typeof ApiV1ClaimRoute
@@ -212,6 +221,7 @@ export interface FileRouteTypes {
     | '/$handle/opengraph-image'
     | '/api/health'
     | '/$handle/'
+    | '/$handle/c/$slug'
     | '/api/auth/$'
     | '/api/v1/chirps'
     | '/api/v1/claim'
@@ -233,6 +243,7 @@ export interface FileRouteTypes {
     | '/$handle/opengraph-image'
     | '/api/health'
     | '/$handle'
+    | '/$handle/c/$slug'
     | '/api/auth/$'
     | '/api/v1/chirps'
     | '/api/v1/claim'
@@ -255,6 +266,7 @@ export interface FileRouteTypes {
     | '/$handle/opengraph-image'
     | '/api/health'
     | '/$handle/'
+    | '/$handle/c/$slug'
     | '/api/auth/$'
     | '/api/v1/chirps'
     | '/api/v1/claim'
@@ -371,6 +383,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/$handle/c/$slug': {
+      id: '/$handle/c/$slug'
+      path: '/c/$slug'
+      fullPath: '/$handle/c/$slug'
+      preLoaderRoute: typeof HandleCSlugRouteImport
+      parentRoute: typeof HandleRouteRoute
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -434,12 +453,14 @@ interface HandleRouteRouteChildren {
   HandleCloneRoute: typeof HandleCloneRoute
   HandleOpengraphImageRoute: typeof HandleOpengraphImageRoute
   HandleIndexRoute: typeof HandleIndexRoute
+  HandleCSlugRoute: typeof HandleCSlugRoute
 }
 
 const HandleRouteRouteChildren: HandleRouteRouteChildren = {
   HandleCloneRoute: HandleCloneRoute,
   HandleOpengraphImageRoute: HandleOpengraphImageRoute,
   HandleIndexRoute: HandleIndexRoute,
+  HandleCSlugRoute: HandleCSlugRoute,
 }
 
 const HandleRouteRouteWithChildren = HandleRouteRoute._addFileChildren(

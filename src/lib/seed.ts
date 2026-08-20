@@ -1,5 +1,6 @@
 import { getSql } from "@/lib/db";
 import { colorForIndex } from "@/lib/colors";
+import { planClusters } from "@/lib/cluster";
 import { newId } from "@/lib/ids";
 import { hashToken } from "@/lib/tokens";
 
@@ -7,6 +8,7 @@ type SeedBird = {
   name: string;
   role: string;
   state?: "working" | "idle" | "offline";
+  cluster?: string;
   chirps: string[];
 };
 
@@ -173,25 +175,42 @@ const SEED: SeedFlock[] = [
   {
     handle: "loft",
     title: "The Loft",
-    bio: "Demo studio crew. Six nodes, one shared desk.",
+    bio: "Demo studio crew. Two clusters, one shared desk.",
     owner_hint: "demo",
     birds: [
       {
         name: "Jarvis",
         role: "Chief of staff",
         state: "working",
+        cluster: "Studio",
         chirps: ["Published the weekly roster"],
       },
-      { name: "Maya", role: "Sales", chirps: ["Drafted twelve follow-ups"] },
+      { name: "Maya", role: "Sales", cluster: "Desk", chirps: ["Drafted twelve follow-ups"] },
       {
         name: "Sol",
         role: "Engineer",
         state: "idle",
+        cluster: "Studio",
         chirps: ["Patched the morning lint failures"],
       },
-      { name: "Kite", role: "Support", chirps: ["Triaged the public inbox to three threads"] },
-      { name: "Noor", role: "Research", chirps: ["Compared two open-source eval suites"] },
-      { name: "Elm", role: "Writer", chirps: ["Cut the launch note to 180 words"] },
+      {
+        name: "Kite",
+        role: "Support",
+        cluster: "Desk",
+        chirps: ["Triaged the public inbox to three threads"],
+      },
+      {
+        name: "Noor",
+        role: "Research",
+        cluster: "Desk",
+        chirps: ["Compared two open-source eval suites"],
+      },
+      {
+        name: "Elm",
+        role: "Writer",
+        cluster: "Studio",
+        chirps: ["Cut the launch note to 180 words"],
+      },
     ],
   },
 ];
@@ -221,6 +240,7 @@ async function seedIfEmpty(): Promise<void> {
   const rows = await sql<{ n: number }>`select count(*)::int as n from flocks`;
   if (Number(rows[0]?.n ?? 0) > 0) {
     await recolorSeedBirds();
+    await syncSeedClusters();
     return;
   }
   await insertSeedFlocks();
@@ -236,6 +256,53 @@ async function recolorSeedBirds(): Promise<void> {
   `;
   for (const bird of birds) {
     await sql`update birds set color = ${colorForIndex(Number(bird.sort_order))} where id = ${bird.id}`;
+  }
+}
+
+async function syncSeedClusters(): Promise<void> {
+  const sql = await getSql();
+  for (const flock of SEED) {
+    const rows = await sql<{ id: string }>`
+      select id from flocks where handle = ${flock.handle} and is_seed = true limit 1
+    `;
+    const flockId = rows[0]?.id;
+    if (!flockId) continue;
+    const birds = await sql<{ id: string; name: string }>`
+      select id, name from birds where flock_id = ${flockId}
+    `;
+    const idByName = new Map(birds.map((b) => [b.name, b.id]));
+    const plans = planClusters(flock.birds.map((b) => ({ name: b.name, cluster: b.cluster })));
+    const keep = new Set<string>();
+    for (const plan of plans) {
+      const existing = await sql<{ id: string }>`
+        select id from clusters where flock_id = ${flockId} and slug = ${plan.slug} limit 1
+      `;
+      const clusterId = existing[0]?.id ?? newId();
+      keep.add(clusterId);
+      if (existing[0]) {
+        await sql`
+          update clusters
+          set name = ${plan.name}, sort_order = ${plan.sort_order}
+          where id = ${clusterId}
+        `;
+      } else {
+        await sql`
+          insert into clusters (id, flock_id, name, slug, sort_order)
+          values (${clusterId}, ${flockId}, ${plan.name}, ${plan.slug}, ${plan.sort_order})
+        `;
+      }
+      for (const memberName of plan.members) {
+        const birdId = idByName.get(memberName);
+        if (!birdId) continue;
+        await sql`update birds set cluster_id = ${clusterId} where id = ${birdId}`;
+      }
+    }
+    const extras = await sql<{ id: string }>`select id from clusters where flock_id = ${flockId}`;
+    for (const extra of extras) {
+      if (!keep.has(extra.id)) {
+        await sql`delete from clusters where id = ${extra.id}`;
+      }
+    }
   }
 }
 
@@ -299,4 +366,5 @@ async function insertSeedFlocks(): Promise<void> {
       }
     }
   }
+  await syncSeedClusters();
 }

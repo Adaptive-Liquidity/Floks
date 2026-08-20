@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import satori from "satori";
 import { Resvg, initWasm } from "@resvg/resvg-wasm";
 import { OgCardMarkup } from "@/lib/og-card";
-import type { Bird, Chirp, Flock } from "@/lib/types";
+import type { Flock, OgCluster } from "@/lib/types";
 
 const require = createRequire(import.meta.url);
 const here = dirname(fileURLToPath(import.meta.url));
@@ -76,16 +76,16 @@ function ensureWasm(): Promise<void> {
 
 export async function renderFlockCardPng(input: {
   flock: Flock;
-  birds: Bird[];
-  chirp: Chirp | null;
+  clusters: OgCluster[];
+  nodeCount: number;
   host: string;
 }): Promise<Uint8Array> {
   const [fontSet] = await Promise.all([fonts(), ensureWasm()]);
   const svg = await satori(
     OgCardMarkup({
       flock: input.flock,
-      birds: input.birds,
-      chirp: input.chirp,
+      clusters: input.clusters,
+      nodeCount: input.nodeCount,
       host: input.host,
     }),
     {
