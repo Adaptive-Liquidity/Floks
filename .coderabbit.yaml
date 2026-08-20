@@ -3,11 +3,7 @@
 language: "en-US"
 early_access: false
 
-tone_instructions: >
-  Act as an independent senior/staff engineer reviewing Flok.
-  Be concise and high-signal. Prioritize correctness, security,
-  architecture, regressions, data integrity, tests, and production risk.
-  Avoid cosmetic comments unless they materially improve maintainability.
+tone_instructions: "Review as a senior engineer. Prioritize correctness, security, architecture, regressions, tests, data integrity, and production risk. Keep feedback concise and high-signal."
 
 reviews:
   profile: "assertive"
