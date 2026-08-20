@@ -78,7 +78,7 @@ function OgClusterTile({ cluster }: { cluster: OgCluster }) {
                       ? "0 0 0 1px rgba(247,179,61,0.55)"
                       : face.state === "bound"
                         ? "0 0 0 2px rgba(92,100,110,0.7)"
-                        : undefined,
+                        : "none",
             }}
           >
             <EyePair
