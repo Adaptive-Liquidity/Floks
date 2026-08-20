@@ -93,6 +93,7 @@ function createNeonSql(): Promise<Sql> {
     };
     return toSql(run, async <T>(callback: (sql: Sql) => Promise<T>) => {
       const client = await pool.connect();
+      let destroyClient = false;
       try {
         await client.query("BEGIN");
         const txRun: Run = async <R>(text: string, params: unknown[]) => {
@@ -105,15 +106,16 @@ function createNeonSql(): Promise<Sql> {
         const result = await callback(txSql);
         await client.query("COMMIT");
         return result;
+      } catch (error) {
         try {
           await client.query("ROLLBACK");
         } catch {
-          // Preserve the original error if the connection can no longer roll back.
+          // Preserve the original error and discard the unusable connection.
+          destroyClient = true;
         }
         throw error;
       } finally {
-        client.release();
-        client.release();
+        client.release(destroyClient);
       }
     });
   })().catch((err) => {
