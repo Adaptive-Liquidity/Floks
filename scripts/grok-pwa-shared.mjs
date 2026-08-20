@@ -10,6 +10,25 @@ export const DEFAULT_APP_NAME = "Grok App";
 export const OG_SERVICE_URL_DEFAULT = "https://og.grok.me";
 export const OG_SITE_REL_PATH = "src/lib/og/site.json";
 
+/**
+ * Grok App Builder platform chrome (share-meta strip, extensions.js, /__grok).
+ * Off by default so Flok product deploys keep per-page og:image. Set
+ * FLOK_GROK_PLATFORM=1 (or GROK_APP_BUILDER=1 / VITE_GROK_PLATFORM=1) inside
+ * the sandbox only.
+ */
+export function isGrokPlatformEnabled(
+  env = typeof process !== "undefined" ? process.env : undefined,
+) {
+  const e = env ?? {};
+  const truthy = (v) => {
+    const s = String(v ?? "")
+      .trim()
+      .toLowerCase();
+    return s === "1" || s === "true" || s === "yes" || s === "on";
+  };
+  return truthy(e.FLOK_GROK_PLATFORM) || truthy(e.GROK_APP_BUILDER) || truthy(e.VITE_GROK_PLATFORM);
+}
+
 const SHARE_META_KEYS = new Set([
   "og:title",
   "og:description",
@@ -371,6 +390,10 @@ export function normalizeHeadContext(ctx = {}) {
 
 export function injectGrokPwaHead(html, ctx = {}) {
   if (typeof html !== "string") return html;
+  // Product default: do not rewrite head. Sandbox opts in via FLOK_GROK_PLATFORM=1.
+  if (ctx.platform !== true && !isGrokPlatformEnabled(ctx.env)) {
+    return html;
+  }
   const { site, projectId, creator, creatorId, host } = normalizeHeadContext(ctx);
   const documentTitle = titleFromDocument(html);
   const appName = resolveOgTitle(site, ctx.appName ?? DEFAULT_APP_NAME, host, documentTitle);
@@ -437,6 +460,8 @@ export function createHeadInjector(ctx = {}) {
       host: normalized.host,
       cwd: normalized.cwd,
       site: normalized.site,
+      platform: ctx.platform,
+      env: ctx.env,
     });
 
   return {

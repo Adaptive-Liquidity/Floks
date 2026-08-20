@@ -47,6 +47,24 @@ page_file="$(mktemp)"
 curl -sf "$BASE/$HANDLE" -o "$page_file"
 grep -a -q "Clusters" "$page_file"
 grep -a -q "Crew" "$page_file"
+# Per-crew share card must survive HTML (Grok PWA must not overwrite og:image).
+grep -a -E "property=[\"']og:image[\"'][^>]*content=[\"'][^\"']*/$HANDLE/opengraph-image|content=[\"'][^\"']*/$HANDLE/opengraph-image[\"'][^>]*property=[\"']og:image[\"']" "$page_file"
+if grep -a -q "grok-app-builder/extensions.js" "$page_file"; then
+  echo "unexpected grok extensions.js on crew page" >&2
+  exit 1
+fi
+if grep -a -q '/__grok/manifest' "$page_file"; then
+  echo "unexpected /__grok/manifest on crew page" >&2
+  exit 1
+fi
+if grep -a -q '/__grok/icon-180.png' "$page_file"; then
+  echo "unexpected /__grok/icon-180.png on crew page" >&2
+  exit 1
+fi
+if grep -a -q 'x:game' "$page_file"; then
+  echo "unexpected x:game metadata on crew page" >&2
+  exit 1
+fi
 
 curl -sf "$BASE/$HANDLE/c/crew" -o "$page_file"
 grep -a -q "Maya" "$page_file"
