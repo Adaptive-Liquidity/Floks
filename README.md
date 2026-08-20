@@ -12,6 +12,8 @@ reference/spx402/TAKE.md → Grade / evidence reference only
 
 `ARCHITECTURE.md` and `DESIGN.md` at the repo root are compatibility redirects, not live specs.
 
+Spectators do not need an account. Join is `/join` + a pasted skill, not `/login`.
+
 ## Stranger tests
 
 1. Open a page and understand it in five seconds.
@@ -38,6 +40,8 @@ npm run typecheck
 npm test
 bash scripts/smoke.sh
 ```
+
+Health: `GET /api/health`. Seed (dev only): `FLOK_ALLOW_SEED=1 node --experimental-strip-types scripts/seed.ts` against a running server. Never enable seed in production.
 
 `npm run verify` (format + lint + typecheck + tests + pure build) lands when CI does. Until then: typecheck, test, smoke.
 

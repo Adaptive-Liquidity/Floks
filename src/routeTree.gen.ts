@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HandleRouteRouteImport } from './routes/$handle/route'
 import { Route as CloneDotmdRouteImport } from './routes/clone[.]md'
-import { Route as HealthRouteImport } from './routes/health'
 import { Route as HeartbeatDotmdRouteImport } from './routes/heartbeat[.]md'
 import { Route as JoinRouteImport } from './routes/join'
 import { Route as LoginRouteImport } from './routes/login'
@@ -44,11 +43,6 @@ const HandleRouteRoute = HandleRouteRouteImport.update({
 const CloneDotmdRoute = CloneDotmdRouteImport.update({
   id: '/clone.md',
   path: '/clone.md',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HealthRoute = HealthRouteImport.update({
-  id: '/health',
-  path: '/health',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HeartbeatDotmdRoute = HeartbeatDotmdRouteImport.update({
@@ -141,7 +135,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$handle': typeof HandleRouteRouteWithChildren
   '/clone.md': typeof CloneDotmdRoute
-  '/health': typeof HealthRoute
   '/heartbeat.md': typeof HeartbeatDotmdRoute
   '/join': typeof JoinRoute
   '/login': typeof LoginRoute
@@ -163,7 +156,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/clone.md': typeof CloneDotmdRoute
-  '/health': typeof HealthRoute
   '/heartbeat.md': typeof HeartbeatDotmdRoute
   '/join': typeof JoinRoute
   '/login': typeof LoginRoute
@@ -187,7 +179,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/$handle': typeof HandleRouteRouteWithChildren
   '/clone.md': typeof CloneDotmdRoute
-  '/health': typeof HealthRoute
   '/heartbeat.md': typeof HeartbeatDotmdRoute
   '/join': typeof JoinRoute
   '/login': typeof LoginRoute
@@ -212,7 +203,6 @@ export interface FileRouteTypes {
     | '/'
     | '/$handle'
     | '/clone.md'
-    | '/health'
     | '/heartbeat.md'
     | '/join'
     | '/login'
@@ -234,7 +224,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/clone.md'
-    | '/health'
     | '/heartbeat.md'
     | '/join'
     | '/login'
@@ -257,7 +246,6 @@ export interface FileRouteTypes {
     | '/'
     | '/$handle'
     | '/clone.md'
-    | '/health'
     | '/heartbeat.md'
     | '/join'
     | '/login'
@@ -281,7 +269,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   HandleRouteRoute: typeof HandleRouteRouteWithChildren
   CloneDotmdRoute: typeof CloneDotmdRoute
-  HealthRoute: typeof HealthRoute
   HeartbeatDotmdRoute: typeof HeartbeatDotmdRoute
   JoinRoute: typeof JoinRoute
   LoginRoute: typeof LoginRoute
@@ -319,13 +306,6 @@ declare module '@tanstack/react-router' {
       path: '/clone.md'
       fullPath: '/clone.md'
       preLoaderRoute: typeof CloneDotmdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/health': {
-      id: '/health'
-      path: '/health'
-      fullPath: '/health'
-      preLoaderRoute: typeof HealthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/heartbeat.md': {
@@ -470,7 +450,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   HandleRouteRoute: HandleRouteRouteWithChildren,
   CloneDotmdRoute: CloneDotmdRoute,
-  HealthRoute: HealthRoute,
   HeartbeatDotmdRoute: HeartbeatDotmdRoute,
   JoinRoute: JoinRoute,
   LoginRoute: LoginRoute,

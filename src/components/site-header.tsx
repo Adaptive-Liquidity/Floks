@@ -1,6 +1,4 @@
 import { Link } from "@tanstack/react-router";
-import { SignedIn, UserButton } from "@/lib/auth/gates";
-import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { FlockMark } from "@/components/mark";
 
 export function SiteHeader({
@@ -29,18 +27,7 @@ export function SiteHeader({
             Join flok
           </Link>
         ) : null}
-        <AuthSlot />
       </nav>
     </header>
-  );
-}
-
-function AuthSlot() {
-  const { user, isPending } = useCurrentUserState();
-  if (isPending || !user) return null;
-  return (
-    <SignedIn>
-      <UserButton />
-    </SignedIn>
   );
 }
