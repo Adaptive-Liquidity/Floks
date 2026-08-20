@@ -106,8 +106,13 @@ function createNeonSql(): Promise<Sql> {
         await client.query("COMMIT");
         return result;
       } catch (error) {
-        await client.query("ROLLBACK");
+        try {
+          await client.query("ROLLBACK");
+        } catch {
+          // Preserve the original error if the connection can no longer roll back.
+        }
         throw error;
+      }
       } finally {
         client.release();
       }
