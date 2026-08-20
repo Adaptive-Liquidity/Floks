@@ -17,13 +17,13 @@ import { renderInstallPage } from "./grok-pwa-plugin.mjs";
 
 const TEMPLATE_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-/** Isolate from repo identity / env so tests assert injector behavior. */
+/** Isolate from repo identity / env so tests assert sandbox injector behavior. */
 function inject(html, extra = {}) {
-  return injectGrokPwaHead(html, { site: {}, host: "", ...extra });
+  return injectGrokPwaHead(html, { site: {}, host: "", platform: true, ...extra });
 }
 
 function injector(extra = {}) {
-  return createHeadInjector({ site: {}, host: "", ...extra });
+  return createHeadInjector({ site: {}, host: "", platform: true, ...extra });
 }
 
 test("injects before </head>", () => {
@@ -138,6 +138,15 @@ test("is idempotent", () => {
 test("uses the app name in the injected title tag", () => {
   const out = inject("<html><head></head></html>", { appName: "Wild Race" });
   assert.match(out, /apple-mobile-web-app-title" content="Wild Race"/);
+});
+
+test("product default preserves per-page og:image (platform off)", () => {
+  const html =
+    '<html><head><title>Crew</title><meta property="og:image" content="https://example.com/acme/opengraph-image"></head><body></body></html>';
+  const out = injectGrokPwaHead(html, { site: {}, host: "example.com", platform: false, env: {} });
+  assert.equal(out, html);
+  assert.doesNotMatch(out, /grok-app-builder\/extensions\.js/);
+  assert.doesNotMatch(out, /\/__grok\/manifest/);
 });
 
 test("streaming injector handles </head> split across chunks", () => {
