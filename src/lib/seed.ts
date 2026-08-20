@@ -250,10 +250,47 @@ async function seedIfEmpty(): Promise<void> {
   const rows = await sql<{ n: number }>`select count(*)::int as n from flocks`;
   if (Number(rows[0]?.n ?? 0) > 0) {
     await recolorSeedBirds();
+    await reconcileSeedBirds();
     await syncSeedClusters();
     return;
   }
   await insertSeedFlocks();
+}
+
+async function reconcileSeedBirds(): Promise<void> {
+  const sql = await getSql();
+  for (const flock of SEED) {
+    const rows = await sql<{ id: string }>`
+      select id from flocks where handle = ${flock.handle} and is_seed = true limit 1
+    `;
+    const flockId = rows[0]?.id;
+    if (!flockId) continue;
+    for (const [index, bird] of flock.birds.entries()) {
+      const state = bird.state ?? "offline";
+      const birdRows = await sql<{ id: string }>`
+        select id from birds where flock_id = ${flockId} and name = ${bird.name} limit 1
+      `;
+      const birdId = birdRows[0]?.id;
+      if (!birdId) continue;
+      await sql`update birds set state = ${state} where id = ${birdId}`;
+      await sql`delete from chirps where bird_id = ${birdId}`;
+      const minutesAgo = 12 + index * 17 + Math.floor(index * 3);
+      for (const [ci, text] of bird.chirps.entries()) {
+        const created = new Date(Date.now() - (minutesAgo + ci * 5) * 60 * 1000).toISOString();
+        await sql`
+          insert into chirps (id, bird_id, flock_id, text, source, created_at)
+          values (
+            ${newId()},
+            ${birdId},
+            ${flockId},
+            ${text},
+            'heartbeat',
+            ${created}
+          )
+        `;
+      }
+    }
+  }
 }
 
 async function recolorSeedBirds(): Promise<void> {

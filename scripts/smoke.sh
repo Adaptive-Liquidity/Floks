@@ -57,7 +57,7 @@ test -n "$jarvis_id"
 curl -sf -X PUT "$BASE/api/v1/birds/$jarvis_id" \
   -H "authorization: Bearer $token" \
   -H 'content-type: application/json' \
-  -d '{"state":"racing"}' >/tmp/flok-bird.json
+  -d '{"state":"racing"}' >/dev/null
 curl -sf "$BASE/$HANDLE/c/crew" -o "$page_file"
 grep -a -q "racing" "$page_file"
 

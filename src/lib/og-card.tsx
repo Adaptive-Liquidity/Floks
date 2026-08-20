@@ -1,12 +1,57 @@
+import { eyesStill } from "@/lib/node-state";
 import type { ClusterFace, Flock, OgCluster } from "@/lib/types";
 
-function EyePair({ looking = 0, closed = false }: { looking?: number; closed?: boolean }) {
+function EyePair({
+  looking = 0,
+  closed = false,
+  racing = false,
+}: {
+  looking?: number;
+  closed?: boolean;
+  racing?: boolean;
+}) {
   const shift = looking * 2;
   if (closed) {
     return (
       <div style={{ display: "flex", gap: 10 }}>
         <div style={{ width: 14, height: 4, borderRadius: 999, backgroundColor: "#0A0B0D" }} />
         <div style={{ width: 14, height: 4, borderRadius: 999, backgroundColor: "#0A0B0D" }} />
+      </div>
+    );
+  }
+  if (racing) {
+    return (
+      <div style={{ display: "flex", gap: 10, position: "relative" }}>
+        <div
+          style={{
+            width: 10,
+            height: 22,
+            borderRadius: 999,
+            backgroundColor: "#0A0B0D",
+            transform: "rotate(-18deg) translate(-6px, 1px)",
+          }}
+        />
+        <div
+          style={{
+            width: 10,
+            height: 22,
+            borderRadius: 999,
+            backgroundColor: "#0A0B0D",
+            transform: "rotate(-18deg) translate(6px, -1px)",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            top: -14,
+            right: -2,
+            display: "flex",
+            gap: 4,
+          }}
+        >
+          <div style={{ width: 5, height: 13, borderRadius: 1.2, backgroundColor: "#0A0B0D" }} />
+          <div style={{ width: 5, height: 13, borderRadius: 1.2, backgroundColor: "#0A0B0D" }} />
+        </div>
       </div>
     );
   }
@@ -81,15 +126,18 @@ function OgClusterTile({ cluster }: { cluster: OgCluster }) {
                   ? "0 0 0 2px #C6F84E"
                   : face.state === "working"
                     ? "0 0 0 1px rgba(198,248,78,0.45)"
-                    : face.state === "denied"
-                      ? "0 0 0 1px rgba(247,179,61,0.55)"
-                      : face.state === "bound"
-                        ? "0 0 0 2px rgba(92,100,110,0.7)"
-                        : "none",
+                    : face.state === "racing"
+                      ? "0 0 0 1px rgba(198,248,78,0.4)"
+                      : face.state === "denied"
+                        ? "0 0 0 1px rgba(247,179,61,0.55)"
+                        : face.state === "bound"
+                          ? "0 0 0 2px rgba(92,100,110,0.7)"
+                          : "none",
             }}
           >
             <EyePair
-              looking={face.state === "racing" ? 1 : (i % 3) - 1}
+              racing={face.state === "racing"}
+              looking={eyesStill(face.state) ? 0 : face.state === "racing" ? 0 : (i % 3) - 1}
               closed={!face.name || face.state === "offline" || face.state === "rolled_back"}
             />
             {face.state === "denied" && (

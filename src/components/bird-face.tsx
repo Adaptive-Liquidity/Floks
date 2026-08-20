@@ -56,6 +56,19 @@ export function BirdFace({
   const race = state === "racing" && !closed;
   const idleBlink = state === "idle" && !closed && !still;
 
+  const prevStateRef = useRef<BirdState>(state);
+  const [rollbackAnim, setRollbackAnim] = useState(false);
+
+  useEffect(() => {
+    const prev = prevStateRef.current;
+    prevStateRef.current = state;
+    if (state === "rolled_back" && prev !== "rolled_back") {
+      setRollbackAnim(true);
+    } else if (state !== "rolled_back") {
+      setRollbackAnim(false);
+    }
+  }, [state]);
+
   useEffect(() => {
     if (closed || still || race) {
       setLook({ x: 0, y: 0 });
@@ -83,13 +96,13 @@ export function BirdFace({
         state === "attested" && !closed && "bird-face-attested",
         state === "denied" && "bird-face-denied",
         state === "bound" && "bird-face-bound",
-        state === "rolled_back" && "bird-face-rollback",
+        rollbackAnim && "bird-face-rollback",
         closed && state !== "rolled_back" && "bird-face-sleep",
         className,
       )}
       style={{
         backgroundColor: color,
-        animationDelay: `${delay}s`,
+        animationDelay: state === "rolled_back" ? "0s" : `${delay}s`,
       }}
       data-state={closed ? "sleep" : state}
       aria-hidden="true"

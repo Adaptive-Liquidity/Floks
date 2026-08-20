@@ -52,7 +52,7 @@ export function eyesStill(state: BirdState): boolean {
  * @returns The display label for the state
  */
 export function nodeStateLabel(state: BirdState, sleeping = false): string {
-  if (sleeping || state === "offline") return "sleeping";
+  if (state === "offline" || (sleeping && !isLiveNode(state))) return "sleeping";
   switch (state) {
     case "working":
       return "executing";
