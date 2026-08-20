@@ -20,9 +20,6 @@ export const Route = createRootRoute({
   head: () => {
     const host = import.meta.env.VITE_PUBLIC_HOSTNAME as string | undefined;
     const ogImage = host ? `https://${host}/og.jpg` : undefined;
-    const xBanner = host
-      ? `https://og.grok.me/v1/banner.png?host=${encodeURIComponent(host)}&title=${encodeURIComponent(APP_NAME)}&color=0A0B0C`
-      : undefined;
     return {
       meta: [
         { charSet: "utf-8" },
@@ -48,16 +45,10 @@ export const Route = createRootRoute({
               { property: "og:image:height", content: "630" },
             ]
           : []),
-        ...(xBanner
-          ? [
-              { property: "x:game:image", content: xBanner },
-              { property: "x:game:image:width", content: "1200" },
-              { property: "x:game:image:height", content: "264" },
-            ]
-          : []),
       ],
       links: [
         { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+        { rel: "apple-touch-icon", href: "/favicon.svg" },
         { rel: "preconnect", href: "https://fonts.googleapis.com" },
         { rel: "preconnect", href: "https://fonts.gstatic.com" },
         { rel: "preconnect", href: "https://api.fontshare.com" },
@@ -70,8 +61,6 @@ export const Route = createRootRoute({
           href: "https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap",
         },
         { rel: "stylesheet", href: appCss },
-        { rel: "manifest", href: "/__grok/manifest.webmanifest" },
-        { rel: "apple-touch-icon", href: "/__grok/icon-180.png" },
       ],
     };
   },
