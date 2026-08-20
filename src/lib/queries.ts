@@ -17,6 +17,7 @@ import type {
   RackCard,
   Visibility,
 } from "@/lib/types";
+import type { RackInput } from "@/lib/rack";
 
 import { ensureSeeded } from "@/lib/seed";
 
@@ -405,7 +406,7 @@ function resolveCluster(cards: ClusterCard[], label: string): ClusterCard | unde
 
 export async function upsertFlockRacks(
   flockId: string,
-  racks: { name?: string | null; clusters: string[] }[],
+  racks: RackInput[],
 ): Promise<{ ok: true; racks: RackCard[] } | { ok: false; error: string; code: string }> {
   const planned = planRacks(racks);
   if (!planned.ok) return planned;
@@ -476,20 +477,21 @@ export async function upsertFlockRacks(
 
 export async function upsertOneRack(
   flockId: string,
-  rack: { name?: string | null; clusters: string[] },
+  rack: RackInput,
 ): Promise<{ ok: true; racks: RackCard[] } | { ok: false; error: string; code: string }> {
   const planned = planRacks([rack]);
   if (!planned.ok) return planned;
   const current = await getRackCards(flockId);
-  const slug = planned.plans[0]?.slug ?? slugifyRack(rack.name ?? "");
+  const slug = planned.plans[0]?.slug ?? slugifyRack(rack.slug?.trim() || rack.name || "");
   const next = [
     ...current
       .filter((item) => item.slug !== slug)
       .map((item) => ({
         name: item.name,
+        slug: item.slug,
         clusters: item.roosts.map((roost) => roost.slug),
       })),
-    rack,
+    { ...rack, slug },
   ];
   return upsertFlockRacks(flockId, next);
 }

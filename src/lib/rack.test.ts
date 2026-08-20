@@ -57,3 +57,22 @@ test("planRacks splits colliding slugs", () => {
   assert.equal(planned.plans[0]?.slug, "shift");
   assert.equal(planned.plans[1]?.slug, "shift-2");
 });
+
+test("planRacks preserves explicit slugs and rejects collisions", () => {
+  const planned = planRacks([
+    { name: "Shift", slug: "shift-2", clusters: ["Studio", "Desk"] },
+    { name: "Shift", clusters: ["Outbound", "Research"] },
+  ]);
+  assert.equal(planned.ok, true);
+  if (!planned.ok) return;
+  assert.equal(planned.plans[0]?.slug, "shift-2");
+  assert.equal(planned.plans[1]?.slug, "shift");
+
+  const duplicate = planRacks([
+    { name: "Shift", slug: "shift", clusters: ["Studio", "Desk"] },
+    { name: "Shift 2", slug: "shift", clusters: ["Outbound", "Research"] },
+  ]);
+  assert.equal(duplicate.ok, false);
+  if (duplicate.ok) return;
+  assert.equal(duplicate.code, "duplicate_rack");
+});

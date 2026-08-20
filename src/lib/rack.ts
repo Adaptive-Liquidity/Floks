@@ -10,6 +10,12 @@ export type RackPlan = {
   clusters: string[];
 };
 
+export type RackInput = {
+  name?: string | null;
+  slug?: string | null;
+  clusters: string[];
+};
+
 export type RackPlanError = {
   ok: false;
   error: string;
@@ -39,9 +45,7 @@ function uniqueLabels(labels: string[]): string[] {
   return out;
 }
 
-export function planRacks(
-  racks: { name?: string | null; clusters: string[] }[],
-): { ok: true; plans: RackPlan[] } | RackPlanError {
+export function planRacks(racks: RackInput[]): { ok: true; plans: RackPlan[] } | RackPlanError {
   if (racks.length > RACK_CAP) {
     return {
       ok: false,
@@ -63,8 +67,16 @@ export function planRacks(
       };
     }
     const name = rack.name?.trim() || DEFAULT_RACK_NAME;
-    let slug = slugifyRack(name);
+    const explicitSlug = rack.slug?.trim();
+    let slug = slugifyRack(explicitSlug || name);
     if (usedSlugs.has(slug)) {
+      if (explicitSlug) {
+        return {
+          ok: false,
+          error: "Rack slugs must be unique.",
+          code: "duplicate_rack",
+        };
+      }
       let n = 2;
       while (usedSlugs.has(`${slug}-${n}`)) n += 1;
       slug = `${slug}-${n}`;
