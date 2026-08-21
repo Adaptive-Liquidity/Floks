@@ -107,13 +107,17 @@ test(
   },
 );
 
-test("POST /api/v1/contracts rejects an invalid body", { timeout: 60_000 }, async () => {
-  const app = await startApp(false);
-  try {
-    const invalid = await post(app.baseUrl, { "sec-fetch-site": "same-origin" });
-    assert.equal(invalid.status, 400, app.output());
-    assert.equal((await invalid.json()).code, "invalid_body");
-  } finally {
-    await stopApp(app);
-  }
-});
+test(
+  "POST /api/v1/contracts requires a real session when auth is disabled",
+  { timeout: 60_000 },
+  async () => {
+    const app = await startApp(false);
+    try {
+      const unauthorized = await post(app.baseUrl, { "sec-fetch-site": "same-origin" });
+      assert.equal(unauthorized.status, 401, app.output());
+      assert.equal((await unauthorized.json()).code, "unauthorized");
+    } finally {
+      await stopApp(app);
+    }
+  },
+);

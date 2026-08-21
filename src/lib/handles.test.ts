@@ -19,6 +19,7 @@ test("rejects length, format, reserved", () => {
   assert.equal(validateHandle("join").ok, false);
   assert.equal(validateHandle("login").ok, false);
   assert.equal(validateHandle("api").ok, false);
+  assert.equal(validateHandle("contracts").ok, false);
   const reserved = validateHandle("FLOk");
   assert.equal(reserved.ok, false);
   if (!reserved.ok) assert.equal(reserved.code, "handle_reserved");

@@ -1,5 +1,5 @@
 import { assertSameSiteRequest, CrossSiteRequestError } from "@/lib/auth/isolation.server";
-import { requireUserId, UnauthorizedError } from "@/lib/auth/verify.server";
+import { requireSessionUserId, UnauthorizedError } from "@/lib/auth/verify.server";
 import { bearerToken, jsonError } from "@/lib/http";
 
 export function hasUnverifiableCookieWrite(request: Request): boolean {
@@ -23,7 +23,7 @@ export async function requireApiUser(
       };
     }
     assertSameSiteRequest();
-    const userId = await requireUserId(bearerToken(request) ?? undefined);
+    const userId = await requireSessionUserId(bearerToken(request) ?? undefined);
     return { ok: true, userId };
   } catch (error) {
     if (error instanceof UnauthorizedError) {

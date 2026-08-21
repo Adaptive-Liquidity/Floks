@@ -9,6 +9,8 @@ import {
   listPosterOutcomeContracts,
 } from "./outcome-contracts.server.ts";
 
+process.env.FLOK_POSTER_SECRET ??= "outcome-contract-test-poster-secret";
+
 const valid = {
   outcomeClass: "artifact" as const,
   outcome: "Publish a machine-checkable signed release artifact.",
@@ -43,7 +45,7 @@ test("Outcome Contract persistence scopes history and exposes only public header
   const ownerA = `owner-a-${suffix}`;
   const ownerB = `owner-b-${suffix}`;
   const contractA = await createOutcomeContract(ownerA, valid);
-  await createOutcomeContract(ownerB, {
+  const contractB = await createOutcomeContract(ownerB, {
     ...valid,
     outcome: "Publish a second independently verifiable release artifact.",
   });
@@ -53,7 +55,8 @@ test("Outcome Contract persistence scopes history and exposes only public header
     own.map((contract) => contract.id),
     [contractA.id],
   );
-  assert.match(contractA.poster, /^@poster_[a-f0-9]{12}$/);
+  assert.match(contractA.poster, /^@poster_[a-f0-9]{32}$/);
+  assert.notEqual(contractA.poster, contractB.poster);
 
   const publicHeader = await getPublicOutcomeContract(contractA.id);
   assert.deepEqual(publicHeader, contractA);
@@ -84,14 +87,29 @@ test("Outcome Contract input requires a future deadline and explicit proof", () 
     }).success,
     false,
   );
+  assert.equal(
+    outcomeContractInputSchema.safeParse({
+      ...valid,
+      outcome: "Publish a signed artifact with an invalid surrogate \ud800.",
+    }).success,
+    false,
+  );
+  assert.equal(
+    outcomeContractInputSchema.safeParse({
+      ...valid,
+      proofRequirements: [{ verifier: "hash", requirement: "Invalid \udfff digest" }],
+    }).success,
+    false,
+  );
 });
 
 test("Outcome Contract creation enforces the poster quota atomically", async () => {
   const owner = `quota-${crypto.randomUUID()}`;
   const sql = await getSql();
   await sql.query(
-    "insert into outcome_contract_poster_quotas (poster_user_id, contract_count) values ($1, 100)",
-    [owner],
+    `insert into outcome_contract_poster_quotas (poster_user_id, poster, contract_count)
+     values ($1, $2, 100)`,
+    [owner, `@poster_${"a".repeat(32)}`],
   );
   await assert.rejects(() => createOutcomeContract(owner, valid), ContractLimitError);
   const rows = await sql.query<{ count: number }>(

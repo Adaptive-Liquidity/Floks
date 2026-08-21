@@ -12,6 +12,7 @@ export const RESERVED_HANDLES = new Set([
   "flok",
   "clone",
   "card",
+  "contracts",
   "health",
   "login",
   "auth",

@@ -1,3 +1,4 @@
+import { createHmac, randomBytes } from "node:crypto";
 import { getSql } from "./db.ts";
 import { canonicalJsonStringify, sha256Hex } from "./evidence-hash.server.ts";
 import { newId } from "./ids.ts";
@@ -24,6 +25,30 @@ type OutcomeContractRow = {
   contract_hash: string;
   created_at: unknown;
 };
+
+const globalPosterSecret = globalThis as typeof globalThis & {
+  __flokPosterSecret__?: string;
+};
+
+function posterSecret(): string {
+  const configured = process.env.FLOK_POSTER_SECRET?.trim();
+  if (configured) return configured;
+  if (process.env.NODE_ENV === "production" || process.env.DATABASE_URL?.trim()) {
+    throw new Error("FLOK_POSTER_SECRET is required for persistent Outcome Contracts.");
+  }
+  globalPosterSecret.__flokPosterSecret__ ??= randomBytes(32).toString("hex");
+  return globalPosterSecret.__flokPosterSecret__;
+}
+
+function posterPseudonym(posterUserId: string): string {
+  // A secret-keyed 128-bit id prevents offline user-id enumeration and makes
+  // accidental public-poster collisions impractical.
+  const digest = createHmac("sha256", posterSecret())
+    .update("flok:outcome-contract-poster:v1\0")
+    .update(posterUserId)
+    .digest("hex");
+  return `@poster_${digest.slice(0, 32)}`;
+}
 
 function parseJson<T>(value: unknown): T {
   return (typeof value === "string" ? JSON.parse(value) : value) as T;
@@ -66,7 +91,7 @@ export async function createOutcomeContract(
 ): Promise<OutcomeContractHeader> {
   const sql = await getSql();
   const id = newId();
-  const poster = `@poster_${(await sha256Hex(posterUserId)).slice(0, 12)}`;
+  const poster = posterPseudonym(posterUserId);
   const deadline = new Date(input.deadline).toISOString();
   const immutableHeader = {
     id,
@@ -82,13 +107,13 @@ export async function createOutcomeContract(
   const hash = `sha256:${await sha256Hex(canonicalJsonStringify(immutableHeader))}`;
   return sql.transaction(async (tx) => {
     const quota = await tx.query<{ contract_count: number }>(
-      `insert into outcome_contract_poster_quotas (poster_user_id, contract_count)
-       values ($1, 1)
+      `insert into outcome_contract_poster_quotas (poster_user_id, poster, contract_count)
+       values ($1, $2, 1)
        on conflict (poster_user_id) do update
        set contract_count = outcome_contract_poster_quotas.contract_count + 1
        where outcome_contract_poster_quotas.contract_count < 100
        returning contract_count`,
-      [posterUserId],
+      [posterUserId, poster],
     );
     if (!quota[0]) throw new ContractLimitError();
 

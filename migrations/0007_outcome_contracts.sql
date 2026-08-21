@@ -23,6 +23,7 @@ create table if not exists outcome_contracts (
 
 create table if not exists outcome_contract_poster_quotas (
   poster_user_id  text primary key,
+  poster          text not null unique,
   contract_count  integer not null default 0
                   check (contract_count between 0 and 100)
 );

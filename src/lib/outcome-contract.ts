@@ -9,6 +9,7 @@ function hasUnsafeDisplayCharacter(value: string): boolean {
     return (
       code <= 0x1f ||
       (code >= 0x7f && code <= 0x9f) ||
+      (code >= 0xd800 && code <= 0xdfff) ||
       (code >= 0x200b && code <= 0x200f) ||
       (code >= 0x202a && code <= 0x202e) ||
       (code >= 0x2060 && code <= 0x206f) ||
