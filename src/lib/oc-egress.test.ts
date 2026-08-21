@@ -41,6 +41,16 @@ async function createContract(id: string, deadline: string) {
   );
 }
 
+const PINNED_OUTBOX_AVAILABLE_AT = "2026-08-21T18:00:00.000Z";
+
+async function pinOutboxAvailable(eventId: string) {
+  const sql = await getSql();
+  await sql.query("update oc_evidence_outbox set available_at = $2 where event_id = $1", [
+    eventId,
+    PINNED_OUTBOX_AVAILABLE_AT,
+  ]);
+}
+
 async function enqueueOpened(contractId: string, occurredAt: string) {
   const evidence = await createOcEvidence({
     handle: "growthops",
@@ -52,6 +62,7 @@ async function enqueueOpened(contractId: string, occurredAt: string) {
     idempotency_key: "open-1",
   });
   assert.equal((await persistOcEvidence(evidence)).transition, "advance");
+  await pinOutboxAvailable(evidence.event_id);
   return evidence;
 }
 
@@ -66,6 +77,7 @@ async function enqueueAwarded(contractId: string, occurredAt: string) {
     idempotency_key: "award-1",
   });
   assert.equal((await persistOcEvidence(evidence)).transition, "advance");
+  await pinOutboxAvailable(evidence.event_id);
   return evidence;
 }
 
@@ -321,8 +333,8 @@ test("drainer orders equal-time terminal evidence by event id", async () => {
       ],
     );
     await sql.query(
-      "insert into oc_evidence_outbox (event_id, payload, deadline_at) values ($1, $2::jsonb, $3)",
-      [item.event_id, JSON.stringify(item), deadline],
+      "insert into oc_evidence_outbox (event_id, payload, deadline_at, available_at) values ($1, $2::jsonb, $3, $4)",
+      [item.event_id, JSON.stringify(item), deadline, PINNED_OUTBOX_AVAILABLE_AT],
     );
   }
 
