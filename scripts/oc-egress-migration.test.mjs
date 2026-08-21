@@ -7,8 +7,12 @@ const migration = await readFile(
   new URL("../migrations/0009_oc_evidence_v2_egress.sql", import.meta.url),
   "utf8",
 );
+const expiryMigration = await readFile(
+  new URL("../migrations/0010_oc_expiry_quarantine.sql", import.meta.url),
+  "utf8",
+);
 
-test("0009 purges v1 and upgrades the outbox for bounded delivery", async () => {
+test("0009 and 0010 upgrade bounded delivery and expiry quarantine", async () => {
   const db = new PGlite();
   await db.exec(`
     create table outcome_contracts (
@@ -29,7 +33,8 @@ test("0009 purges v1 and upgrades the outbox for bounded delivery", async () => 
       sent_at timestamptz
     );
     create table oc_lifecycle (
-      contract_id text primary key
+      contract_id text primary key,
+      current_type text not null default 'OC_OPENED'
     );
     create index oc_evidence_outbox_pending_idx
       on oc_evidence_outbox (available_at, created_at)
@@ -49,6 +54,7 @@ test("0009 purges v1 and upgrades the outbox for bounded delivery", async () => 
   `);
 
   await db.exec(migration);
+  await db.exec(expiryMigration);
   const rows = await db.query(
     "select event_id, status, deadline_at, claim_token from oc_evidence_outbox order by event_id",
   );
@@ -70,6 +76,14 @@ test("0009 purges v1 and upgrades the outbox for bounded delivery", async () => 
     lifecycleColumns.rows.some((row) => row.column_name === "expiry_last_error"),
     true,
   );
+  assert.equal(
+    lifecycleColumns.rows.some((row) => row.column_name === "expiry_attempts"),
+    true,
+  );
+  assert.equal(
+    lifecycleColumns.rows.some((row) => row.column_name === "expiry_dead_lettered_at"),
+    true,
+  );
   const indexes = await db.query(
     "select indexname from pg_indexes where tablename = 'oc_evidence_outbox'",
   );
@@ -81,6 +95,12 @@ test("0009 purges v1 and upgrades the outbox for bounded delivery", async () => 
     indexes.rows.some((row) => row.indexname === "oc_evidence_outbox_drain_idx"),
     true,
   );
+  const sweepIndexes = await db.query(
+    `select indexname
+     from pg_indexes
+     where indexname in ('oc_lifecycle_expiry_sweep_idx', 'outcome_contracts_deadline_idx')`,
+  );
+  assert.equal(sweepIndexes.rows.length, 2);
 
   await db.exec(
     "update oc_evidence_outbox set status = 'dead_letter', last_error = 'terminal' where event_id = 'event-v2'",

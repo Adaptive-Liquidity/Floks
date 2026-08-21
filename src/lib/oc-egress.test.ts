@@ -54,6 +54,20 @@ async function enqueueOpened(contractId: string, occurredAt: string) {
   return evidence;
 }
 
+async function enqueueAwarded(contractId: string, occurredAt: string) {
+  const evidence = await createOcEvidence({
+    handle: "growthops",
+    contract_id: contractId,
+    cluster_id: "cluster-7",
+    cluster_slug: "outbound",
+    type: "OC_AWARDED",
+    occurred_at: occurredAt,
+    idempotency_key: "award-1",
+  });
+  assert.equal((await persistOcEvidence(evidence)).transition, "advance");
+  return evidence;
+}
+
 function stagingEnv(overrides: NodeJS.ProcessEnv = {}): NodeJS.ProcessEnv {
   return {
     FLOK_SPX402_EGRESS_MODE: "staging",
@@ -88,6 +102,11 @@ test("staging egress requires explicit mode, URL, and secret", () => {
     readOcEgressConfig(stagingEnv({ FLOK_SPX402_STAGING_URL: "https://spx.example/staging" })),
     null,
   );
+  assert.equal(
+    readOcEgressConfig(stagingEnv({ FLOK_SPX402_STAGING_URL: "https://spx.example" })),
+    null,
+  );
+  assert.equal(readOcEgressConfig(stagingEnv({ FLOK_OC_DRAIN_BATCH_SIZE: "100" }))?.batchSize, 5);
 });
 
 test("drainer sends v2 with bearer auth and marks the row sent", async () => {
@@ -200,6 +219,49 @@ test("drainer retries server failures and dead-letters terminal HTTP", async () 
       last_error: "http_400",
     },
   );
+});
+
+test("drainer preserves per-contract lifecycle delivery order", async () => {
+  const id = `contract-order-${crypto.randomUUID()}`;
+  await createContract(id, "2026-08-25T19:00:00.000Z");
+  const opened = await enqueueOpened(id, "2026-08-21T19:00:00.000Z");
+  await drainOcEvidenceOutbox({
+    env: stagingEnv(),
+    now: () => new Date("2026-08-21T19:01:00.000Z"),
+    fetcher: async () => Response.json({ error: "unavailable" }, { status: 503 }),
+  });
+  const awarded = await enqueueAwarded(id, "2026-08-21T19:01:05.000Z");
+  let delivered = 0;
+  const blocked = await drainOcEvidenceOutbox({
+    env: stagingEnv(),
+    now: () => new Date("2026-08-21T19:01:10.000Z"),
+    fetcher: async () => {
+      delivered += 1;
+      return Response.json({ ok: true });
+    },
+  });
+  assert.equal(blocked.claimed, 0);
+  assert.equal(delivered, 0);
+
+  await drainOcEvidenceOutbox({
+    env: stagingEnv(),
+    now: () => new Date("2026-08-21T19:01:31.000Z"),
+    fetcher: async (_url, init) => {
+      assert.equal(JSON.parse(String(init?.body)).event_id, opened.event_id);
+      delivered += 1;
+      return Response.json({ ok: true });
+    },
+  });
+  await drainOcEvidenceOutbox({
+    env: stagingEnv(),
+    now: () => new Date("2026-08-21T19:01:32.000Z"),
+    fetcher: async (_url, init) => {
+      assert.equal(JSON.parse(String(init?.body)).event_id, awarded.event_id);
+      delivered += 1;
+      return Response.json({ ok: true });
+    },
+  });
+  assert.equal(delivered, 2);
 });
 
 test("drainer retries auth failures and honors Retry-After", async () => {
@@ -461,8 +523,12 @@ test("expiry sweeper enqueues OC_FAILED for overdue open contracts", async () =>
     [id],
   );
   assert.deepEqual(rows[0], { current_type: "OC_FAILED", subject: opened.subject, outbox: 2 });
-  const quarantined = await sql.query<{ expiry_retry_at: unknown; expiry_last_error: string }>(
-    `select expiry_retry_at, expiry_last_error
+  const quarantined = await sql.query<{
+    expiry_retry_at: unknown;
+    expiry_last_error: string;
+    expiry_attempts: number;
+  }>(
+    `select expiry_retry_at, expiry_last_error, expiry_attempts
      from oc_lifecycle
      where contract_id = $1`,
     [malformedId],
@@ -471,9 +537,32 @@ test("expiry sweeper enqueues OC_FAILED for overdue open contracts", async () =>
     new Date(String(quarantined[0]?.expiry_retry_at)).toISOString(),
     "2026-08-23T20:00:00.000Z",
   );
-  assert.equal(quarantined[0]?.expiry_last_error, "ZodError");
-  const immediateRetry = await sweepExpiredOutcomeContracts({
-    now: () => new Date("2026-08-23T19:00:01.000Z"),
+  assert.equal(quarantined[0]?.expiry_last_error, "invalid_oc_evidence");
+  assert.equal(quarantined[0]?.expiry_attempts, 1);
+  const secondFailure = await sweepExpiredOutcomeContracts({
+    now: () => new Date("2026-08-23T20:00:00.000Z"),
   });
-  assert.deepEqual(immediateRetry, { scanned: 0, failed: 0, errors: 0 });
+  assert.deepEqual(secondFailure, { scanned: 1, failed: 0, errors: 1 });
+  const thirdFailure = await sweepExpiredOutcomeContracts({
+    now: () => new Date("2026-08-23T21:00:00.000Z"),
+  });
+  assert.deepEqual(thirdFailure, { scanned: 1, failed: 0, errors: 1 });
+  const deadLettered = await sql.query<{
+    expiry_attempts: number;
+    expiry_dead_lettered_at: unknown;
+  }>(
+    `select expiry_attempts, expiry_dead_lettered_at
+     from oc_lifecycle
+     where contract_id = $1`,
+    [malformedId],
+  );
+  assert.equal(deadLettered[0]?.expiry_attempts, 3);
+  assert.equal(
+    new Date(String(deadLettered[0]?.expiry_dead_lettered_at)).toISOString(),
+    "2026-08-23T21:00:00.000Z",
+  );
+  const noMoreRetries = await sweepExpiredOutcomeContracts({
+    now: () => new Date("2026-08-23T22:00:00.000Z"),
+  });
+  assert.deepEqual(noMoreRetries, { scanned: 0, failed: 0, errors: 0 });
 });

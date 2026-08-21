@@ -7,10 +7,6 @@ where payload->>'schema' is distinct from 'flok.oc-evidence.v2';
 alter table oc_evidence_outbox
   add column if not exists deadline_at timestamptz;
 
-alter table oc_lifecycle
-  add column if not exists expiry_retry_at timestamptz,
-  add column if not exists expiry_last_error text;
-
 update oc_evidence_outbox as outbox
 set deadline_at = contract.deadline
 from oc_evidence_events as event

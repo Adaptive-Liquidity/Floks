@@ -8,7 +8,7 @@ import {
 import type { OcEvidence } from "./oc-evidence.ts";
 
 const INGEST_PATH = "/api/public/ingest-oc-evidence";
-const DEFAULT_BATCH_SIZE = 25;
+const DEFAULT_BATCH_SIZE = 5;
 const DEFAULT_MAX_ATTEMPTS = 5;
 const MIN_CLAIM_LEASE_MS = 5 * 60 * 1000;
 const REQUEST_TIMEOUT_MS = 10_000;
@@ -17,6 +17,7 @@ const DRAIN_BUDGET_MS = 60_000;
 const MAX_DRAIN_ROWS = 5;
 const MAX_BACKOFF_MS = 60 * 60 * 1000;
 const EXPIRY_RETRY_MS = 60 * 60 * 1000;
+const EXPIRY_MAX_ATTEMPTS = 3;
 const MAX_ERROR_BODY_BYTES = 4 * 1024;
 
 type OutboxRow = {
@@ -95,8 +96,10 @@ export function readOcEgressConfig(env: NodeJS.ProcessEnv = process.env): OcEgre
     return null;
   }
   const local = base.hostname === "localhost" || base.hostname === "127.0.0.1";
+  const stagingHost = /(^|[.-])staging([.-]|$)/i.test(base.hostname);
   if (
     (base.protocol !== "https:" && !(local && base.protocol === "http:")) ||
+    (!local && !stagingHost) ||
     base.username ||
     base.password ||
     base.search ||
@@ -109,13 +112,28 @@ export function readOcEgressConfig(env: NodeJS.ProcessEnv = process.env): OcEgre
   return Object.freeze({
     endpoint: new URL(INGEST_PATH, `${base.origin}/`).toString(),
     secret,
-    batchSize: boundedInteger(env.FLOK_OC_DRAIN_BATCH_SIZE, DEFAULT_BATCH_SIZE, 100),
+    batchSize: boundedInteger(env.FLOK_OC_DRAIN_BATCH_SIZE, DEFAULT_BATCH_SIZE, MAX_DRAIN_ROWS),
     maxAttempts: boundedInteger(env.FLOK_OC_DRAIN_MAX_ATTEMPTS, DEFAULT_MAX_ATTEMPTS, 20),
   });
 }
 
 function parsePayload(payload: OcEvidence | string): OcEvidence {
   return (typeof payload === "string" ? JSON.parse(payload) : payload) as OcEvidence;
+}
+
+function expiryErrorCode(error: unknown): string {
+  const errorName =
+    typeof error === "object" && error !== null && "name" in error ? error.name : undefined;
+  if (error instanceof SyntaxError || errorName === "ZodError") return "invalid_oc_evidence";
+  if (
+    error instanceof Error &&
+    ["invalid_oc_deadline", "outcome_contract_not_found", "oc_deadline_mismatch"].includes(
+      error.message,
+    )
+  ) {
+    return error.message;
+  }
+  return "expiry_processing_failed";
 }
 
 function retryableStatus(status: number): boolean {
@@ -190,11 +208,29 @@ async function claimOutbox(sql: Sql, config: OcEgressConfig, now: Date): Promise
   return sql.transaction((tx) =>
     tx.query<OutboxRow>(
       `with candidates as (
-         select event_id
-         from oc_evidence_outbox
-         where status in ('pending', 'sending') and available_at <= $1
-         order by available_at, created_at
-         for update skip locked
+         select candidate.event_id
+         from oc_evidence_outbox as candidate
+         join oc_evidence_events as current_event
+           on current_event.event_id = candidate.event_id
+         where candidate.status in ('pending', 'sending')
+           and candidate.available_at <= $1
+           and not exists (
+             select 1
+             from oc_evidence_outbox as predecessor
+             join oc_evidence_events as predecessor_event
+               on predecessor_event.event_id = predecessor.event_id
+             where predecessor_event.contract_id = current_event.contract_id
+               and predecessor.status <> 'sent'
+               and (
+                 predecessor_event.occurred_at < current_event.occurred_at
+                 or (
+                   predecessor_event.occurred_at = current_event.occurred_at
+                   and predecessor.event_id < candidate.event_id
+                 )
+               )
+           )
+         order by candidate.available_at, candidate.created_at
+         for update of candidate skip locked
          limit $2
        )
        update oc_evidence_outbox as outbox
@@ -492,6 +528,7 @@ export async function sweepExpiredOutcomeContracts(
      where contract.deadline <= $1
        and lifecycle.current_type in ('OC_OPENED', 'OC_AWARDED')
        and (lifecycle.expiry_retry_at is null or lifecycle.expiry_retry_at <= $1)
+       and lifecycle.expiry_dead_lettered_at is null
      order by contract.deadline, contract.id
      limit $2`,
     [now.toISOString(), limit],
@@ -516,25 +553,36 @@ export async function sweepExpiredOutcomeContracts(
       if ((await persistOcEvidence(evidence, {}, sqlPromise)).transition === "advance") failed += 1;
     } catch (error) {
       errors += 1;
-      const errorName = error instanceof Error ? error.name : "unknown";
+      const errorCode = expiryErrorCode(error);
       try {
         await sql.query(
           `update oc_lifecycle
-           set expiry_retry_at = $3,
-               expiry_last_error = $4
+           set expiry_attempts = expiry_attempts + 1,
+               expiry_retry_at = case
+                 when expiry_attempts + 1 >= $5 then null
+                 else $3::timestamptz
+               end,
+               expiry_last_error = $4,
+               expiry_dead_lettered_at = case
+                 when expiry_attempts + 1 >= $5 then $6::timestamptz
+                 else null
+               end
            where contract_id = $1 and latest_event_id = $2`,
           [
             row.contract_id,
             row.latest_event_id,
             new Date(now.getTime() + EXPIRY_RETRY_MS).toISOString(),
-            errorName,
+            errorCode,
+            EXPIRY_MAX_ATTEMPTS,
+            now.toISOString(),
           ],
         );
-      } catch {
+      } catch (quarantineError) {
         console.warn(
           JSON.stringify({
             metric: "flok.oc_evidence_expiry.quarantine_error",
             contract_id: row.contract_id,
+            error: quarantineError instanceof Error ? quarantineError.name : "unknown",
           }),
         );
       }
@@ -542,7 +590,7 @@ export async function sweepExpiredOutcomeContracts(
         JSON.stringify({
           metric: "flok.oc_evidence_expiry.sweep_error",
           contract_id: row.contract_id,
-          error: errorName,
+          error: errorCode,
         }),
       );
     }

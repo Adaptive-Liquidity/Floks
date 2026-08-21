@@ -48,7 +48,7 @@ Preview uses PGLite. Production uses Postgres when `DATABASE_URL` is set. Do not
 
 Phase B sends `flok.oc-evidence.v2` only to a dedicated SPX staging deployment. Production SPX egress has no configuration path and remains closed; upstream `task_executor.decoderLive` remains `false`.
 
-Set `FLOK_SPX402_EGRESS_MODE=staging`, `FLOK_SPX402_STAGING_URL`, `OC_INGEST_SECRET`, `FLOK_OC_DRAIN_SECRET`, and `FLOK_SPX402_SUBJECTS`. The `OC_INGEST_SECRET` value must match the staging SPX deployment. Secret rotation remains a Gate 2 SPX follow-up because Phase A has no `_NEXT` accept slot.
+Set `FLOK_SPX402_EGRESS_MODE=staging`, `FLOK_SPX402_STAGING_URL`, `OC_INGEST_SECRET`, `FLOK_OC_DRAIN_SECRET`, and `FLOK_SPX402_SUBJECTS`. The staging URL hostname must contain a distinct `staging` marker delimited by a dot or hyphen (for example, `spx-staging.example`); production hosts are rejected. The `OC_INGEST_SECRET` value must match the staging SPX deployment. Secret rotation remains a Gate 2 SPX follow-up because Phase A has no `_NEXT` accept slot.
 
 Before enabling egress, provision every `FLOK_SPX402_SUBJECTS` value in the dedicated SPX staging registry. For an existing staging agent row, the SPX SQL is `update public.agents set category = 'task_executor', identifier_kind = 'executor_wallet', executor_wallet = mint where mint = '<subject>';`. Confirm it with `select mint, category, identifier_kind, executor_wallet from public.agents where mint = '<subject>';`; if no row exists, create it through the upstream agent registry first rather than inventing missing required fields.
 

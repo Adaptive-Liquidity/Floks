@@ -32,7 +32,8 @@ drain_status="$(curl -s -o "$DRAIN_RESPONSE" -w "%{http_code}" -X POST "$BASE/ap
 test "$drain_status" = "401"
 grep -q unauthorized "$DRAIN_RESPONSE"
 
-if [ -n "${FLOK_OC_DRAIN_SECRET:-}" ]; then
+if [ "${FLOK_SMOKE_EXPECT_EGRESS_DISABLED:-0}" = "1" ]; then
+  test -n "${FLOK_OC_DRAIN_SECRET:-}"
   drain_disabled_status="$(curl -s -o "$DRAIN_DISABLED_RESPONSE" -w "%{http_code}" \
     -X POST "$BASE/api/internal/oc-evidence/drain" \
     -H "authorization: Bearer $FLOK_OC_DRAIN_SECRET")"

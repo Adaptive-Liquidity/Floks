@@ -66,6 +66,7 @@ jobs:
         env:
           FLOK_APP_URL: http://127.0.0.1:8080
           FLOK_OC_DRAIN_SECRET: ci-smoke-drain-secret
+          FLOK_SMOKE_EXPECT_EGRESS_DISABLED: "1"
         run: bash scripts/smoke.sh
       - name: Browser smoke
         env:
