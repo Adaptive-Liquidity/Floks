@@ -16,6 +16,7 @@ const CLAIM_LEASE_BUFFER_MS = 60_000;
 const DRAIN_BUDGET_MS = 60_000;
 const MAX_DRAIN_ROWS = 5;
 const MAX_BACKOFF_MS = 60 * 60 * 1000;
+const EXPIRY_RETRY_MS = 60 * 60 * 1000;
 const MAX_ERROR_BODY_BYTES = 4 * 1024;
 
 type OutboxRow = {
@@ -28,6 +29,7 @@ type OutboxRow = {
 
 type ExpiredLifecycleRow = {
   contract_id: string;
+  latest_event_id: string;
   payload: OcEvidence | string;
 };
 
@@ -481,12 +483,15 @@ export async function sweepExpiredOutcomeContracts(
   const now = options.now?.() ?? new Date();
   const limit = Math.min(100, Math.max(1, options.limit ?? DEFAULT_BATCH_SIZE));
   const rows = await sql.query<ExpiredLifecycleRow>(
-    `select contract.id as contract_id, event.payload
+    `select contract.id as contract_id,
+            lifecycle.latest_event_id,
+            event.payload
      from outcome_contracts as contract
      join oc_lifecycle as lifecycle on lifecycle.contract_id = contract.id
      join oc_evidence_events as event on event.event_id = lifecycle.latest_event_id
      where contract.deadline <= $1
        and lifecycle.current_type in ('OC_OPENED', 'OC_AWARDED')
+       and (lifecycle.expiry_retry_at is null or lifecycle.expiry_retry_at <= $1)
      order by contract.deadline, contract.id
      limit $2`,
     [now.toISOString(), limit],
@@ -511,11 +516,33 @@ export async function sweepExpiredOutcomeContracts(
       if ((await persistOcEvidence(evidence, {}, sqlPromise)).transition === "advance") failed += 1;
     } catch (error) {
       errors += 1;
+      const errorName = error instanceof Error ? error.name : "unknown";
+      try {
+        await sql.query(
+          `update oc_lifecycle
+           set expiry_retry_at = $3,
+               expiry_last_error = $4
+           where contract_id = $1 and latest_event_id = $2`,
+          [
+            row.contract_id,
+            row.latest_event_id,
+            new Date(now.getTime() + EXPIRY_RETRY_MS).toISOString(),
+            errorName,
+          ],
+        );
+      } catch {
+        console.warn(
+          JSON.stringify({
+            metric: "flok.oc_evidence_expiry.quarantine_error",
+            contract_id: row.contract_id,
+          }),
+        );
+      }
       console.warn(
         JSON.stringify({
           metric: "flok.oc_evidence_expiry.sweep_error",
           contract_id: row.contract_id,
-          error: error instanceof Error ? error.name : "unknown",
+          error: errorName,
         }),
       );
     }

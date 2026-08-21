@@ -28,6 +28,9 @@ test("0009 purges v1 and upgrades the outbox for bounded delivery", async () => 
       created_at timestamptz not null default now(),
       sent_at timestamptz
     );
+    create table oc_lifecycle (
+      contract_id text primary key
+    );
     create index oc_evidence_outbox_pending_idx
       on oc_evidence_outbox (available_at, created_at)
       where status = 'pending';
@@ -54,6 +57,19 @@ test("0009 purges v1 and upgrades the outbox for bounded delivery", async () => 
   assert.equal(rows.rows[0]?.status, "pending");
   assert.equal(new Date(rows.rows[0]?.deadline_at).toISOString(), "2026-08-26T00:00:00.000Z");
   assert.equal(rows.rows[0]?.claim_token, null);
+  const lifecycleColumns = await db.query(
+    `select column_name
+     from information_schema.columns
+     where table_name = 'oc_lifecycle'`,
+  );
+  assert.equal(
+    lifecycleColumns.rows.some((row) => row.column_name === "expiry_retry_at"),
+    true,
+  );
+  assert.equal(
+    lifecycleColumns.rows.some((row) => row.column_name === "expiry_last_error"),
+    true,
+  );
   const indexes = await db.query(
     "select indexname from pg_indexes where tablename = 'oc_evidence_outbox'",
   );

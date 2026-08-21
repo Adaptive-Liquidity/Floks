@@ -461,4 +461,19 @@ test("expiry sweeper enqueues OC_FAILED for overdue open contracts", async () =>
     [id],
   );
   assert.deepEqual(rows[0], { current_type: "OC_FAILED", subject: opened.subject, outbox: 2 });
+  const quarantined = await sql.query<{ expiry_retry_at: unknown; expiry_last_error: string }>(
+    `select expiry_retry_at, expiry_last_error
+     from oc_lifecycle
+     where contract_id = $1`,
+    [malformedId],
+  );
+  assert.equal(
+    new Date(String(quarantined[0]?.expiry_retry_at)).toISOString(),
+    "2026-08-23T20:00:00.000Z",
+  );
+  assert.equal(quarantined[0]?.expiry_last_error, "ZodError");
+  const immediateRetry = await sweepExpiredOutcomeContracts({
+    now: () => new Date("2026-08-23T19:00:01.000Z"),
+  });
+  assert.deepEqual(immediateRetry, { scanned: 0, failed: 0, errors: 0 });
 });
