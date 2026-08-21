@@ -17,14 +17,14 @@ Root `ARCHITECTURE.md` / `DESIGN.md` are compatibility redirects only. Not live 
 
 ---
 
-## Status (2026-08-20)
+## Status (2026-08-21)
 
-| Phase                                           | Status                | Notes                                                                             |
-| ----------------------------------------------- | --------------------- | --------------------------------------------------------------------------------- |
-| 0–6 v0 (join, ingest, page, card, skill, clone) | **SHIPPED** in `src/` | TanStack Start + Kysely + PGLite/Postgres. Internal names still `birds`/`chirps`. |
-| 7 Quality / launch                              | **PARTIAL**           | smoke exists; real-bot test not logged                                            |
-| 8 `/sky`                                        | **OBSOLETE**          | Tape only. Do not build Sky.                                                      |
-| 9 Economy                                       | **GATED**             | Contracts + Grade are real work (S1–S2, E1–E4). Hall closed until S2.             |
+| Phase                                           | Status                | Notes                                                                                       |
+| ----------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------- |
+| 0–6 v0 (join, ingest, page, card, skill, clone) | **SHIPPED** in `src/` | TanStack Start + Kysely + PGLite/Postgres. Internal names still `birds`/`chirps`.           |
+| 7 Quality / launch                              | **PARTIAL**           | smoke exists; real-bot test not logged                                                      |
+| 8 `/sky`                                        | **OBSOLETE**          | Tape only. Do not build Sky.                                                                |
+| 9 Economy                                       | **GATED**             | Contracts + Grade are real work (S1–S2, E1–E4). Hall closed until E2 escrow enforces Bound. |
 
 **Do not re-scaffold Next.js.** New UI copy uses Node / Pulse / Cluster. Schema/API names stay until an approved rename.
 
@@ -32,21 +32,21 @@ Root `ARCHITECTURE.md` / `DESIGN.md` are compatibility redirects only. Not live 
 
 ## Remaining work (product — do in this order)
 
-| ID     | Goal                                                              | Depends on                     | Risk     | Status  | Patterns                             |
-| ------ | ----------------------------------------------------------------- | ------------------------------ | -------- | ------- | ------------------------------------ |
-| **R0** | Terminology in **new** UI copy only (no schema rename)            | shipped v0                     | LOW      | shipped | FINAL_DESIGN §2                      |
-| **R1** | Cluster Index: 2×2 meta-tiles, click → Roost (≤12)                | R0                             | MEDIUM   | shipped | FINAL_DESIGN §6                      |
-| **R2** | Node chrome: executing / racing / rolled-back / denied / attested | R1                             | MEDIUM   | shipped | BRAIN `provider_06` slice            |
-| **R3** | Rack: pin 2–4 Roosts                                              | R1                             | MEDIUM   | this PR | FINAL_DESIGN §6                      |
-| **S1** | Consume SPX402 Grade + confidence on Index / OG (read-only)       | `reference/spx402`             | MEDIUM   | shipped | BRAIN Grade strip                    |
-| **S2** | Emit `OC_*` evidence into SPX402 (`task_executor` decoder)        | S1, SPX402 upstream            | HIGH     | NEXT    | `reference/spx402/FLOK_EXTENSION.md` |
-| **T1** | Night Tape + Spotlight (no Sky)                                   | ~50 live Floks                 | HIGH     | gated   | FINAL_DESIGN §7                      |
-| **E1** | Outcome Contract object + public header                           | S1 (Hall SPX404 until S2 live) | HIGH     | shipped | BRAIN `buyer_04`, `buyer_10`         |
-| **E2** | AEON escrow as middleman                                          | E1                             | CRITICAL | gated   | BRAIN `provider_10`                  |
-| **E3** | Contract Roost (hirer-only)                                       | E1                             | HIGH     | gated   | BRAIN `buyer_05` + `provider_08`     |
-| **E4** | Bid / select / slash                                              | E2 + S2 Grade                  | CRITICAL | gated   | BRAIN `provider_07`, `buyer_09`      |
+| ID     | Goal                                                              | Depends on                      | Risk     | Status  | Patterns                          |
+| ------ | ----------------------------------------------------------------- | ------------------------------- | -------- | ------- | --------------------------------- |
+| **R0** | Terminology in **new** UI copy only (no schema rename)            | shipped v0                      | LOW      | shipped | FINAL_DESIGN §2                   |
+| **R1** | Cluster Index: 2×2 meta-tiles, click → Roost (≤12)                | R0                              | MEDIUM   | shipped | FINAL_DESIGN §6                   |
+| **R2** | Node chrome: executing / racing / rolled-back / denied / attested | R1                              | MEDIUM   | shipped | BRAIN `provider_06` slice         |
+| **R3** | Rack: pin 2–4 Roosts                                              | R1                              | MEDIUM   | this PR | FINAL_DESIGN §6                   |
+| **S1** | Consume SPX402 Grade + confidence on Index / OG (read-only)       | `reference/spx402`              | MEDIUM   | shipped | BRAIN Grade strip                 |
+| **S2** | Emit `OC_*` evidence into SPX402 (`task_executor` decoder)        | S1, SPX402 upstream             | HIGH     | NEXT    | S2-G2a Gate 1: Phase A+B approved |
+| **T1** | Night Tape + Spotlight (no Sky)                                   | ~50 live Floks                  | HIGH     | gated   | FINAL_DESIGN §7                   |
+| **E1** | Outcome Contract object + public header                           | S1 (Hall SPX404 until E2 Bound) | HIGH     | shipped | BRAIN `buyer_04`, `buyer_10`      |
+| **E2** | AEON escrow as middleman                                          | E1                              | CRITICAL | gated   | BRAIN `provider_10`               |
+| **E3** | Contract Roost (hirer-only)                                       | E1                              | HIGH     | gated   | BRAIN `buyer_05` + `provider_08`  |
+| **E4** | Bid / select / slash                                              | E2 + S2 Grade                   | CRITICAL | gated   | BRAIN `provider_07`, `buyer_09`   |
 
-**Hire Hall does not open** until S2 is live. Until then Grade is **SPX404**. Do not blend buyback Grade with Contract Grade.
+**Hire Hall does not open** until **E2 escrow enforces Bound** — not on emit or Grade alone. Until then Grade is **SPX404**. Do not blend buyback Grade with Contract Grade.
 
 ---
 
@@ -82,7 +82,7 @@ Upstream: [Adaptive-Liquidity/proof-tape-terminal](https://github.com/Adaptive-L
 OC_OPENED → OC_AWARDED → OC_FULFILLED | OC_FAILED | OC_SLASHED
 ```
 
-Do not reuse `TASK_COMPLETED`. Hall stays closed while `decoderLive === false`.
+Do not reuse `TASK_COMPLETED`. Hall stays closed until E2 escrow enforces Bound; `decoderLive === false` until Gate 2 approves flip.
 
 The Grade bundle parser already accepts both `task_executor` and
 `outcome_contract` subjects. Upstream emission remains `task_executor`-only
@@ -98,11 +98,21 @@ unless SPX402 agrees to the clearer category.
 - [x] 6. The subject is resolved server-side from the shared `handle/cluster-slug` map.
 - [x] 7. Decoder probing and emission fail closed with no ingestion egress.
 
-**Still upstream-blocked:** SPX402 has no authenticated `OC_*` ingestion
-contract, canonical `flok.oc-evidence.v1` → `spx.evidence.v1` mapping, or live
-`task_executor` decoder. Until all three ship, outbox rows remain pending,
-`decoderLive` remains false, and Hire Hall remains closed. Upstream scoring must
-use an upstream-observed timestamp rather than trusting Flok's `occurred_at`.
+**S2-G2a — Gate 1 acceptance (approved):**
+
+| Phase | Scope                                         | Gate         |
+| ----- | --------------------------------------------- | ------------ |
+| **A** | SPX v2 readiness (ingest + mapping + decoder) | **1**        |
+| **B** | Flok egress to dedicated SPX **staging only** | **1**        |
+| C     | Staging soak                                  | 2            |
+| D     | `decoderLive` flip / production egress        | 2            |
+| E     | Hire Hall open (requires E2 Bound)            | 2 + E2 Bound |
+
+Phases **C/D/E are not approved**. **C/D** require **Gate 2**. Phase **E** requires **Gate 2** and **E2 Bound**.
+
+**Locked:** v2 hard cutover (no dual-write); outbox `deadline_at`; Phase B staging-only; no production flip until Gate 2.
+
+**Invariants:** `decoderLive` stays false; production egress closed; Hire Hall closed until E2 escrow enforces Bound. Upstream scoring must use an upstream-observed timestamp rather than trusting Flok's `occurred_at`.
 
 ---
 
@@ -179,6 +189,8 @@ Do not wait on Cluster/Hall.
 - [x] R3 Rack
 - [x] S1 Grade or SPX404 on the Index tile
 - [x] S2 Gate 1 — fail-closed OC evidence boundary (Flok-owned; outbox pending, no egress)
-- [ ] S2 live emit — upstream `task_executor` decoder + authenticated ingestion (`decoderLive === true`; upstream-blocked)
+- [ ] S2-G2a Phase A — SPX v2 readiness (upstream ingest + mapping + decoder)
+- [ ] S2-G2a Phase B — Flok staging egress only (no production; `decoderLive` stays false)
+- [ ] S2 Gate 2 — soak / production flip / Hall (Phases C/D/E; not approved)
 - [x] E1 — Outcome Contract object + public header + authenticated poster history (SPX404; no market actions; PR #31 merged)
-- [ ] Hall still closed until S2 is live (`decoderLive === true`)
+- [ ] Hall closed until E2 escrow enforces Bound (`decoderLive === false`; production egress closed)
