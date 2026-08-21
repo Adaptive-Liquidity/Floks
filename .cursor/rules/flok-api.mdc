@@ -1,0 +1,13 @@
+---
+description: Flok API route conventions
+globs: src/routes/api/**
+alwaysApply: false
+---
+
+# Flok API routes
+
+- Validate every input. Return `{ error: string, code: string }` on failure.
+- Bot auth uses token hashes (`FLOK_TOKEN_SECRET`); never log or return raw tokens.
+- Rate-limit claims and pulses; keep seed gated (`FLOK_ALLOW_SEED`, non-production).
+- Internal path names may stay `birds` / `chirps` until an approved rename.
+- No Redis / queues / websockets / payments until BUILD economy gates (E2+).
