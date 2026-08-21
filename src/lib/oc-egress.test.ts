@@ -264,6 +264,75 @@ test("drainer preserves per-contract lifecycle delivery order", async () => {
   assert.equal(delivered, 2);
 });
 
+test("drainer orders equal-time terminal evidence by event id", async () => {
+  const id = `contract-terminal-order-${crypto.randomUUID()}`;
+  const deadline = "2026-08-25T19:00:00.000Z";
+  const occurredAt = "2026-08-21T19:00:00.000Z";
+  await createContract(id, deadline);
+  const evidence = await Promise.all([
+    createOcEvidence({
+      handle: "growthops",
+      contract_id: id,
+      cluster_id: "cluster-7",
+      cluster_slug: "outbound",
+      type: "OC_FAILED",
+      occurred_at: occurredAt,
+      idempotency_key: "failed-1",
+    }),
+    createOcEvidence({
+      handle: "growthops",
+      contract_id: id,
+      cluster_id: "cluster-7",
+      cluster_slug: "outbound",
+      type: "OC_FULFILLED",
+      occurred_at: occurredAt,
+      capsule_id: "capsule-1",
+      idempotency_key: "fulfilled-1",
+    }),
+  ]);
+  const sql = await getSql();
+  for (const item of evidence) {
+    await sql.query(
+      `insert into oc_evidence_events (
+         event_id, idempotency_key, contract_id, cluster_id, cluster_slug,
+         subject, type, occurred_at, evidence_hash, capsule_id, payload
+       ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb)`,
+      [
+        item.event_id,
+        item.idempotency_key,
+        item.contract_id,
+        item.cluster_id,
+        item.cluster_slug,
+        item.subject,
+        item.type,
+        item.occurred_at,
+        item.evidence_hash,
+        item.capsule_id ?? null,
+        JSON.stringify(item),
+      ],
+    );
+    await sql.query(
+      "insert into oc_evidence_outbox (event_id, payload, deadline_at) values ($1, $2::jsonb, $3)",
+      [item.event_id, JSON.stringify(item), deadline],
+    );
+  }
+
+  const expectedOrder = evidence.map((item) => item.event_id).sort();
+  const delivered: string[] = [];
+  for (let index = 0; index < expectedOrder.length; index += 1) {
+    const result = await drainOcEvidenceOutbox({
+      env: stagingEnv(),
+      now: () => new Date(`2026-08-21T19:01:0${index}.000Z`),
+      fetcher: async (_url, init) => {
+        delivered.push(JSON.parse(String(init?.body)).event_id);
+        return Response.json({ ok: true });
+      },
+    });
+    assert.equal(result.claimed, 1);
+  }
+  assert.deepEqual(delivered, expectedOrder);
+});
+
 test("drainer retries auth failures and honors Retry-After", async () => {
   const authId = `contract-auth-${crypto.randomUUID()}`;
   await createContract(authId, "2026-08-25T19:00:00.000Z");
@@ -500,29 +569,56 @@ test("expiry sweeper enqueues OC_FAILED for overdue open contracts", async () =>
 
   const previousSubjects = process.env.FLOK_SPX402_SUBJECTS;
   delete process.env.FLOK_SPX402_SUBJECTS;
-  const result = await sweepExpiredOutcomeContracts({
-    now: () => new Date("2026-08-23T19:00:00.000Z"),
-  }).finally(() => {
+  const concurrentResults = await Promise.all([
+    sweepExpiredOutcomeContracts({
+      now: () => new Date("2026-08-23T19:00:00.000Z"),
+    }),
+    sweepExpiredOutcomeContracts({
+      now: () => new Date("2026-08-23T19:00:00.000Z"),
+    }),
+  ]).finally(() => {
     if (previousSubjects === undefined) {
       delete process.env.FLOK_SPX402_SUBJECTS;
     } else {
       process.env.FLOK_SPX402_SUBJECTS = previousSubjects;
     }
   });
+  const result = concurrentResults.reduce(
+    (total, item) => ({
+      scanned: total.scanned + item.scanned,
+      failed: total.failed + item.failed,
+      errors: total.errors + item.errors,
+    }),
+    { scanned: 0, failed: 0, errors: 0 },
+  );
   assert.equal(result.scanned, 2);
   assert.equal(result.failed, 1);
   assert.equal(result.errors, 1);
 
-  const rows = await sql.query<{ current_type: string; subject: string; outbox: number }>(
+  const rows = await sql.query<{
+    current_type: string;
+    subject: string;
+    expiry_claim_token: string | null;
+    expiry_claim_until: unknown;
+    outbox: number;
+  }>(
     `select lifecycle.current_type,
        lifecycle.subject,
+       lifecycle.expiry_claim_token,
+       lifecycle.expiry_claim_until,
        (select count(*)::int from oc_evidence_outbox as outbox
         join oc_evidence_events as event using (event_id)
         where event.contract_id = lifecycle.contract_id) as outbox
      from oc_lifecycle as lifecycle where lifecycle.contract_id = $1`,
     [id],
   );
-  assert.deepEqual(rows[0], { current_type: "OC_FAILED", subject: opened.subject, outbox: 2 });
+  assert.deepEqual(rows[0], {
+    current_type: "OC_FAILED",
+    subject: opened.subject,
+    expiry_claim_token: null,
+    expiry_claim_until: null,
+    outbox: 2,
+  });
   const quarantined = await sql.query<{
     expiry_retry_at: unknown;
     expiry_last_error: string;

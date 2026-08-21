@@ -18,6 +18,7 @@ const MAX_DRAIN_ROWS = 5;
 const MAX_BACKOFF_MS = 60 * 60 * 1000;
 const EXPIRY_RETRY_MS = 60 * 60 * 1000;
 const EXPIRY_MAX_ATTEMPTS = 3;
+const EXPIRY_CLAIM_LEASE_MS = 5 * 60 * 1000;
 const MAX_ERROR_BODY_BYTES = 4 * 1024;
 
 type OutboxRow = {
@@ -31,6 +32,7 @@ type OutboxRow = {
 type ExpiredLifecycleRow = {
   contract_id: string;
   latest_event_id: string;
+  claim_token: string;
   payload: OcEvidence | string;
 };
 
@@ -241,7 +243,19 @@ async function claimOutbox(sql: Sql, config: OcEgressConfig, now: Date): Promise
                  )
                  or (
                    predecessor_event.occurred_at = current_event.occurred_at
-                   and predecessor_event.type = current_event.type
+                   and (
+                     case predecessor_event.type
+                       when 'OC_OPENED' then 1
+                       when 'OC_AWARDED' then 2
+                       else 3
+                     end
+                   ) = (
+                     case current_event.type
+                       when 'OC_OPENED' then 1
+                       when 'OC_AWARDED' then 2
+                       else 3
+                     end
+                   )
                    and predecessor.event_id < candidate.event_id
                  )
                )
@@ -524,6 +538,55 @@ export async function drainOcEvidenceOutbox(
   });
 }
 
+async function claimExpiredLifecycleRows(
+  sql: Sql,
+  now: Date,
+  limit: number,
+): Promise<ExpiredLifecycleRow[]> {
+  const claimToken = randomUUID();
+  const claimUntil = new Date(now.getTime() + EXPIRY_CLAIM_LEASE_MS).toISOString();
+  return sql.transaction((tx) =>
+    tx.query<ExpiredLifecycleRow>(
+      `with candidates as (
+         select lifecycle.contract_id
+         from outcome_contracts as contract
+         join oc_lifecycle as lifecycle on lifecycle.contract_id = contract.id
+         where contract.deadline <= $1
+           and lifecycle.current_type in ('OC_OPENED', 'OC_AWARDED')
+           and (lifecycle.expiry_retry_at is null or lifecycle.expiry_retry_at <= $1)
+           and lifecycle.expiry_dead_lettered_at is null
+           and (lifecycle.expiry_claim_until is null or lifecycle.expiry_claim_until <= $1)
+         order by contract.deadline, contract.id
+         for update of lifecycle skip locked
+         limit $2
+       ),
+       claimed as (
+         update oc_lifecycle as lifecycle
+         set expiry_claim_token = $3,
+             expiry_claim_until = $4
+         from candidates
+         where lifecycle.contract_id = candidates.contract_id
+         returning lifecycle.contract_id, lifecycle.latest_event_id,
+           lifecycle.expiry_claim_token as claim_token
+       )
+       select claimed.contract_id, claimed.latest_event_id, claimed.claim_token, event.payload
+       from claimed
+       join oc_evidence_events as event on event.event_id = claimed.latest_event_id`,
+      [now.toISOString(), limit, claimToken, claimUntil],
+    ),
+  );
+}
+
+async function releaseExpiryClaim(sql: Sql, row: ExpiredLifecycleRow): Promise<void> {
+  await sql.query(
+    `update oc_lifecycle
+     set expiry_claim_token = null,
+         expiry_claim_until = null
+     where contract_id = $1 and expiry_claim_token = $2`,
+    [row.contract_id, row.claim_token],
+  );
+}
+
 export async function sweepExpiredOutcomeContracts(
   options: {
     sqlPromise?: Promise<Sql>;
@@ -535,21 +598,7 @@ export async function sweepExpiredOutcomeContracts(
   const sql = await sqlPromise;
   const now = options.now?.() ?? new Date();
   const limit = Math.min(100, Math.max(1, options.limit ?? DEFAULT_BATCH_SIZE));
-  const rows = await sql.query<ExpiredLifecycleRow>(
-    `select contract.id as contract_id,
-            lifecycle.latest_event_id,
-            event.payload
-     from outcome_contracts as contract
-     join oc_lifecycle as lifecycle on lifecycle.contract_id = contract.id
-     join oc_evidence_events as event on event.event_id = lifecycle.latest_event_id
-     where contract.deadline <= $1
-       and lifecycle.current_type in ('OC_OPENED', 'OC_AWARDED')
-       and (lifecycle.expiry_retry_at is null or lifecycle.expiry_retry_at <= $1)
-       and lifecycle.expiry_dead_lettered_at is null
-     order by contract.deadline, contract.id
-     limit $2`,
-    [now.toISOString(), limit],
-  );
+  const rows = await claimExpiredLifecycleRows(sql, now, limit);
   let failed = 0;
   let errors = 0;
   for (const row of rows) {
@@ -567,7 +616,20 @@ export async function sweepExpiredOutcomeContracts(
         },
         previous.subject,
       );
-      if ((await persistOcEvidence(evidence, {}, sqlPromise)).transition === "advance") failed += 1;
+      const persisted = await persistOcEvidence(evidence, {}, sqlPromise);
+      if (persisted.transition === "advance") failed += 1;
+      try {
+        await releaseExpiryClaim(sql, row);
+      } catch (releaseError) {
+        errors += 1;
+        console.warn(
+          JSON.stringify({
+            metric: "flok.oc_evidence_expiry.release_error",
+            contract_id: row.contract_id,
+            error: releaseError instanceof Error ? releaseError.name : "unknown",
+          }),
+        );
+      }
     } catch (error) {
       errors += 1;
       const errorCode = expiryErrorCode(error);
@@ -583,8 +645,10 @@ export async function sweepExpiredOutcomeContracts(
                expiry_dead_lettered_at = case
                  when expiry_attempts + 1 >= $5 then $6::timestamptz
                  else null
-               end
-           where contract_id = $1 and latest_event_id = $2`,
+               end,
+               expiry_claim_token = null,
+               expiry_claim_until = null
+           where contract_id = $1 and latest_event_id = $2 and expiry_claim_token = $7`,
           [
             row.contract_id,
             row.latest_event_id,
@@ -592,6 +656,7 @@ export async function sweepExpiredOutcomeContracts(
             errorCode,
             EXPIRY_MAX_ATTEMPTS,
             now.toISOString(),
+            row.claim_token,
           ],
         );
       } catch (quarantineError) {

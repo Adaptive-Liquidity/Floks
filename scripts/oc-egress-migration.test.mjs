@@ -11,8 +11,12 @@ const expiryMigration = await readFile(
   new URL("../migrations/0010_oc_expiry_quarantine.sql", import.meta.url),
   "utf8",
 );
+const expiryClaimsMigration = await readFile(
+  new URL("../migrations/0011_oc_expiry_claims.sql", import.meta.url),
+  "utf8",
+);
 
-test("0009 and 0010 upgrade bounded delivery and expiry quarantine", async () => {
+test("0009 through 0011 upgrade bounded delivery and expiry quarantine", async () => {
   const db = new PGlite();
   await db.exec(`
     create table outcome_contracts (
@@ -55,6 +59,7 @@ test("0009 and 0010 upgrade bounded delivery and expiry quarantine", async () =>
 
   await db.exec(migration);
   await db.exec(expiryMigration);
+  await db.exec(expiryClaimsMigration);
   const rows = await db.query(
     "select event_id, status, deadline_at, claim_token from oc_evidence_outbox order by event_id",
   );
@@ -82,6 +87,14 @@ test("0009 and 0010 upgrade bounded delivery and expiry quarantine", async () =>
   );
   assert.equal(
     lifecycleColumns.rows.some((row) => row.column_name === "expiry_dead_lettered_at"),
+    true,
+  );
+  assert.equal(
+    lifecycleColumns.rows.some((row) => row.column_name === "expiry_claim_token"),
+    true,
+  );
+  assert.equal(
+    lifecycleColumns.rows.some((row) => row.column_name === "expiry_claim_until"),
     true,
   );
   const indexes = await db.query(
