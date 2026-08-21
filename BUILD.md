@@ -100,15 +100,15 @@ unless SPX402 agrees to the clearer category.
 
 **S2-G2a — Gate 1 acceptance (approved):**
 
-| Phase | Scope                                         | Gate  |
-| ----- | --------------------------------------------- | ----- |
-| **A** | SPX v2 readiness (ingest + mapping + decoder) | **1** |
-| **B** | Flok egress to dedicated SPX **staging only** | **1** |
-| C     | Staging soak                                  | 2     |
-| D     | `decoderLive` flip / production egress        | 2     |
-| E     | Hire Hall open (requires E2 Bound)            | 2     |
+| Phase | Scope                                         | Gate         |
+| ----- | --------------------------------------------- | ------------ |
+| **A** | SPX v2 readiness (ingest + mapping + decoder) | **1**        |
+| **B** | Flok egress to dedicated SPX **staging only** | **1**        |
+| C     | Staging soak                                  | 2            |
+| D     | `decoderLive` flip / production egress        | 2            |
+| E     | Hire Hall open (requires E2 Bound)            | 2 + E2 Bound |
 
-Phases **C/D/E are not approved** — require **Gate 2**.
+Phases **C/D/E are not approved**. **C/D** require **Gate 2**. Phase **E** requires **Gate 2** and **E2 Bound**.
 
 **Locked:** v2 hard cutover (no dual-write); outbox `deadline_at`; Phase B staging-only; no production flip until Gate 2.
 
