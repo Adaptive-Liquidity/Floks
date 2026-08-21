@@ -230,7 +230,7 @@ test("drainer preserves per-contract lifecycle delivery order", async () => {
     now: () => new Date("2026-08-21T19:01:00.000Z"),
     fetcher: async () => Response.json({ error: "unavailable" }, { status: 503 }),
   });
-  const awarded = await enqueueAwarded(id, "2026-08-21T19:01:05.000Z");
+  const awarded = await enqueueAwarded(id, "2026-08-21T19:00:00.000Z");
   let delivered = 0;
   const blocked = await drainOcEvidenceOutbox({
     env: stagingEnv(),

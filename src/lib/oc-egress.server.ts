@@ -225,6 +225,23 @@ async function claimOutbox(sql: Sql, config: OcEgressConfig, now: Date): Promise
                  predecessor_event.occurred_at < current_event.occurred_at
                  or (
                    predecessor_event.occurred_at = current_event.occurred_at
+                   and (
+                     case predecessor_event.type
+                       when 'OC_OPENED' then 1
+                       when 'OC_AWARDED' then 2
+                       else 3
+                     end
+                   ) < (
+                     case current_event.type
+                       when 'OC_OPENED' then 1
+                       when 'OC_AWARDED' then 2
+                       else 3
+                     end
+                   )
+                 )
+                 or (
+                   predecessor_event.occurred_at = current_event.occurred_at
+                   and predecessor_event.type = current_event.type
                    and predecessor.event_id < candidate.event_id
                  )
                )
