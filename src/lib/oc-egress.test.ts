@@ -158,6 +158,7 @@ test("drainer releases unattempted claims when its time budget expires", async (
   );
   assert.equal(fetchCalls, 0);
   assert.equal(result.claimed, 1);
+  assert.equal(result.released, 1);
   assert.equal(rows[0]?.status, "pending");
   assert.equal(rows[0]?.attempts, 0);
   assert.equal(rows[0]?.claim_token, null);

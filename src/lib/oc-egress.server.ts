@@ -49,6 +49,7 @@ export type OcEgressConfig = Readonly<{
 export type OcDrainResult = Readonly<{
   enabled: boolean;
   claimed: number;
+  released: number;
   sent: number;
   retried: number;
   deadLettered: number;
@@ -209,16 +210,18 @@ async function claimOutbox(sql: Sql, config: OcEgressConfig, now: Date): Promise
   );
 }
 
-async function releaseClaim(sql: Sql, row: OutboxRow, now: Date): Promise<void> {
-  await sql.query(
+async function releaseClaim(sql: Sql, row: OutboxRow, now: Date): Promise<boolean> {
+  const updated = await sql.query<{ event_id: string }>(
     `update oc_evidence_outbox
      set status = 'pending',
          attempts = greatest(0, attempts - 1),
          available_at = $2,
          claim_token = null
-     where event_id = $1 and status = 'sending' and claim_token = $3`,
+     where event_id = $1 and status = 'sending' and claim_token = $3
+     returning event_id`,
     [row.event_id, now.toISOString(), row.claim_token],
   );
+  return updated.length === 1;
 }
 
 async function markSent(sql: Sql, row: OutboxRow, now: Date): Promise<boolean> {
@@ -366,6 +369,7 @@ export async function drainOcEvidenceOutbox(
     return Object.freeze({
       enabled: false,
       claimed: 0,
+      released: 0,
       sent: 0,
       retried: 0,
       deadLettered: 0,
@@ -380,12 +384,13 @@ export async function drainOcEvidenceOutbox(
   let sent = 0;
   let retried = 0;
   let deadLettered = 0;
+  let released = 0;
   const drainDeadline = now().getTime() + DRAIN_BUDGET_MS;
 
   for (const [index, row] of rows.entries()) {
     if (now().getTime() >= drainDeadline) {
       for (const remaining of rows.slice(index)) {
-        await releaseClaim(sql, remaining, now());
+        if (await releaseClaim(sql, remaining, now())) released += 1;
       }
       break;
     }
@@ -447,6 +452,7 @@ export async function drainOcEvidenceOutbox(
       metric: "flok.oc_evidence_outbox.drain_lag_seconds",
       value: lagSeconds,
       claimed: rows.length,
+      released,
       sent,
       retried,
       dead_lettered: deadLettered,
@@ -455,6 +461,7 @@ export async function drainOcEvidenceOutbox(
   return Object.freeze({
     enabled: true,
     claimed: rows.length,
+    released,
     sent,
     retried,
     deadLettered,
