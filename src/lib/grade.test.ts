@@ -33,6 +33,15 @@ test("parseEvidenceGrade accepts OC grades and separates confidence", () => {
   assert.equal(parse(evidence({ confidence_at_publish: 0.66 })).outlined, false);
 });
 
+test("parseEvidenceGrade accepts the existing outcome_contract category", () => {
+  assert.deepEqual(parse(evidence({ subject: { id: SUBJECT, category: "outcome_contract" } })), {
+    grade: "SPX AA",
+    confidence: 0.8,
+    outlined: false,
+    source: "spx402",
+  });
+});
+
 test("parseEvidenceGrade keeps valid grades outlined without usable confidence", () => {
   const parsed = parse(evidence({ confidence_at_publish: null }));
   assert.equal(parsed.grade, "SPX AA");
