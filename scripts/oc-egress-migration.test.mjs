@@ -37,10 +37,12 @@ test("0009 purges v1 and upgrades the outbox for bounded delivery", async () => 
       ('contract-v2', '2026-08-26T00:00:00Z');
     insert into oc_evidence_events values
       ('event-v1', 'contract-v1'),
-      ('event-v2', 'contract-v2');
+      ('event-v2', 'contract-v2'),
+      ('event-orphan', 'contract-missing');
     insert into oc_evidence_outbox (event_id, payload) values
       ('event-v1', '{"schema":"flok.oc-evidence.v1"}'),
-      ('event-v2', '{"schema":"flok.oc-evidence.v2"}');
+      ('event-v2', '{"schema":"flok.oc-evidence.v2"}'),
+      ('event-orphan', '{"schema":"flok.oc-evidence.v2"}');
   `);
 
   await db.exec(migration);

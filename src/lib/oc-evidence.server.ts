@@ -32,7 +32,11 @@ async function materializeOcEvidence(
   const parsed = ocEvidenceInputSchema.parse(input);
   const boundSubject = ocSubjectSchema.parse(subject);
   const requiresDeadline = parsed.type === "OC_OPENED" || parsed.type === "OC_AWARDED";
-  const deadlineAtMs = requiresDeadline ? Date.parse(String(deadlineAt)) : undefined;
+  const deadlineAtMs = requiresDeadline
+    ? deadlineAt instanceof Date
+      ? deadlineAt.getTime()
+      : Date.parse(String(deadlineAt))
+    : undefined;
   if (requiresDeadline) {
     const occurredAtMs = Date.parse(parsed.occurred_at);
     if (!Number.isFinite(deadlineAtMs) || Number(deadlineAtMs) <= occurredAtMs) {
@@ -289,7 +293,10 @@ export async function persistOcEvidence(
     );
     const contractDeadline = contractRows[0]?.deadline;
     if (contractDeadline === undefined) throw new Error("outcome_contract_not_found");
-    const deadlineAt = new Date(String(contractDeadline)).toISOString();
+    const deadlineAt =
+      contractDeadline instanceof Date
+        ? contractDeadline.toISOString()
+        : new Date(String(contractDeadline)).toISOString();
     if (
       (validated.type === "OC_OPENED" || validated.type === "OC_AWARDED") &&
       validated.deadline_at !== deadlineAt

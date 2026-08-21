@@ -61,7 +61,7 @@ async function event(
 ) {
   const input = { ...INPUT, type, ...overrides };
   await ensureContract(String(input.contract_id));
-  return createOcEvidence({ ...INPUT, type, ...overrides });
+  return createOcEvidence(input);
 }
 
 test("OC taxonomy is exact and never aliases TASK_COMPLETED", () => {

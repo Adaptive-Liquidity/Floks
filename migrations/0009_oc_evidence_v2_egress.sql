@@ -14,6 +14,9 @@ join outcome_contracts as contract on contract.id = event.contract_id
 where event.event_id = outbox.event_id
   and outbox.deadline_at is null;
 
+delete from oc_evidence_outbox
+where deadline_at is null;
+
 alter table oc_evidence_outbox
   alter column deadline_at set not null;
 

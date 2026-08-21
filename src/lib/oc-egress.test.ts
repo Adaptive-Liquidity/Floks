@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
-import test from "node:test";
-import { getSql } from "./db.ts";
+import test, { beforeEach } from "node:test";
+import { dbSource, getSql } from "./db.ts";
 import {
   drainOcEvidenceOutbox,
   readOcEgressConfig,
@@ -12,6 +12,15 @@ import { createOcEvidence, persistOcEvidence } from "./oc-evidence.server.ts";
 
 const SUBJECT = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijk";
 process.env.FLOK_SPX402_SUBJECTS = JSON.stringify({ "growthops/outbound": SUBJECT });
+
+beforeEach(async () => {
+  if (dbSource !== "pglite") throw new Error("oc_egress_tests_require_pglite");
+  const sql = await getSql();
+  await sql.query("delete from oc_evidence_outbox");
+  await sql.query("delete from oc_lifecycle");
+  await sql.query("delete from oc_evidence_events");
+  await sql.query("delete from outcome_contracts");
+});
 
 async function createContract(id: string, deadline: string) {
   const sql = await getSql();
@@ -25,7 +34,8 @@ async function createContract(id: string, deadline: string) {
        deadline, bound, visibility, version, contract_hash
      ) values ($1, $2, $3, 'artifact', 'Produce a verifiable staging artifact.',
        '[]'::jsonb, $4, '{"amount":"1","currency":"USD"}'::jsonb,
-       'public', 1, $5)`,
+       'public', 1, $5)
+     on conflict (id) do nothing`,
     [id, `user-${id}`, `@poster_${suffix}`, deadline, `sha256:${suffix.padEnd(64, "0")}`],
   );
 }
@@ -110,7 +120,7 @@ test("drainer sends v2 with bearer auth and marks the row sent", async () => {
     "Bearer test-ingest-secret",
   );
   assert.equal(request?.init?.redirect, "error");
-  assert.equal(leaseUntil, "2026-08-21T19:18:40.000Z");
+  assert.equal(leaseUntil, "2026-08-21T19:06:00.000Z");
   const payload = JSON.parse(String(request?.init?.body)) as Record<string, unknown>;
   assert.equal(payload.schema, "flok.oc-evidence.v2");
   assert.equal(payload.deadline_at, deadline);
@@ -121,6 +131,36 @@ test("drainer sends v2 with bearer auth and marks the row sent", async () => {
     [opened.event_id],
   );
   assert.deepEqual(rows[0], { status: "sent", attempts: 1 });
+});
+
+test("drainer releases unattempted claims when its time budget expires", async () => {
+  const id = `contract-budget-${crypto.randomUUID()}`;
+  await createContract(id, "2026-08-25T19:00:00.000Z");
+  const evidence = await enqueueOpened(id, "2026-08-21T19:00:00.000Z");
+  const startedAt = new Date("2026-08-21T19:01:00.000Z");
+  const expiredAt = new Date("2026-08-21T19:02:01.000Z");
+  let nowCalls = 0;
+  let fetchCalls = 0;
+
+  const result = await drainOcEvidenceOutbox({
+    env: stagingEnv(),
+    now: () => (nowCalls++ < 2 ? startedAt : expiredAt),
+    fetcher: async () => {
+      fetchCalls += 1;
+      return Response.json({ ok: true });
+    },
+  });
+
+  const sql = await getSql();
+  const rows = await sql.query<{ status: string; attempts: number; claim_token: string | null }>(
+    "select status, attempts, claim_token from oc_evidence_outbox where event_id = $1",
+    [evidence.event_id],
+  );
+  assert.equal(fetchCalls, 0);
+  assert.equal(result.claimed, 1);
+  assert.equal(rows[0]?.status, "pending");
+  assert.equal(rows[0]?.attempts, 0);
+  assert.equal(rows[0]?.claim_token, null);
 });
 
 test("drainer retries server failures and dead-letters terminal HTTP", async () => {
@@ -204,7 +244,7 @@ test("drainer caps Retry-After at the maximum backoff", async () => {
     env: stagingEnv({ FLOK_OC_DRAIN_BATCH_SIZE: "100" }),
     now: () => now,
     fetcher: async () =>
-      Response.json({ error: "rate_limited" }, { status: 429, headers: { "retry-after": "7200" } }),
+      Response.json({ error: "unavailable" }, { status: 503, headers: { "retry-after": "7200" } }),
   });
 
   const sql = await getSql();
@@ -369,20 +409,47 @@ test("subject_not_found is retryable then distinctly dead-lettered and requeueab
 
 test("expiry sweeper enqueues OC_FAILED for overdue open contracts", async () => {
   const id = `contract-expired-${crypto.randomUUID()}`;
+  const malformedId = `contract-expired-malformed-${crypto.randomUUID()}`;
   await createContract(id, "2026-08-22T19:00:00.000Z");
+  await createContract(malformedId, "2026-08-22T19:00:00.000Z");
   const opened = await enqueueOpened(id, "2026-08-21T19:00:00.000Z");
+  const sql = await getSql();
+  await sql.query(
+    `insert into oc_evidence_events (
+       event_id, idempotency_key, contract_id, cluster_id, cluster_slug,
+       subject, type, occurred_at, evidence_hash, payload
+     ) values ($1, 'malformed-open', $2, 'cluster-7', 'outbound',
+       $3, 'OC_OPENED', '2026-08-21T19:00:00.000Z', $4, '{}'::jsonb)`,
+    [`event-${crypto.randomUUID()}`, malformedId, SUBJECT, `sha256:${"0".repeat(64)}`],
+  );
+  const malformedEvents = await sql.query<{ event_id: string }>(
+    "select event_id from oc_evidence_events where contract_id = $1",
+    [malformedId],
+  );
+  await sql.query(
+    `insert into oc_lifecycle (
+       contract_id, latest_event_id, cluster_id, cluster_slug, subject,
+       current_type, current_occurred_at
+     ) values ($1, $2, 'cluster-7', 'outbound', $3, 'OC_OPENED',
+       '2026-08-21T19:00:00.000Z')`,
+    [malformedId, malformedEvents[0]?.event_id, SUBJECT],
+  );
 
   const previousSubjects = process.env.FLOK_SPX402_SUBJECTS;
   delete process.env.FLOK_SPX402_SUBJECTS;
   const result = await sweepExpiredOutcomeContracts({
     now: () => new Date("2026-08-23T19:00:00.000Z"),
   }).finally(() => {
-    process.env.FLOK_SPX402_SUBJECTS = previousSubjects;
+    if (previousSubjects === undefined) {
+      delete process.env.FLOK_SPX402_SUBJECTS;
+    } else {
+      process.env.FLOK_SPX402_SUBJECTS = previousSubjects;
+    }
   });
-  assert.equal(result.scanned, 1);
+  assert.equal(result.scanned, 2);
   assert.equal(result.failed, 1);
+  assert.equal(result.errors, 1);
 
-  const sql = await getSql();
   const rows = await sql.query<{ current_type: string; subject: string; outbox: number }>(
     `select lifecycle.current_type,
        lifecycle.subject,

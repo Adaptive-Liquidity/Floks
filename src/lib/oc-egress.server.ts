@@ -13,6 +13,8 @@ const DEFAULT_MAX_ATTEMPTS = 5;
 const MIN_CLAIM_LEASE_MS = 5 * 60 * 1000;
 const REQUEST_TIMEOUT_MS = 10_000;
 const CLAIM_LEASE_BUFFER_MS = 60_000;
+const DRAIN_BUDGET_MS = 60_000;
+const MAX_DRAIN_ROWS = 5;
 const MAX_BACKOFF_MS = 60 * 60 * 1000;
 const MAX_ERROR_BODY_BYTES = 4 * 1024;
 
@@ -25,6 +27,7 @@ type OutboxRow = {
 };
 
 type ExpiredLifecycleRow = {
+  contract_id: string;
   payload: OcEvidence | string;
 };
 
@@ -55,6 +58,7 @@ export type OcDrainResult = Readonly<{
 export type OcExpirySweepResult = Readonly<{
   scanned: number;
   failed: number;
+  errors: number;
 }>;
 
 export type OcOutboxStatus = Readonly<{
@@ -127,13 +131,17 @@ function backoffMs(attempts: number): number {
 }
 
 function retryAfterMs(response: Response, now: Date): number | undefined {
-  if (response.status !== 429) return undefined;
+  if (response.status !== 429 && response.status !== 503) return undefined;
   const value = response.headers.get("retry-after")?.trim();
   if (!value) return undefined;
   const seconds = Number(value);
-  if (Number.isFinite(seconds) && seconds >= 0) return seconds * 1000;
+  if (Number.isFinite(seconds) && seconds >= 0) {
+    return Math.min(MAX_BACKOFF_MS, seconds * 1000);
+  }
   const retryAt = Date.parse(value);
-  return Number.isFinite(retryAt) ? Math.max(0, retryAt - now.getTime()) : undefined;
+  return Number.isFinite(retryAt)
+    ? Math.min(MAX_BACKOFF_MS, Math.max(0, retryAt - now.getTime()))
+    : undefined;
 }
 
 async function responseErrorCode(response: Response): Promise<string | undefined> {
@@ -163,14 +171,16 @@ async function responseErrorCode(response: Response): Promise<string | undefined
     const value = "code" in body ? body.code : "error" in body ? body.error : undefined;
     return typeof value === "string" ? value : undefined;
   } catch {
+    await reader.cancel().catch(() => undefined);
     return undefined;
   }
 }
 
 async function claimOutbox(sql: Sql, config: OcEgressConfig, now: Date): Promise<OutboxRow[]> {
+  const claimLimit = Math.min(config.batchSize, MAX_DRAIN_ROWS);
   const leaseMs = Math.max(
     MIN_CLAIM_LEASE_MS,
-    config.batchSize * REQUEST_TIMEOUT_MS + CLAIM_LEASE_BUFFER_MS,
+    claimLimit * REQUEST_TIMEOUT_MS + CLAIM_LEASE_BUFFER_MS,
   );
   const leaseUntil = new Date(now.getTime() + leaseMs).toISOString();
   const claimToken = randomUUID();
@@ -194,8 +204,20 @@ async function claimOutbox(sql: Sql, config: OcEgressConfig, now: Date): Promise
        where outbox.event_id = candidates.event_id
        returning outbox.event_id, outbox.payload, outbox.attempts,
          outbox.claim_token, outbox.created_at`,
-      [now.toISOString(), config.batchSize, leaseUntil, claimToken],
+      [now.toISOString(), claimLimit, leaseUntil, claimToken],
     ),
+  );
+}
+
+async function releaseClaim(sql: Sql, row: OutboxRow, now: Date): Promise<void> {
+  await sql.query(
+    `update oc_evidence_outbox
+     set status = 'pending',
+         attempts = greatest(0, attempts - 1),
+         available_at = $2,
+         claim_token = null
+     where event_id = $1 and status = 'sending' and claim_token = $3`,
+    [row.event_id, now.toISOString(), row.claim_token],
   );
 }
 
@@ -207,6 +229,11 @@ async function markSent(sql: Sql, row: OutboxRow, now: Date): Promise<boolean> {
      returning event_id`,
     [row.event_id, now.toISOString(), row.claim_token],
   );
+  if (updated.length === 0) {
+    console.warn(
+      JSON.stringify({ metric: "flok.oc_evidence_outbox.stale_claim", event_id: row.event_id }),
+    );
+  }
   return updated.length === 1;
 }
 
@@ -228,6 +255,11 @@ async function markFailed(
        returning event_id`,
       [row.event_id, now.toISOString(), error.slice(0, 500), row.claim_token],
     );
+    if (updated.length === 0) {
+      console.warn(
+        JSON.stringify({ metric: "flok.oc_evidence_outbox.stale_claim", event_id: row.event_id }),
+      );
+    }
     return updated.length === 1 ? "dead_letter" : "stale";
   }
   const delayMs = Math.min(MAX_BACKOFF_MS, Math.max(backoffMs(row.attempts), retryDelayMs ?? 0));
@@ -239,6 +271,11 @@ async function markFailed(
      returning event_id`,
     [row.event_id, availableAt, error.slice(0, 500), row.claim_token],
   );
+  if (updated.length === 0) {
+    console.warn(
+      JSON.stringify({ metric: "flok.oc_evidence_outbox.stale_claim", event_id: row.event_id }),
+    );
+  }
   return updated.length === 1 ? "retried" : "stale";
 }
 
@@ -343,8 +380,15 @@ export async function drainOcEvidenceOutbox(
   let sent = 0;
   let retried = 0;
   let deadLettered = 0;
+  const drainDeadline = now().getTime() + DRAIN_BUDGET_MS;
 
-  for (const row of rows) {
+  for (const [index, row] of rows.entries()) {
+    if (now().getTime() >= drainDeadline) {
+      for (const remaining of rows.slice(index)) {
+        await releaseClaim(sql, remaining, now());
+      }
+      break;
+    }
     let payload: OcEvidence;
     try {
       payload = await validateOcEvidence(parsePayload(row.payload));
@@ -365,6 +409,7 @@ export async function drainOcEvidenceOutbox(
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       });
       if (response.ok) {
+        await response.body?.cancel().catch(() => undefined);
         if (await markSent(sql, row, now())) sent += 1;
         continue;
       }
@@ -429,7 +474,7 @@ export async function sweepExpiredOutcomeContracts(
   const now = options.now?.() ?? new Date();
   const limit = Math.min(100, Math.max(1, options.limit ?? DEFAULT_BATCH_SIZE));
   const rows = await sql.query<ExpiredLifecycleRow>(
-    `select event.payload
+    `select contract.id as contract_id, event.payload
      from outcome_contracts as contract
      join oc_lifecycle as lifecycle on lifecycle.contract_id = contract.id
      join oc_evidence_events as event on event.event_id = lifecycle.latest_event_id
@@ -440,21 +485,33 @@ export async function sweepExpiredOutcomeContracts(
     [now.toISOString(), limit],
   );
   let failed = 0;
+  let errors = 0;
   for (const row of rows) {
-    const previous = parsePayload(row.payload);
-    const evidence = await createOcEvidenceFromBoundSubject(
-      {
-        handle: previous.handle,
-        contract_id: previous.contract_id,
-        cluster_id: previous.cluster_id,
-        cluster_slug: previous.cluster_slug,
-        type: "OC_FAILED",
-        occurred_at: now.toISOString(),
-        idempotency_key: "deadline-expired-v1",
-      },
-      previous.subject,
-    );
-    if ((await persistOcEvidence(evidence, {}, sqlPromise)).transition === "advance") failed += 1;
+    try {
+      const previous = parsePayload(row.payload);
+      const evidence = await createOcEvidenceFromBoundSubject(
+        {
+          handle: previous.handle,
+          contract_id: previous.contract_id,
+          cluster_id: previous.cluster_id,
+          cluster_slug: previous.cluster_slug,
+          type: "OC_FAILED",
+          occurred_at: now.toISOString(),
+          idempotency_key: "deadline-expired-v1",
+        },
+        previous.subject,
+      );
+      if ((await persistOcEvidence(evidence, {}, sqlPromise)).transition === "advance") failed += 1;
+    } catch (error) {
+      errors += 1;
+      console.warn(
+        JSON.stringify({
+          metric: "flok.oc_evidence_expiry.sweep_error",
+          contract_id: row.contract_id,
+          error: error instanceof Error ? error.name : "unknown",
+        }),
+      );
+    }
   }
-  return Object.freeze({ scanned: rows.length, failed });
+  return Object.freeze({ scanned: rows.length, failed, errors });
 }
