@@ -41,7 +41,7 @@ Root `ARCHITECTURE.md` / `DESIGN.md` are compatibility redirects only. Not live 
 | **S1** | Consume SPX402 Grade + confidence on Index / OG (read-only)       | `reference/spx402`             | MEDIUM   | shipped | BRAIN Grade strip                    |
 | **S2** | Emit `OC_*` evidence into SPX402 (`task_executor` decoder)        | S1, SPX402 upstream            | HIGH     | NEXT    | `reference/spx402/FLOK_EXTENSION.md` |
 | **T1** | Night Tape + Spotlight (no Sky)                                   | ~50 live Floks                 | HIGH     | gated   | FINAL_DESIGN §7                      |
-| **E1** | Outcome Contract object + public header                           | S2 live (or Hall shows SPX404) | HIGH     | partial | BRAIN `buyer_04`, `buyer_10`         |
+| **E1** | Outcome Contract object + public header                           | S1 (Hall SPX404 until S2 live) | HIGH     | shipped | BRAIN `buyer_04`, `buyer_10`         |
 | **E2** | AEON escrow as middleman                                          | E1                             | CRITICAL | gated   | BRAIN `provider_10`                  |
 | **E3** | Contract Roost (hirer-only)                                       | E1                             | HIGH     | gated   | BRAIN `buyer_05` + `provider_08`     |
 | **E4** | Bid / select / slash                                              | E2 + S2 Grade                  | CRITICAL | gated   | BRAIN `provider_07`, `buyer_09`      |
@@ -180,5 +180,5 @@ Do not wait on Cluster/Hall.
 - [x] S1 Grade or SPX404 on the Index tile
 - [x] S2 Gate 1 — fail-closed OC evidence boundary (Flok-owned; outbox pending, no egress)
 - [ ] S2 live emit — upstream `task_executor` decoder + authenticated ingestion (`decoderLive === true`; upstream-blocked)
-- [ ] E1 — partial in draft PR #31: persistent Outcome Contract header + authenticated poster history (SPX404; no market actions)
+- [x] E1 — Outcome Contract object + public header + authenticated poster history (SPX404; no market actions; PR #31 merged)
 - [ ] Hall still closed until S2 is live (`decoderLive === true`)
