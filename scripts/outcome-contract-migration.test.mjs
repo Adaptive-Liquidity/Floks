@@ -72,3 +72,46 @@ test("0007 rejects unsupported market state", async () => {
     await pg.close();
   }
 });
+
+test("0008 upgrades quotas created by the original 0007 migration", async () => {
+  const pg = new PGlite();
+  try {
+    await pg.waitReady;
+    await pg.exec(`
+      create table outcome_contracts (
+        id text primary key,
+        poster_user_id text not null,
+        poster text not null,
+        created_at timestamptz not null default now()
+      );
+      create table outcome_contract_poster_quotas (
+        poster_user_id text primary key,
+        contract_count integer not null default 0
+      );
+      insert into outcome_contracts (id, poster_user_id, poster)
+      values ('contract-1', 'user-1', '@poster_11111111111111111111111111111111');
+      insert into outcome_contract_poster_quotas (poster_user_id, contract_count)
+      values ('user-1', 1);
+    `);
+
+    const migration = await readFile(
+      new URL("../migrations/0008_outcome_contract_posters.sql", import.meta.url),
+      "utf8",
+    );
+    await pg.exec(migration);
+    await pg.exec(migration);
+
+    const result = await pg.query(
+      "select poster from outcome_contract_poster_quotas where poster_user_id = 'user-1'",
+    );
+    assert.equal(result.rows[0]?.poster, "@poster_11111111111111111111111111111111");
+    await assert.rejects(() =>
+      pg.query(
+        `insert into outcome_contract_poster_quotas (poster_user_id, poster)
+         values ('user-2', '@poster_11111111111111111111111111111111')`,
+      ),
+    );
+  } finally {
+    await pg.close();
+  }
+});
