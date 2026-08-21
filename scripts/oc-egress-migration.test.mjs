@@ -45,12 +45,24 @@ test("0009 purges v1 and upgrades the outbox for bounded delivery", async () => 
 
   await db.exec(migration);
   const rows = await db.query(
-    "select event_id, status, deadline_at from oc_evidence_outbox order by event_id",
+    "select event_id, status, deadline_at, claim_token from oc_evidence_outbox order by event_id",
   );
   assert.equal(rows.rows.length, 1);
   assert.equal(rows.rows[0]?.event_id, "event-v2");
   assert.equal(rows.rows[0]?.status, "pending");
   assert.equal(new Date(rows.rows[0]?.deadline_at).toISOString(), "2026-08-26T00:00:00.000Z");
+  assert.equal(rows.rows[0]?.claim_token, null);
+  const indexes = await db.query(
+    "select indexname from pg_indexes where tablename = 'oc_evidence_outbox'",
+  );
+  assert.equal(
+    indexes.rows.some((row) => row.indexname === "oc_evidence_outbox_pending_idx"),
+    false,
+  );
+  assert.equal(
+    indexes.rows.some((row) => row.indexname === "oc_evidence_outbox_drain_idx"),
+    true,
+  );
 
   await db.exec(
     "update oc_evidence_outbox set status = 'dead_letter', last_error = 'terminal' where event_id = 'event-v2'",

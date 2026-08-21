@@ -140,6 +140,17 @@ test("OC_FULFILLED requires a capsule_id", async () => {
   await event("OC_OPENED", { capsule_id: undefined });
 });
 
+test("OC evidence preserves valid long-horizon contract deadlines", async () => {
+  const contractId = "contract-long-horizon";
+  const deadline = "2099-01-01T00:00:00.000Z";
+  await ensureContract(contractId, deadline);
+  const opened = await event("OC_OPENED", {
+    contract_id: contractId,
+    occurred_at: "2026-08-20T19:00:00.000Z",
+  });
+  assert.equal(opened.deadline_at, deadline);
+});
+
 test("OC lifecycle accepts only opened, awarded, then one terminal event", async () => {
   const opened = await event("OC_OPENED");
   const awarded = await event("OC_AWARDED");

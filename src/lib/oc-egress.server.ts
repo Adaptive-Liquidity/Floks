@@ -1,17 +1,26 @@
+import { randomUUID } from "node:crypto";
 import { getSql, type Sql } from "./db.ts";
-import { createOcEvidence, persistOcEvidence, validateOcEvidence } from "./oc-evidence.server.ts";
+import {
+  createOcEvidenceFromBoundSubject,
+  persistOcEvidence,
+  validateOcEvidence,
+} from "./oc-evidence.server.ts";
 import type { OcEvidence } from "./oc-evidence.ts";
 
 const INGEST_PATH = "/api/public/ingest-oc-evidence";
 const DEFAULT_BATCH_SIZE = 25;
 const DEFAULT_MAX_ATTEMPTS = 5;
-const CLAIM_LEASE_MS = 5 * 60 * 1000;
+const MIN_CLAIM_LEASE_MS = 5 * 60 * 1000;
+const REQUEST_TIMEOUT_MS = 10_000;
+const CLAIM_LEASE_BUFFER_MS = 60_000;
 const MAX_BACKOFF_MS = 60 * 60 * 1000;
+const MAX_ERROR_BODY_BYTES = 4 * 1024;
 
 type OutboxRow = {
   event_id: string;
   payload: OcEvidence | string;
   attempts: number;
+  claim_token: string;
   created_at: unknown;
 };
 
@@ -84,7 +93,8 @@ export function readOcEgressConfig(env: NodeJS.ProcessEnv = process.env): OcEgre
     base.username ||
     base.password ||
     base.search ||
-    base.hash
+    base.hash ||
+    base.pathname !== "/"
   ) {
     return null;
   }
@@ -127,8 +137,28 @@ function retryAfterMs(response: Response, now: Date): number | undefined {
 }
 
 async function responseErrorCode(response: Response): Promise<string | undefined> {
+  const reader = response.body?.getReader();
+  if (!reader) return undefined;
   try {
-    const body = (await response.clone().json()) as unknown;
+    const chunks: Uint8Array[] = [];
+    let length = 0;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      length += value.byteLength;
+      if (length > MAX_ERROR_BODY_BYTES) {
+        await reader.cancel();
+        return undefined;
+      }
+      chunks.push(value);
+    }
+    const bytes = new Uint8Array(length);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    const body = JSON.parse(new TextDecoder().decode(bytes)) as unknown;
     if (typeof body !== "object" || body === null) return undefined;
     const value = "code" in body ? body.code : "error" in body ? body.error : undefined;
     return typeof value === "string" ? value : undefined;
@@ -138,7 +168,12 @@ async function responseErrorCode(response: Response): Promise<string | undefined
 }
 
 async function claimOutbox(sql: Sql, config: OcEgressConfig, now: Date): Promise<OutboxRow[]> {
-  const leaseUntil = new Date(now.getTime() + CLAIM_LEASE_MS).toISOString();
+  const leaseMs = Math.max(
+    MIN_CLAIM_LEASE_MS,
+    config.batchSize * REQUEST_TIMEOUT_MS + CLAIM_LEASE_BUFFER_MS,
+  );
+  const leaseUntil = new Date(now.getTime() + leaseMs).toISOString();
+  const claimToken = randomUUID();
   return sql.transaction((tx) =>
     tx.query<OutboxRow>(
       `with candidates as (
@@ -153,22 +188,26 @@ async function claimOutbox(sql: Sql, config: OcEgressConfig, now: Date): Promise
        set status = 'sending',
            attempts = outbox.attempts + 1,
            available_at = $3,
+           claim_token = $4,
            last_error = null
        from candidates
        where outbox.event_id = candidates.event_id
-       returning outbox.event_id, outbox.payload, outbox.attempts, outbox.created_at`,
-      [now.toISOString(), config.batchSize, leaseUntil],
+       returning outbox.event_id, outbox.payload, outbox.attempts,
+         outbox.claim_token, outbox.created_at`,
+      [now.toISOString(), config.batchSize, leaseUntil, claimToken],
     ),
   );
 }
 
-async function markSent(sql: Sql, eventId: string, now: Date): Promise<void> {
-  await sql.query(
+async function markSent(sql: Sql, row: OutboxRow, now: Date): Promise<boolean> {
+  const updated = await sql.query<{ event_id: string }>(
     `update oc_evidence_outbox
-     set status = 'sent', sent_at = $2, available_at = $2, last_error = null
-     where event_id = $1 and status = 'sending'`,
-    [eventId, now.toISOString()],
+     set status = 'sent', sent_at = $2, available_at = $2, claim_token = null, last_error = null
+     where event_id = $1 and status = 'sending' and claim_token = $3
+     returning event_id`,
+    [row.event_id, now.toISOString(), row.claim_token],
   );
+  return updated.length === 1;
 }
 
 async function markFailed(
@@ -179,25 +218,28 @@ async function markFailed(
   config: OcEgressConfig,
   now: Date,
   retryDelayMs?: number,
-): Promise<"retried" | "dead_letter"> {
+): Promise<"retried" | "dead_letter" | "stale"> {
   if (terminal || row.attempts >= config.maxAttempts) {
-    await sql.query(
+    const updated = await sql.query<{ event_id: string }>(
       `update oc_evidence_outbox
-       set status = 'dead_letter', dead_lettered_at = $2, available_at = $2, last_error = $3
-       where event_id = $1 and status = 'sending'`,
-      [row.event_id, now.toISOString(), error.slice(0, 500)],
+       set status = 'dead_letter', dead_lettered_at = $2, available_at = $2,
+           claim_token = null, last_error = $3
+       where event_id = $1 and status = 'sending' and claim_token = $4
+       returning event_id`,
+      [row.event_id, now.toISOString(), error.slice(0, 500), row.claim_token],
     );
-    return "dead_letter";
+    return updated.length === 1 ? "dead_letter" : "stale";
   }
-  const delayMs = Math.max(backoffMs(row.attempts), retryDelayMs ?? 0);
+  const delayMs = Math.min(MAX_BACKOFF_MS, Math.max(backoffMs(row.attempts), retryDelayMs ?? 0));
   const availableAt = new Date(now.getTime() + delayMs).toISOString();
-  await sql.query(
+  const updated = await sql.query<{ event_id: string }>(
     `update oc_evidence_outbox
-     set status = 'pending', available_at = $2, last_error = $3
-     where event_id = $1 and status = 'sending'`,
-    [row.event_id, availableAt, error.slice(0, 500)],
+     set status = 'pending', available_at = $2, claim_token = null, last_error = $3
+     where event_id = $1 and status = 'sending' and claim_token = $4
+     returning event_id`,
+    [row.event_id, availableAt, error.slice(0, 500), row.claim_token],
   );
-  return "retried";
+  return updated.length === 1 ? "retried" : "stale";
 }
 
 async function readDrainLagSeconds(sql: Sql, now: Date): Promise<number> {
@@ -258,6 +300,7 @@ export async function requeueDeadLetters(
        set status = 'pending',
            attempts = 0,
            available_at = $2,
+           claim_token = null,
            last_error = null,
            dead_lettered_at = null,
            sent_at = null
@@ -306,8 +349,8 @@ export async function drainOcEvidenceOutbox(
     try {
       payload = await validateOcEvidence(parsePayload(row.payload));
     } catch {
-      await markFailed(sql, row, true, "invalid_evidence", config, now());
-      deadLettered += 1;
+      const disposition = await markFailed(sql, row, true, "invalid_evidence", config, now());
+      if (disposition === "dead_letter") deadLettered += 1;
       continue;
     }
     try {
@@ -318,11 +361,11 @@ export async function drainOcEvidenceOutbox(
           "content-type": "application/json",
         },
         body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(10_000),
+        redirect: "error",
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       });
       if (response.ok) {
-        await markSent(sql, row.event_id, now());
-        sent += 1;
+        if (await markSent(sql, row, now())) sent += 1;
         continue;
       }
       const upstreamCode = await responseErrorCode(response);
@@ -338,7 +381,7 @@ export async function drainOcEvidenceOutbox(
         retryAfterMs(response, failureTime),
       );
       if (disposition === "retried") retried += 1;
-      else deadLettered += 1;
+      else if (disposition === "dead_letter") deadLettered += 1;
     } catch (error) {
       const disposition = await markFailed(
         sql,
@@ -349,7 +392,7 @@ export async function drainOcEvidenceOutbox(
         now(),
       );
       if (disposition === "retried") retried += 1;
-      else deadLettered += 1;
+      else if (disposition === "dead_letter") deadLettered += 1;
     }
   }
 
@@ -399,7 +442,7 @@ export async function sweepExpiredOutcomeContracts(
   let failed = 0;
   for (const row of rows) {
     const previous = parsePayload(row.payload);
-    const evidence = await createOcEvidence(
+    const evidence = await createOcEvidenceFromBoundSubject(
       {
         handle: previous.handle,
         contract_id: previous.contract_id,
@@ -409,7 +452,7 @@ export async function sweepExpiredOutcomeContracts(
         occurred_at: now.toISOString(),
         idempotency_key: "deadline-expired-v1",
       },
-      sqlPromise,
+      previous.subject,
     );
     if ((await persistOcEvidence(evidence, {}, sqlPromise)).transition === "advance") failed += 1;
   }

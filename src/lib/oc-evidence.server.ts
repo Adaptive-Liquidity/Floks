@@ -11,7 +11,6 @@ import {
 import { parseSubjectMap, resolveSubject } from "./spx-subject.ts";
 
 const OC_EVIDENCE_SCHEMA = "flok.oc-evidence.v2" as const;
-const OC_DEADLINE_MAX_HORIZON_MS = 30 * 24 * 60 * 60 * 1000;
 
 export const OC_DECODER_STATUS = Object.freeze({
   category: "task_executor",
@@ -33,18 +32,15 @@ async function materializeOcEvidence(
   const parsed = ocEvidenceInputSchema.parse(input);
   const boundSubject = ocSubjectSchema.parse(subject);
   const requiresDeadline = parsed.type === "OC_OPENED" || parsed.type === "OC_AWARDED";
-  const deadline = requiresDeadline ? new Date(String(deadlineAt)).toISOString() : undefined;
+  const deadlineAtMs = requiresDeadline ? Date.parse(String(deadlineAt)) : undefined;
   if (requiresDeadline) {
     const occurredAtMs = Date.parse(parsed.occurred_at);
-    const deadlineAtMs = Date.parse(deadline ?? "");
-    if (
-      !Number.isFinite(deadlineAtMs) ||
-      deadlineAtMs <= occurredAtMs ||
-      (parsed.type === "OC_OPENED" && deadlineAtMs > occurredAtMs + OC_DEADLINE_MAX_HORIZON_MS)
-    ) {
+    if (!Number.isFinite(deadlineAtMs) || Number(deadlineAtMs) <= occurredAtMs) {
       throw new Error("invalid_oc_deadline");
     }
   }
+  const deadline =
+    deadlineAtMs === undefined ? undefined : new Date(Number(deadlineAtMs)).toISOString();
   const eventId = `oc_${await sha256Hex(
     canonicalJsonStringify({
       contract_id: parsed.contract_id,
@@ -91,6 +87,13 @@ export async function createOcEvidence(
     ),
     deadline,
   );
+}
+
+export async function createOcEvidenceFromBoundSubject(
+  input: unknown,
+  subject: unknown,
+): Promise<OcEvidence> {
+  return materializeOcEvidence(input, subject);
 }
 
 export async function validateOcEvidence(value: unknown): Promise<OcEvidence> {

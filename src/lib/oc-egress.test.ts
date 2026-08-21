@@ -74,6 +74,10 @@ test("staging egress requires explicit mode, URL, and secret", () => {
     readOcEgressConfig(stagingEnv())?.endpoint,
     "https://spx-staging.example/api/public/ingest-oc-evidence",
   );
+  assert.equal(
+    readOcEgressConfig(stagingEnv({ FLOK_SPX402_STAGING_URL: "https://spx.example/staging" })),
+    null,
+  );
 });
 
 test("drainer sends v2 with bearer auth and marks the row sent", async () => {
@@ -81,13 +85,20 @@ test("drainer sends v2 with bearer auth and marks the row sent", async () => {
   const deadline = "2026-08-25T19:00:00.000Z";
   await createContract(id, deadline);
   const opened = await enqueueOpened(id, "2026-08-21T19:00:00.000Z");
+  const sql = await getSql();
   let request: { url: string; init?: RequestInit } | undefined;
+  let leaseUntil: string | undefined;
 
   const result = await drainOcEvidenceOutbox({
-    env: stagingEnv(),
+    env: stagingEnv({ FLOK_OC_DRAIN_BATCH_SIZE: "100" }),
     now: () => new Date("2026-08-21T19:01:00.000Z"),
     fetcher: async (url, init) => {
       request = { url: String(url), init };
+      const rows = await sql.query<{ available_at: unknown }>(
+        "select available_at from oc_evidence_outbox where event_id = $1",
+        [opened.event_id],
+      );
+      leaseUntil = new Date(String(rows[0]?.available_at)).toISOString();
       return Response.json({ ok: true, inserted: true }, { status: 201 });
     },
   });
@@ -98,12 +109,13 @@ test("drainer sends v2 with bearer auth and marks the row sent", async () => {
     new Headers(request?.init?.headers).get("authorization"),
     "Bearer test-ingest-secret",
   );
+  assert.equal(request?.init?.redirect, "error");
+  assert.equal(leaseUntil, "2026-08-21T19:18:40.000Z");
   const payload = JSON.parse(String(request?.init?.body)) as Record<string, unknown>;
   assert.equal(payload.schema, "flok.oc-evidence.v2");
   assert.equal(payload.deadline_at, deadline);
   assert.equal(payload.evidence_hash, opened.evidence_hash);
 
-  const sql = await getSql();
   const rows = await sql.query<{ status: string; attempts: number }>(
     "select status, attempts from oc_evidence_outbox where event_id = $1",
     [opened.event_id],
@@ -183,6 +195,114 @@ test("drainer retries auth failures and honors Retry-After", async () => {
   assert.equal(new Date(String(rateRow?.available_at)).toISOString(), "2026-08-21T20:04:00.000Z");
 });
 
+test("drainer caps Retry-After at the maximum backoff", async () => {
+  const id = `contract-rate-cap-${crypto.randomUUID()}`;
+  await createContract(id, "2026-08-25T19:00:00.000Z");
+  const evidence = await enqueueOpened(id, "2026-08-21T20:10:00.000Z");
+  const now = new Date("2026-08-21T20:11:00.000Z");
+  await drainOcEvidenceOutbox({
+    env: stagingEnv({ FLOK_OC_DRAIN_BATCH_SIZE: "100" }),
+    now: () => now,
+    fetcher: async () =>
+      Response.json({ error: "rate_limited" }, { status: 429, headers: { "retry-after": "7200" } }),
+  });
+
+  const sql = await getSql();
+  const rows = await sql.query<{ available_at: unknown }>(
+    "select available_at from oc_evidence_outbox where event_id = $1",
+    [evidence.event_id],
+  );
+  assert.equal(new Date(String(rows[0]?.available_at)).toISOString(), "2026-08-21T21:11:00.000Z");
+});
+
+test("stale delivery cannot overwrite a reclaimed outbox row", async () => {
+  const sql = await getSql();
+  await sql.query(
+    "update oc_evidence_outbox set status = 'sent', sent_at = now() where status in ('pending', 'sending')",
+  );
+  const id = `contract-stale-${crypto.randomUUID()}`;
+  await createContract(id, "2026-08-25T19:00:00.000Z");
+  const evidence = await enqueueOpened(id, "2026-08-21T20:20:00.000Z");
+  const result = await drainOcEvidenceOutbox({
+    env: stagingEnv({ FLOK_OC_DRAIN_BATCH_SIZE: "1" }),
+    now: () => new Date("2026-08-21T20:21:00.000Z"),
+    fetcher: async () => {
+      await sql.query(
+        "update oc_evidence_outbox set attempts = 1, claim_token = 'new-claim' where event_id = $1",
+        [evidence.event_id],
+      );
+      return Response.json({ ok: true }, { status: 201 });
+    },
+  });
+
+  assert.equal(result.sent, 0);
+  const rows = await sql.query<{ status: string; attempts: number }>(
+    "select status, attempts from oc_evidence_outbox where event_id = $1",
+    [evidence.event_id],
+  );
+  assert.deepEqual(rows[0], { status: "sending", attempts: 1 });
+});
+
+test("stale failure is not counted or allowed to overwrite a new claim", async () => {
+  const sql = await getSql();
+  await sql.query(
+    "update oc_evidence_outbox set status = 'sent', sent_at = now() where status in ('pending', 'sending')",
+  );
+  const id = `contract-stale-failure-${crypto.randomUUID()}`;
+  await createContract(id, "2026-08-25T19:00:00.000Z");
+  const evidence = await enqueueOpened(id, "2026-08-21T20:30:00.000Z");
+  const result = await drainOcEvidenceOutbox({
+    env: stagingEnv({ FLOK_OC_DRAIN_BATCH_SIZE: "1" }),
+    now: () => new Date("2026-08-21T20:31:00.000Z"),
+    fetcher: async () => {
+      await sql.query(
+        "update oc_evidence_outbox set attempts = 1, claim_token = 'new-claim' where event_id = $1",
+        [evidence.event_id],
+      );
+      return Response.json({ error: "unavailable" }, { status: 503 });
+    },
+  });
+
+  assert.equal(result.retried, 0);
+  assert.equal(result.deadLettered, 0);
+  const rows = await sql.query<{ status: string; attempts: number; claim_token: string }>(
+    "select status, attempts, claim_token from oc_evidence_outbox where event_id = $1",
+    [evidence.event_id],
+  );
+  assert.deepEqual(rows[0], { status: "sending", attempts: 1, claim_token: "new-claim" });
+});
+
+test("drainer cancels oversized upstream error bodies", async () => {
+  const sql = await getSql();
+  await sql.query(
+    "update oc_evidence_outbox set status = 'sent', sent_at = now() where status in ('pending', 'sending')",
+  );
+  const id = `contract-large-error-${crypto.randomUUID()}`;
+  await createContract(id, "2026-08-25T19:00:00.000Z");
+  const evidence = await enqueueOpened(id, "2026-08-21T20:40:00.000Z");
+  let cancelled = false;
+  const body = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(new TextEncoder().encode("x".repeat(5_000)));
+    },
+    cancel() {
+      cancelled = true;
+    },
+  });
+  await drainOcEvidenceOutbox({
+    env: stagingEnv({ FLOK_OC_DRAIN_BATCH_SIZE: "1" }),
+    now: () => new Date("2026-08-21T20:41:00.000Z"),
+    fetcher: async () => new Response(body, { status: 404 }),
+  });
+
+  assert.equal(cancelled, true);
+  const rows = await sql.query<{ status: string; last_error: string }>(
+    "select status, last_error from oc_evidence_outbox where event_id = $1",
+    [evidence.event_id],
+  );
+  assert.deepEqual(rows[0], { status: "dead_letter", last_error: "http_404" });
+});
+
 test("drainer retries 403 but treats 409 and 413 as terminal", async () => {
   const cases = [
     { status: 403, expected: "pending" },
@@ -250,22 +370,27 @@ test("subject_not_found is retryable then distinctly dead-lettered and requeueab
 test("expiry sweeper enqueues OC_FAILED for overdue open contracts", async () => {
   const id = `contract-expired-${crypto.randomUUID()}`;
   await createContract(id, "2026-08-22T19:00:00.000Z");
-  await enqueueOpened(id, "2026-08-21T19:00:00.000Z");
+  const opened = await enqueueOpened(id, "2026-08-21T19:00:00.000Z");
 
+  const previousSubjects = process.env.FLOK_SPX402_SUBJECTS;
+  delete process.env.FLOK_SPX402_SUBJECTS;
   const result = await sweepExpiredOutcomeContracts({
     now: () => new Date("2026-08-23T19:00:00.000Z"),
+  }).finally(() => {
+    process.env.FLOK_SPX402_SUBJECTS = previousSubjects;
   });
   assert.equal(result.scanned, 1);
   assert.equal(result.failed, 1);
 
   const sql = await getSql();
-  const rows = await sql.query<{ current_type: string; outbox: number }>(
+  const rows = await sql.query<{ current_type: string; subject: string; outbox: number }>(
     `select lifecycle.current_type,
+       lifecycle.subject,
        (select count(*)::int from oc_evidence_outbox as outbox
         join oc_evidence_events as event using (event_id)
         where event.contract_id = lifecycle.contract_id) as outbox
      from oc_lifecycle as lifecycle where lifecycle.contract_id = $1`,
     [id],
   );
-  assert.deepEqual(rows[0], { current_type: "OC_FAILED", outbox: 2 });
+  assert.deepEqual(rows[0], { current_type: "OC_FAILED", subject: opened.subject, outbox: 2 });
 });

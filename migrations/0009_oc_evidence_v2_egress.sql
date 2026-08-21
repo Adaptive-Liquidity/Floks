@@ -26,7 +26,10 @@ alter table oc_evidence_outbox
 
 alter table oc_evidence_outbox
   add column if not exists last_error text,
-  add column if not exists dead_lettered_at timestamptz;
+  add column if not exists dead_lettered_at timestamptz,
+  add column if not exists claim_token text;
+
+drop index if exists oc_evidence_outbox_pending_idx;
 
 create index if not exists oc_evidence_outbox_drain_idx
   on oc_evidence_outbox (available_at, created_at)
