@@ -19,8 +19,20 @@ test("rejects length, format, reserved", () => {
   assert.equal(validateHandle("join").ok, false);
   assert.equal(validateHandle("login").ok, false);
   assert.equal(validateHandle("api").ok, false);
-  assert.equal(validateHandle("contracts").ok, false);
   const reserved = validateHandle("FLOk");
   assert.equal(reserved.ok, false);
   if (!reserved.ok) assert.equal(reserved.code, "handle_reserved");
+});
+
+test("reserves the contracts route from handle claims", () => {
+  assert.deepEqual(validateHandle("contracts"), {
+    ok: false,
+    error: "That handle is reserved.",
+    code: "handle_reserved",
+  });
+  assert.deepEqual(validateHandle("  CONTRACTS  "), {
+    ok: false,
+    error: "That handle is reserved.",
+    code: "handle_reserved",
+  });
 });

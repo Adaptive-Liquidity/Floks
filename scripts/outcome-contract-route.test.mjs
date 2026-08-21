@@ -85,11 +85,16 @@ async function post(baseUrl, headers, body = "{}") {
 }
 
 test(
-  "POST /api/v1/contracts enforces auth and request isolation",
+  "/api/v1/contracts protects authenticated responses and write isolation",
   { timeout: 60_000 },
   async () => {
     const app = await startApp(true);
     try {
+      const posterList = await fetch(`${app.baseUrl}/api/v1/contracts`);
+      assert.equal(posterList.status, 401, app.output());
+      assert.equal(posterList.headers.get("cache-control"), "private, no-store");
+      assert.equal(posterList.headers.get("vary"), "Cookie, Authorization");
+
       const unauthorized = await post(app.baseUrl, { "sec-fetch-site": "same-origin" });
       assert.equal(unauthorized.status, 401, app.output());
       assert.equal((await unauthorized.json()).code, "unauthorized");

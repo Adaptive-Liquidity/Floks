@@ -10,6 +10,12 @@ import {
 
 const path = "/api/v1/contracts";
 
+function privateAuthResponse(response: Response): Response {
+  response.headers.set("Cache-Control", "private, no-store");
+  response.headers.set("Vary", "Cookie, Authorization");
+  return response;
+}
+
 export const Route = createFileRoute("/api/v1/contracts")({
   server: {
     handlers: {
@@ -17,11 +23,11 @@ export const Route = createFileRoute("/api/v1/contracts")({
         const auth = await requireApiUser(request);
         if (!auth.ok) {
           logRequest("GET", path, auth.response.status);
-          return auth.response;
+          return privateAuthResponse(auth.response);
         }
         const contracts = await listPosterOutcomeContracts(auth.userId);
         logRequest("GET", path, 200);
-        return jsonOk({ contracts });
+        return privateAuthResponse(jsonOk({ contracts }));
       },
       POST: async ({ request }) => {
         const auth = await requireApiUser(request);
