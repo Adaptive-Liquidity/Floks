@@ -21,17 +21,21 @@ import { Route as HandleIndexRouteImport } from './routes/$handle/index'
 import { Route as HandleCloneRouteImport } from './routes/$handle/clone'
 import { Route as HandleOpengraphImageRouteImport } from './routes/$handle/opengraph-image'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
+import { Route as ContractsIndexRouteImport } from './routes/contracts/index'
+import { Route as ContractsContractIdRouteImport } from './routes/contracts/$contractId'
 import { Route as HandleCSlugRouteImport } from './routes/$handle/c.$slug'
 import { Route as HandleRSlugRouteImport } from './routes/$handle/r.$slug'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiV1ChirpsRouteImport } from './routes/api/v1/chirps'
 import { Route as ApiV1ClaimRouteImport } from './routes/api/v1/claim'
+import { Route as ApiV1ContractsRouteImport } from './routes/api/v1/contracts'
 import { Route as ApiV1FlocksRouteImport } from './routes/api/v1/flocks'
 import { Route as ApiV1JoinRouteImport } from './routes/api/v1/join'
 import { Route as ApiV1RacksRouteImport } from './routes/api/v1/racks'
 import { Route as ApiV1SeedRouteImport } from './routes/api/v1/seed'
 import { Route as ApiV1BirdsIdRouteImport } from './routes/api/v1/birds.$id'
 import { Route as ApiV1CloneHandleRouteImport } from './routes/api/v1/clone.$handle'
+import { Route as ApiV1ContractsContractIdRouteImport } from './routes/api/v1/contracts.$contractId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -93,6 +97,16 @@ const ApiHealthRoute = ApiHealthRouteImport.update({
   path: '/api/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContractsIndexRoute = ContractsIndexRouteImport.update({
+  id: '/contracts/',
+  path: '/contracts/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContractsContractIdRoute = ContractsContractIdRouteImport.update({
+  id: '/contracts/$contractId',
+  path: '/contracts/$contractId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HandleCSlugRoute = HandleCSlugRouteImport.update({
   id: '/c/$slug',
   path: '/c/$slug',
@@ -116,6 +130,11 @@ const ApiV1ChirpsRoute = ApiV1ChirpsRouteImport.update({
 const ApiV1ClaimRoute = ApiV1ClaimRouteImport.update({
   id: '/api/v1/claim',
   path: '/api/v1/claim',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1ContractsRoute = ApiV1ContractsRouteImport.update({
+  id: '/api/v1/contracts',
+  path: '/api/v1/contracts',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiV1FlocksRoute = ApiV1FlocksRouteImport.update({
@@ -148,6 +167,12 @@ const ApiV1CloneHandleRoute = ApiV1CloneHandleRouteImport.update({
   path: '/api/v1/clone/$handle',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiV1ContractsContractIdRoute =
+  ApiV1ContractsContractIdRouteImport.update({
+    id: '/$contractId',
+    path: '/$contractId',
+    getParentRoute: () => ApiV1ContractsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -161,18 +186,22 @@ export interface FileRoutesByFullPath {
   '/$handle/clone': typeof HandleCloneRoute
   '/$handle/opengraph-image': typeof HandleOpengraphImageRoute
   '/api/health': typeof ApiHealthRoute
+  '/contracts/$contractId': typeof ContractsContractIdRoute
   '/$handle/': typeof HandleIndexRoute
+  '/contracts/': typeof ContractsIndexRoute
   '/$handle/c/$slug': typeof HandleCSlugRoute
   '/$handle/r/$slug': typeof HandleRSlugRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/chirps': typeof ApiV1ChirpsRoute
   '/api/v1/claim': typeof ApiV1ClaimRoute
+  '/api/v1/contracts': typeof ApiV1ContractsRouteWithChildren
   '/api/v1/flocks': typeof ApiV1FlocksRoute
   '/api/v1/join': typeof ApiV1JoinRoute
   '/api/v1/racks': typeof ApiV1RacksRoute
   '/api/v1/seed': typeof ApiV1SeedRoute
   '/api/v1/birds/$id': typeof ApiV1BirdsIdRoute
   '/api/v1/clone/$handle': typeof ApiV1CloneHandleRoute
+  '/api/v1/contracts/$contractId': typeof ApiV1ContractsContractIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -185,18 +214,22 @@ export interface FileRoutesByTo {
   '/$handle/clone': typeof HandleCloneRoute
   '/$handle/opengraph-image': typeof HandleOpengraphImageRoute
   '/api/health': typeof ApiHealthRoute
+  '/contracts/$contractId': typeof ContractsContractIdRoute
   '/$handle': typeof HandleIndexRoute
+  '/contracts': typeof ContractsIndexRoute
   '/$handle/c/$slug': typeof HandleCSlugRoute
   '/$handle/r/$slug': typeof HandleRSlugRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/chirps': typeof ApiV1ChirpsRoute
   '/api/v1/claim': typeof ApiV1ClaimRoute
+  '/api/v1/contracts': typeof ApiV1ContractsRouteWithChildren
   '/api/v1/flocks': typeof ApiV1FlocksRoute
   '/api/v1/join': typeof ApiV1JoinRoute
   '/api/v1/racks': typeof ApiV1RacksRoute
   '/api/v1/seed': typeof ApiV1SeedRoute
   '/api/v1/birds/$id': typeof ApiV1BirdsIdRoute
   '/api/v1/clone/$handle': typeof ApiV1CloneHandleRoute
+  '/api/v1/contracts/$contractId': typeof ApiV1ContractsContractIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -211,18 +244,22 @@ export interface FileRoutesById {
   '/$handle/clone': typeof HandleCloneRoute
   '/$handle/opengraph-image': typeof HandleOpengraphImageRoute
   '/api/health': typeof ApiHealthRoute
+  '/contracts/$contractId': typeof ContractsContractIdRoute
   '/$handle/': typeof HandleIndexRoute
+  '/contracts/': typeof ContractsIndexRoute
   '/$handle/c/$slug': typeof HandleCSlugRoute
   '/$handle/r/$slug': typeof HandleRSlugRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/chirps': typeof ApiV1ChirpsRoute
   '/api/v1/claim': typeof ApiV1ClaimRoute
+  '/api/v1/contracts': typeof ApiV1ContractsRouteWithChildren
   '/api/v1/flocks': typeof ApiV1FlocksRoute
   '/api/v1/join': typeof ApiV1JoinRoute
   '/api/v1/racks': typeof ApiV1RacksRoute
   '/api/v1/seed': typeof ApiV1SeedRoute
   '/api/v1/birds/$id': typeof ApiV1BirdsIdRoute
   '/api/v1/clone/$handle': typeof ApiV1CloneHandleRoute
+  '/api/v1/contracts/$contractId': typeof ApiV1ContractsContractIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -238,18 +275,22 @@ export interface FileRouteTypes {
     | '/$handle/clone'
     | '/$handle/opengraph-image'
     | '/api/health'
+    | '/contracts/$contractId'
     | '/$handle/'
+    | '/contracts/'
     | '/$handle/c/$slug'
     | '/$handle/r/$slug'
     | '/api/auth/$'
     | '/api/v1/chirps'
     | '/api/v1/claim'
+    | '/api/v1/contracts'
     | '/api/v1/flocks'
     | '/api/v1/join'
     | '/api/v1/racks'
     | '/api/v1/seed'
     | '/api/v1/birds/$id'
     | '/api/v1/clone/$handle'
+    | '/api/v1/contracts/$contractId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -262,18 +303,22 @@ export interface FileRouteTypes {
     | '/$handle/clone'
     | '/$handle/opengraph-image'
     | '/api/health'
+    | '/contracts/$contractId'
     | '/$handle'
+    | '/contracts'
     | '/$handle/c/$slug'
     | '/$handle/r/$slug'
     | '/api/auth/$'
     | '/api/v1/chirps'
     | '/api/v1/claim'
+    | '/api/v1/contracts'
     | '/api/v1/flocks'
     | '/api/v1/join'
     | '/api/v1/racks'
     | '/api/v1/seed'
     | '/api/v1/birds/$id'
     | '/api/v1/clone/$handle'
+    | '/api/v1/contracts/$contractId'
   id:
     | '__root__'
     | '/'
@@ -287,18 +332,22 @@ export interface FileRouteTypes {
     | '/$handle/clone'
     | '/$handle/opengraph-image'
     | '/api/health'
+    | '/contracts/$contractId'
     | '/$handle/'
+    | '/contracts/'
     | '/$handle/c/$slug'
     | '/$handle/r/$slug'
     | '/api/auth/$'
     | '/api/v1/chirps'
     | '/api/v1/claim'
+    | '/api/v1/contracts'
     | '/api/v1/flocks'
     | '/api/v1/join'
     | '/api/v1/racks'
     | '/api/v1/seed'
     | '/api/v1/birds/$id'
     | '/api/v1/clone/$handle'
+    | '/api/v1/contracts/$contractId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -311,9 +360,12 @@ export interface RootRouteChildren {
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SkillDotmdRoute: typeof SkillDotmdRoute
   ApiHealthRoute: typeof ApiHealthRoute
+  ContractsContractIdRoute: typeof ContractsContractIdRoute
+  ContractsIndexRoute: typeof ContractsIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiV1ChirpsRoute: typeof ApiV1ChirpsRoute
   ApiV1ClaimRoute: typeof ApiV1ClaimRoute
+  ApiV1ContractsRoute: typeof ApiV1ContractsRouteWithChildren
   ApiV1FlocksRoute: typeof ApiV1FlocksRoute
   ApiV1JoinRoute: typeof ApiV1JoinRoute
   ApiV1RacksRoute: typeof ApiV1RacksRoute
@@ -408,6 +460,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contracts/': {
+      id: '/contracts/'
+      path: '/contracts'
+      fullPath: '/contracts/'
+      preLoaderRoute: typeof ContractsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contracts/$contractId': {
+      id: '/contracts/$contractId'
+      path: '/contracts/$contractId'
+      fullPath: '/contracts/$contractId'
+      preLoaderRoute: typeof ContractsContractIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/$handle/c/$slug': {
       id: '/$handle/c/$slug'
       path: '/c/$slug'
@@ -441,6 +507,13 @@ declare module '@tanstack/react-router' {
       path: '/api/v1/claim'
       fullPath: '/api/v1/claim'
       preLoaderRoute: typeof ApiV1ClaimRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/contracts': {
+      id: '/api/v1/contracts'
+      path: '/api/v1/contracts'
+      fullPath: '/api/v1/contracts'
+      preLoaderRoute: typeof ApiV1ContractsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/v1/flocks': {
@@ -485,6 +558,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1CloneHandleRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/v1/contracts/$contractId': {
+      id: '/api/v1/contracts/$contractId'
+      path: '/$contractId'
+      fullPath: '/api/v1/contracts/$contractId'
+      preLoaderRoute: typeof ApiV1ContractsContractIdRouteImport
+      parentRoute: typeof ApiV1ContractsRoute
+    }
   }
 }
 
@@ -508,6 +588,18 @@ const HandleRouteRouteWithChildren = HandleRouteRoute._addFileChildren(
   HandleRouteRouteChildren,
 )
 
+interface ApiV1ContractsRouteChildren {
+  ApiV1ContractsContractIdRoute: typeof ApiV1ContractsContractIdRoute
+}
+
+const ApiV1ContractsRouteChildren: ApiV1ContractsRouteChildren = {
+  ApiV1ContractsContractIdRoute: ApiV1ContractsContractIdRoute,
+}
+
+const ApiV1ContractsRouteWithChildren = ApiV1ContractsRoute._addFileChildren(
+  ApiV1ContractsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   HandleRouteRoute: HandleRouteRouteWithChildren,
@@ -518,9 +610,12 @@ const rootRouteChildren: RootRouteChildren = {
   RobotsDottxtRoute: RobotsDottxtRoute,
   SkillDotmdRoute: SkillDotmdRoute,
   ApiHealthRoute: ApiHealthRoute,
+  ContractsContractIdRoute: ContractsContractIdRoute,
+  ContractsIndexRoute: ContractsIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiV1ChirpsRoute: ApiV1ChirpsRoute,
   ApiV1ClaimRoute: ApiV1ClaimRoute,
+  ApiV1ContractsRoute: ApiV1ContractsRouteWithChildren,
   ApiV1FlocksRoute: ApiV1FlocksRoute,
   ApiV1JoinRoute: ApiV1JoinRoute,
   ApiV1RacksRoute: ApiV1RacksRoute,
