@@ -33,6 +33,8 @@ import { Route as ApiV1FlocksRouteImport } from './routes/api/v1/flocks'
 import { Route as ApiV1JoinRouteImport } from './routes/api/v1/join'
 import { Route as ApiV1RacksRouteImport } from './routes/api/v1/racks'
 import { Route as ApiV1SeedRouteImport } from './routes/api/v1/seed'
+import { Route as ApiInternalOcEvidenceDrainRouteImport } from './routes/api/internal/oc-evidence/drain'
+import { Route as ApiInternalOcEvidenceStatusRouteImport } from './routes/api/internal/oc-evidence/status'
 import { Route as ApiV1BirdsIdRouteImport } from './routes/api/v1/birds.$id'
 import { Route as ApiV1CloneHandleRouteImport } from './routes/api/v1/clone.$handle'
 import { Route as ApiV1ContractsContractIdRouteImport } from './routes/api/v1/contracts.$contractId'
@@ -157,6 +159,18 @@ const ApiV1SeedRoute = ApiV1SeedRouteImport.update({
   path: '/api/v1/seed',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiInternalOcEvidenceDrainRoute =
+  ApiInternalOcEvidenceDrainRouteImport.update({
+    id: '/api/internal/oc-evidence/drain',
+    path: '/api/internal/oc-evidence/drain',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiInternalOcEvidenceStatusRoute =
+  ApiInternalOcEvidenceStatusRouteImport.update({
+    id: '/api/internal/oc-evidence/status',
+    path: '/api/internal/oc-evidence/status',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiV1BirdsIdRoute = ApiV1BirdsIdRouteImport.update({
   id: '/api/v1/birds/$id',
   path: '/api/v1/birds/$id',
@@ -199,6 +213,8 @@ export interface FileRoutesByFullPath {
   '/api/v1/join': typeof ApiV1JoinRoute
   '/api/v1/racks': typeof ApiV1RacksRoute
   '/api/v1/seed': typeof ApiV1SeedRoute
+  '/api/internal/oc-evidence/drain': typeof ApiInternalOcEvidenceDrainRoute
+  '/api/internal/oc-evidence/status': typeof ApiInternalOcEvidenceStatusRoute
   '/api/v1/birds/$id': typeof ApiV1BirdsIdRoute
   '/api/v1/clone/$handle': typeof ApiV1CloneHandleRoute
   '/api/v1/contracts/$contractId': typeof ApiV1ContractsContractIdRoute
@@ -227,6 +243,8 @@ export interface FileRoutesByTo {
   '/api/v1/join': typeof ApiV1JoinRoute
   '/api/v1/racks': typeof ApiV1RacksRoute
   '/api/v1/seed': typeof ApiV1SeedRoute
+  '/api/internal/oc-evidence/drain': typeof ApiInternalOcEvidenceDrainRoute
+  '/api/internal/oc-evidence/status': typeof ApiInternalOcEvidenceStatusRoute
   '/api/v1/birds/$id': typeof ApiV1BirdsIdRoute
   '/api/v1/clone/$handle': typeof ApiV1CloneHandleRoute
   '/api/v1/contracts/$contractId': typeof ApiV1ContractsContractIdRoute
@@ -257,6 +275,8 @@ export interface FileRoutesById {
   '/api/v1/join': typeof ApiV1JoinRoute
   '/api/v1/racks': typeof ApiV1RacksRoute
   '/api/v1/seed': typeof ApiV1SeedRoute
+  '/api/internal/oc-evidence/drain': typeof ApiInternalOcEvidenceDrainRoute
+  '/api/internal/oc-evidence/status': typeof ApiInternalOcEvidenceStatusRoute
   '/api/v1/birds/$id': typeof ApiV1BirdsIdRoute
   '/api/v1/clone/$handle': typeof ApiV1CloneHandleRoute
   '/api/v1/contracts/$contractId': typeof ApiV1ContractsContractIdRoute
@@ -288,6 +308,8 @@ export interface FileRouteTypes {
     | '/api/v1/join'
     | '/api/v1/racks'
     | '/api/v1/seed'
+    | '/api/internal/oc-evidence/drain'
+    | '/api/internal/oc-evidence/status'
     | '/api/v1/birds/$id'
     | '/api/v1/clone/$handle'
     | '/api/v1/contracts/$contractId'
@@ -316,6 +338,8 @@ export interface FileRouteTypes {
     | '/api/v1/join'
     | '/api/v1/racks'
     | '/api/v1/seed'
+    | '/api/internal/oc-evidence/drain'
+    | '/api/internal/oc-evidence/status'
     | '/api/v1/birds/$id'
     | '/api/v1/clone/$handle'
     | '/api/v1/contracts/$contractId'
@@ -345,6 +369,8 @@ export interface FileRouteTypes {
     | '/api/v1/join'
     | '/api/v1/racks'
     | '/api/v1/seed'
+    | '/api/internal/oc-evidence/drain'
+    | '/api/internal/oc-evidence/status'
     | '/api/v1/birds/$id'
     | '/api/v1/clone/$handle'
     | '/api/v1/contracts/$contractId'
@@ -370,6 +396,8 @@ export interface RootRouteChildren {
   ApiV1JoinRoute: typeof ApiV1JoinRoute
   ApiV1RacksRoute: typeof ApiV1RacksRoute
   ApiV1SeedRoute: typeof ApiV1SeedRoute
+  ApiInternalOcEvidenceDrainRoute: typeof ApiInternalOcEvidenceDrainRoute
+  ApiInternalOcEvidenceStatusRoute: typeof ApiInternalOcEvidenceStatusRoute
   ApiV1BirdsIdRoute: typeof ApiV1BirdsIdRoute
   ApiV1CloneHandleRoute: typeof ApiV1CloneHandleRoute
 }
@@ -544,6 +572,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1SeedRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/internal/oc-evidence/drain': {
+      id: '/api/internal/oc-evidence/drain'
+      path: '/api/internal/oc-evidence/drain'
+      fullPath: '/api/internal/oc-evidence/drain'
+      preLoaderRoute: typeof ApiInternalOcEvidenceDrainRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/internal/oc-evidence/status': {
+      id: '/api/internal/oc-evidence/status'
+      path: '/api/internal/oc-evidence/status'
+      fullPath: '/api/internal/oc-evidence/status'
+      preLoaderRoute: typeof ApiInternalOcEvidenceStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/v1/birds/$id': {
       id: '/api/v1/birds/$id'
       path: '/api/v1/birds/$id'
@@ -620,6 +662,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiV1JoinRoute: ApiV1JoinRoute,
   ApiV1RacksRoute: ApiV1RacksRoute,
   ApiV1SeedRoute: ApiV1SeedRoute,
+  ApiInternalOcEvidenceDrainRoute: ApiInternalOcEvidenceDrainRoute,
+  ApiInternalOcEvidenceStatusRoute: ApiInternalOcEvidenceStatusRoute,
   ApiV1BirdsIdRoute: ApiV1BirdsIdRoute,
   ApiV1CloneHandleRoute: ApiV1CloneHandleRoute,
 }

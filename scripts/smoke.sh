@@ -17,6 +17,18 @@ seed_status="$(curl -s -o /tmp/flok-seed.json -w "%{http_code}" -X POST "$BASE/a
 test "$seed_status" = "403"
 grep -q seed_disabled /tmp/flok-seed.json
 
+drain_status="$(curl -s -o /tmp/flok-oc-drain.json -w "%{http_code}" -X POST "$BASE/api/internal/oc-evidence/drain")"
+test "$drain_status" = "401"
+grep -q unauthorized /tmp/flok-oc-drain.json
+
+if [ -n "${FLOK_OC_DRAIN_SECRET:-}" ]; then
+  drain_disabled_status="$(curl -s -o /tmp/flok-oc-drain-disabled.json -w "%{http_code}" \
+    -X POST "$BASE/api/internal/oc-evidence/drain" \
+    -H "authorization: Bearer $FLOK_OC_DRAIN_SECRET")"
+  test "$drain_disabled_status" = "503"
+  grep -q staging_egress_disabled /tmp/flok-oc-drain-disabled.json
+fi
+
 join="$(curl -sf -X POST "$BASE/api/v1/join" \
   -H 'content-type: application/json' \
   -d "{\"handle\":\"$HANDLE\"}")"

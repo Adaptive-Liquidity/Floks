@@ -63,12 +63,13 @@ export type OcEvidenceInput = z.infer<typeof ocEvidenceInputSchema>;
 
 export type OcEvidence = Readonly<
   OcEvidenceInput & {
-    schema: "flok.oc-evidence.v1";
+    schema: "flok.oc-evidence.v2";
     event_id: string;
     category: "task_executor";
     subject: string;
     severity: OcSeverity;
     evidence_hash: string;
+    deadline_at?: string;
   }
 >;
 
@@ -108,7 +109,9 @@ export function classifyOcTransitionFromState(
     return "conflict";
   }
   if (Date.parse(next.occurred_at) < Date.parse(previous.occurred_at)) return "invalid";
-  if (previous.type === "OC_OPENED") return next.type === "OC_AWARDED" ? "advance" : "invalid";
+  if (previous.type === "OC_OPENED") {
+    return next.type === "OC_AWARDED" || next.type === "OC_FAILED" ? "advance" : "invalid";
+  }
   if (previous.type === "OC_AWARDED") {
     return next.type === "OC_FULFILLED" || next.type === "OC_FAILED" || next.type === "OC_SLASHED"
       ? "advance"

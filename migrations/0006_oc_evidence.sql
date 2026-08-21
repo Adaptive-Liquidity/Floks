@@ -1,5 +1,5 @@
 -- S2 Gate 1: durable Outcome Contract lifecycle and transactional delivery outbox.
--- Hall remains closed; pending rows have no sender until the upstream decoder is live.
+-- Hall remains closed; Phase B adds a staging-only sender while decoderLive stays false.
 
 create table if not exists oc_lifecycle (
   contract_id         text primary key,

@@ -32,19 +32,19 @@ Root `ARCHITECTURE.md` / `DESIGN.md` are compatibility redirects only. Not live 
 
 ## Remaining work (product — do in this order)
 
-| ID     | Goal                                                              | Depends on                      | Risk     | Status  | Patterns                          |
-| ------ | ----------------------------------------------------------------- | ------------------------------- | -------- | ------- | --------------------------------- |
-| **R0** | Terminology in **new** UI copy only (no schema rename)            | shipped v0                      | LOW      | shipped | FINAL_DESIGN §2                   |
-| **R1** | Cluster Index: 2×2 meta-tiles, click → Roost (≤12)                | R0                              | MEDIUM   | shipped | FINAL_DESIGN §6                   |
-| **R2** | Node chrome: executing / racing / rolled-back / denied / attested | R1                              | MEDIUM   | shipped | BRAIN `provider_06` slice         |
-| **R3** | Rack: pin 2–4 Roosts                                              | R1                              | MEDIUM   | this PR | FINAL_DESIGN §6                   |
-| **S1** | Consume SPX402 Grade + confidence on Index / OG (read-only)       | `reference/spx402`              | MEDIUM   | shipped | BRAIN Grade strip                 |
-| **S2** | Emit `OC_*` evidence into SPX402 (`task_executor` decoder)        | S1, SPX402 upstream             | HIGH     | NEXT    | S2-G2a Gate 1: Phase A+B approved |
-| **T1** | Night Tape + Spotlight (no Sky)                                   | ~50 live Floks                  | HIGH     | gated   | FINAL_DESIGN §7                   |
-| **E1** | Outcome Contract object + public header                           | S1 (Hall SPX404 until E2 Bound) | HIGH     | shipped | BRAIN `buyer_04`, `buyer_10`      |
-| **E2** | AEON escrow as middleman                                          | E1                              | CRITICAL | gated   | BRAIN `provider_10`               |
-| **E3** | Contract Roost (hirer-only)                                       | E1                              | HIGH     | gated   | BRAIN `buyer_05` + `provider_08`  |
-| **E4** | Bid / select / slash                                              | E2 + S2 Grade                   | CRITICAL | gated   | BRAIN `provider_07`, `buyer_09`   |
+| ID     | Goal                                                              | Depends on                      | Risk     | Status  | Patterns                         |
+| ------ | ----------------------------------------------------------------- | ------------------------------- | -------- | ------- | -------------------------------- |
+| **R0** | Terminology in **new** UI copy only (no schema rename)            | shipped v0                      | LOW      | shipped | FINAL_DESIGN §2                  |
+| **R1** | Cluster Index: 2×2 meta-tiles, click → Roost (≤12)                | R0                              | MEDIUM   | shipped | FINAL_DESIGN §6                  |
+| **R2** | Node chrome: executing / racing / rolled-back / denied / attested | R1                              | MEDIUM   | shipped | BRAIN `provider_06` slice        |
+| **R3** | Rack: pin 2–4 Roosts                                              | R1                              | MEDIUM   | this PR | FINAL_DESIGN §6                  |
+| **S1** | Consume SPX402 Grade + confidence on Index / OG (read-only)       | `reference/spx402`              | MEDIUM   | shipped | BRAIN Grade strip                |
+| **S2** | Emit `OC_*` evidence into SPX402 (`task_executor` decoder)        | S1, SPX402 upstream             | HIGH     | this PR | S2-G2a Phase B staging egress    |
+| **T1** | Night Tape + Spotlight (no Sky)                                   | ~50 live Floks                  | HIGH     | gated   | FINAL_DESIGN §7                  |
+| **E1** | Outcome Contract object + public header                           | S1 (Hall SPX404 until E2 Bound) | HIGH     | shipped | BRAIN `buyer_04`, `buyer_10`     |
+| **E2** | AEON escrow as middleman                                          | E1                              | CRITICAL | gated   | BRAIN `provider_10`              |
+| **E3** | Contract Roost (hirer-only)                                       | E1                              | HIGH     | gated   | BRAIN `buyer_05` + `provider_08` |
+| **E4** | Bid / select / slash                                              | E2 + S2 Grade                   | CRITICAL | gated   | BRAIN `provider_07`, `buyer_09`  |
 
 **Hire Hall does not open** until **E2 escrow enforces Bound** — not on emit or Grade alone. Until then Grade is **SPX404**. Do not blend buyback Grade with Contract Grade.
 
@@ -113,6 +113,8 @@ Phases **C/D/E are not approved**. **C/D** require **Gate 2**. Phase **E** requi
 **Locked:** v2 hard cutover (no dual-write); outbox `deadline_at`; Phase B staging-only; no production flip until Gate 2.
 
 **Invariants:** `decoderLive` stays false; production egress closed; Hire Hall closed until E2 escrow enforces Bound. Upstream scoring must use an upstream-observed timestamp rather than trusting Flok's `occurred_at`.
+
+**Phase B operations:** Flok sends only to the explicitly configured dedicated staging base URL with Bearer `OC_INGEST_SECRET`. Pending v1 rows are purged by migration before the drainer can claim work; retryable failures use bounded exponential backoff and terminal/max-attempt failures are dead-lettered. SPX uses its receipt timestamp and a five-minute clock-skew grace window for on-time grading; this does not change the E1 contract deadline.
 
 ---
 
@@ -189,8 +191,8 @@ Do not wait on Cluster/Hall.
 - [x] R3 Rack
 - [x] S1 Grade or SPX404 on the Index tile
 - [x] S2 Gate 1 — fail-closed OC evidence boundary (Flok-owned; outbox pending, no egress)
-- [ ] S2-G2a Phase A — SPX v2 readiness (upstream ingest + mapping + decoder)
-- [ ] S2-G2a Phase B — Flok staging egress only (no production; `decoderLive` stays false)
+- [x] S2-G2a Phase A — SPX v2 readiness (upstream PR #5 merged)
+- [x] S2-G2a Phase B — Flok staging egress only (this PR; no production; `decoderLive` stays false)
 - [ ] S2 Gate 2 — soak / production flip / Hall (Phases C/D/E; not approved)
 - [x] E1 — Outcome Contract object + public header + authenticated poster history (SPX404; no market actions; PR #31 merged)
 - [ ] Hall closed until E2 escrow enforces Bound (`decoderLive === false`; production egress closed)

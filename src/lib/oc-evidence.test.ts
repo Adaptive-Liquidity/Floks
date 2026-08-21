@@ -30,7 +30,37 @@ const INPUT = {
   capsule_id: "capsule-9",
 };
 
-function event(type: (typeof OC_EVENT_TYPES)[number], overrides: Record<string, unknown> = {}) {
+const CONTRACT_DEADLINE = "2026-08-25T19:00:00.000Z";
+
+async function ensureContract(contractId: string, deadline = CONTRACT_DEADLINE) {
+  const sql = await getSql();
+  await sql.query(
+    `insert into outcome_contracts (
+       id, poster_user_id, poster, outcome_class, outcome_text, proof_requirements,
+       deadline, bound, visibility, version, contract_hash
+     ) values ($1, $2, $3, 'artifact', 'Produce a verifiable test artifact.',
+       '[]'::jsonb, $4, '{"amount":"1","currency":"USD"}'::jsonb,
+       'public', 1, $5)
+     on conflict (id) do nothing`,
+    [
+      contractId,
+      `test-user-${contractId}`,
+      `@poster_${contractId
+        .replace(/[^a-z0-9]/gi, "")
+        .padEnd(32, "0")
+        .slice(0, 32)}`,
+      deadline,
+      `sha256:${contractId.padEnd(64, "0").slice(0, 64)}`,
+    ],
+  );
+}
+
+async function event(
+  type: (typeof OC_EVENT_TYPES)[number],
+  overrides: Record<string, unknown> = {},
+) {
+  const input = { ...INPUT, type, ...overrides };
+  await ensureContract(String(input.contract_id));
   return createOcEvidence({ ...INPUT, type, ...overrides });
 }
 
@@ -56,7 +86,7 @@ test("canonical evidence hashing matches the golden vector", async () => {
 
 test("OC evidence matches the fixed identity golden vector", async () => {
   const fulfilled = await event("OC_FULFILLED");
-  assert.equal(fulfilled.schema, "flok.oc-evidence.v1");
+  assert.equal(fulfilled.schema, "flok.oc-evidence.v2");
   assert.equal(
     fulfilled.event_id,
     "oc_e65ac6a4d5d0f660a5ece6d2b1935bb9493da69674d2a193e3cb82b071681c89",
@@ -65,8 +95,11 @@ test("OC evidence matches the fixed identity golden vector", async () => {
   assert.equal(fulfilled.subject, SUBJECT);
   assert.equal(
     fulfilled.evidence_hash,
-    "sha256:259066ccfc6d5b9e60685f7d9ffc14c5dc999bf19d78b22dd90297c10a663d4e",
+    "sha256:99c01f3b1284f61bdd41473136f6a8f9f51c0a1013bccf496f127ac31353e7f8",
   );
+  assert.equal(fulfilled.deadline_at, undefined);
+  assert.equal((await event("OC_OPENED")).deadline_at, CONTRACT_DEADLINE);
+  assert.equal((await event("OC_AWARDED")).deadline_at, CONTRACT_DEADLINE);
   assert.equal(Object.isFrozen(fulfilled), true);
 
   assert.deepEqual(
@@ -112,6 +145,7 @@ test("OC lifecycle accepts only opened, awarded, then one terminal event", async
   const awarded = await event("OC_AWARDED");
   assert.equal(classifyOcTransitionFromState(null, opened), "advance");
   assert.equal(classifyOcTransitionFromState(opened, awarded), "advance");
+  assert.equal(classifyOcTransitionFromState(opened, await event("OC_FAILED")), "advance");
   assert.equal(classifyOcTransitionFromState(awarded, await event("OC_FULFILLED")), "advance");
   assert.equal(classifyOcTransitionFromState(awarded, await event("OC_FAILED")), "advance");
   assert.equal(classifyOcTransitionFromState(awarded, await event("OC_SLASHED")), "advance");
