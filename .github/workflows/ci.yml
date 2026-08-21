@@ -47,6 +47,8 @@ jobs:
       - name: Playwright Chromium
         run: npx playwright install --with-deps chromium
       - name: Start Flok (PGLite)
+        env:
+          FLOK_OC_DRAIN_SECRET: ci-smoke-drain-secret
         run: |
           npm run dev > /tmp/flok-dev.log 2>&1 &
           echo $! > /tmp/flok-dev.pid
@@ -63,6 +65,8 @@ jobs:
       - name: Smoke
         env:
           FLOK_APP_URL: http://127.0.0.1:8080
+          FLOK_OC_DRAIN_SECRET: ci-smoke-drain-secret
+          FLOK_SMOKE_EXPECT_EGRESS_DISABLED: "1"
         run: bash scripts/smoke.sh
       - name: Browser smoke
         env:

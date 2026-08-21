@@ -10,6 +10,8 @@ import {
 } from "./oc-evidence.ts";
 import { parseSubjectMap, resolveSubject } from "./spx-subject.ts";
 
+const OC_EVIDENCE_SCHEMA = "flok.oc-evidence.v2" as const;
+
 export const OC_DECODER_STATUS = Object.freeze({
   category: "task_executor",
   decoderLive: false,
@@ -22,9 +24,27 @@ export type OcDecoderStatus = {
   reason: "upstream_decoder_unavailable" | "upstream_decoder_live" | "probe_failed";
 };
 
-async function materializeOcEvidence(input: unknown, subject: unknown): Promise<OcEvidence> {
+async function materializeOcEvidence(
+  input: unknown,
+  subject: unknown,
+  deadlineAt?: unknown,
+): Promise<OcEvidence> {
   const parsed = ocEvidenceInputSchema.parse(input);
   const boundSubject = ocSubjectSchema.parse(subject);
+  const requiresDeadline = parsed.type === "OC_OPENED" || parsed.type === "OC_AWARDED";
+  const deadlineAtMs = requiresDeadline
+    ? deadlineAt instanceof Date
+      ? deadlineAt.getTime()
+      : Date.parse(String(deadlineAt))
+    : undefined;
+  if (requiresDeadline) {
+    const occurredAtMs = Date.parse(parsed.occurred_at);
+    if (!Number.isFinite(deadlineAtMs) || Number(deadlineAtMs) <= occurredAtMs) {
+      throw new Error("invalid_oc_deadline");
+    }
+  }
+  const deadline =
+    deadlineAtMs === undefined ? undefined : new Date(Number(deadlineAtMs)).toISOString();
   const eventId = `oc_${await sha256Hex(
     canonicalJsonStringify({
       contract_id: parsed.contract_id,
@@ -34,11 +54,12 @@ async function materializeOcEvidence(input: unknown, subject: unknown): Promise<
   )}`;
   const hashPayload = {
     ...parsed,
-    schema: "flok.oc-evidence.v1" as const,
+    schema: OC_EVIDENCE_SCHEMA,
     event_id: eventId,
     category: "task_executor" as const,
     subject: boundSubject,
     severity: severityForOcEvent(parsed.type),
+    ...(deadline === undefined ? {} : { deadline_at: deadline }),
   };
   return Object.freeze({
     ...hashPayload,
@@ -46,8 +67,21 @@ async function materializeOcEvidence(input: unknown, subject: unknown): Promise<
   });
 }
 
-export async function createOcEvidence(input: unknown): Promise<OcEvidence> {
+export async function createOcEvidence(
+  input: unknown,
+  sqlPromise?: Promise<Sql>,
+): Promise<OcEvidence> {
   const parsed = ocEvidenceInputSchema.parse(input);
+  let deadline: unknown;
+  if (parsed.type === "OC_OPENED" || parsed.type === "OC_AWARDED") {
+    const sql = await (sqlPromise ?? getSql());
+    const rows = await sql.query<{ deadline: unknown }>(
+      "select deadline from outcome_contracts where id = $1 limit 1",
+      [parsed.contract_id],
+    );
+    deadline = rows[0]?.deadline;
+    if (deadline === undefined) throw new Error("outcome_contract_not_found");
+  }
   return materializeOcEvidence(
     parsed,
     resolveSubject(
@@ -55,10 +89,18 @@ export async function createOcEvidence(input: unknown): Promise<OcEvidence> {
       parsed.handle,
       parsed.cluster_slug,
     ),
+    deadline,
   );
 }
 
-async function validateOcEvidence(value: unknown): Promise<OcEvidence> {
+export async function createOcEvidenceFromBoundSubject(
+  input: unknown,
+  subject: unknown,
+): Promise<OcEvidence> {
+  return materializeOcEvidence(input, subject);
+}
+
+export async function validateOcEvidence(value: unknown): Promise<OcEvidence> {
   if (typeof value !== "object" || value === null) throw new Error("invalid_oc_evidence");
   const evidence = value as Partial<OcEvidence>;
   // Durable/queued payloads carry the subject binding captured at create time.
@@ -75,6 +117,7 @@ async function validateOcEvidence(value: unknown): Promise<OcEvidence> {
       ...(evidence.capsule_id === undefined ? {} : { capsule_id: evidence.capsule_id }),
     },
     evidence.subject,
+    evidence.deadline_at,
   );
   if (canonicalJsonStringify(expected) !== canonicalJsonStringify(value)) {
     throw new Error("invalid_oc_evidence");
@@ -123,8 +166,8 @@ export type OcEvidenceEmissionResult = {
 };
 
 /**
- * Gate 1 has no authenticated upstream ingestion contract. Even if a probe
- * observes a decoder, this boundary remains closed until that contract ships.
+ * Compatibility probe only. Phase B delivery is owned by the staging outbox
+ * drainer, so this helper validates evidence but never performs network egress.
  */
 export async function emitOcEvidence(
   evidence: unknown,
@@ -244,6 +287,23 @@ export async function persistOcEvidence(
       return Object.freeze({ transition, evidence: validated });
     }
 
+    const contractRows = await tx.query<{ deadline: unknown }>(
+      "select deadline from outcome_contracts where id = $1 for update",
+      [validated.contract_id],
+    );
+    const contractDeadline = contractRows[0]?.deadline;
+    if (contractDeadline === undefined) throw new Error("outcome_contract_not_found");
+    const deadlineAt =
+      contractDeadline instanceof Date
+        ? contractDeadline.toISOString()
+        : new Date(String(contractDeadline)).toISOString();
+    if (
+      (validated.type === "OC_OPENED" || validated.type === "OC_AWARDED") &&
+      validated.deadline_at !== deadlineAt
+    ) {
+      throw new Error("oc_deadline_mismatch");
+    }
+
     const payload = JSON.stringify(validated);
     await tx.query(
       `insert into oc_evidence_events (
@@ -265,10 +325,10 @@ export async function persistOcEvidence(
       ],
     );
     await hooks.beforeOutboxInsert?.();
-    await tx.query("insert into oc_evidence_outbox (event_id, payload) values ($1, $2::jsonb)", [
-      validated.event_id,
-      payload,
-    ]);
+    await tx.query(
+      "insert into oc_evidence_outbox (event_id, payload, deadline_at) values ($1, $2::jsonb, $3)",
+      [validated.event_id, payload, deadlineAt],
+    );
     await tx.query(
       `update oc_lifecycle set
         latest_event_id = $2, cluster_id = $3, cluster_slug = $4, subject = $5,
