@@ -18,7 +18,6 @@ const MAX_DRAIN_ROWS = 5;
 const MAX_BACKOFF_MS = 60 * 60 * 1000;
 const EXPIRY_RETRY_MS = 60 * 60 * 1000;
 const EXPIRY_MAX_ATTEMPTS = 3;
-const EXPIRY_CLAIM_LEASE_MS = 5 * 60 * 1000;
 const MAX_ERROR_BODY_BYTES = 4 * 1024;
 
 type OutboxRow = {
@@ -85,6 +84,10 @@ function boundedInteger(value: string | undefined, fallback: number, maximum: nu
   return Number.isInteger(parsed) && parsed > 0 && parsed <= maximum ? parsed : fallback;
 }
 
+export function claimLeaseMs(rowCount: number): number {
+  return Math.max(MIN_CLAIM_LEASE_MS, rowCount * REQUEST_TIMEOUT_MS + CLAIM_LEASE_BUFFER_MS);
+}
+
 export function readOcEgressConfig(env: NodeJS.ProcessEnv = process.env): OcEgressConfig | null {
   if (env.FLOK_SPX402_EGRESS_MODE?.trim() !== "staging") return null;
   const rawBase = env.FLOK_SPX402_STAGING_URL?.trim();
@@ -129,9 +132,14 @@ function expiryErrorCode(error: unknown): string {
   if (error instanceof SyntaxError || errorName === "ZodError") return "invalid_oc_evidence";
   if (
     error instanceof Error &&
-    ["invalid_oc_deadline", "outcome_contract_not_found", "oc_deadline_mismatch"].includes(
-      error.message,
-    )
+    [
+      "invalid_oc_deadline",
+      "outcome_contract_not_found",
+      "oc_deadline_mismatch",
+      "invalid",
+      "duplicate",
+      "conflict",
+    ].includes(error.message)
   ) {
     return error.message;
   }
@@ -201,11 +209,7 @@ async function responseErrorCode(response: Response): Promise<string | undefined
 
 async function claimOutbox(sql: Sql, config: OcEgressConfig, now: Date): Promise<OutboxRow[]> {
   const claimLimit = Math.min(config.batchSize, MAX_DRAIN_ROWS);
-  const leaseMs = Math.max(
-    MIN_CLAIM_LEASE_MS,
-    claimLimit * REQUEST_TIMEOUT_MS + CLAIM_LEASE_BUFFER_MS,
-  );
-  const leaseUntil = new Date(now.getTime() + leaseMs).toISOString();
+  const leaseUntil = new Date(now.getTime() + claimLeaseMs(claimLimit)).toISOString();
   const claimToken = randomUUID();
   return sql.transaction((tx) =>
     tx.query<OutboxRow>(
@@ -544,7 +548,7 @@ async function claimExpiredLifecycleRows(
   limit: number,
 ): Promise<ExpiredLifecycleRow[]> {
   const claimToken = randomUUID();
-  const claimUntil = new Date(now.getTime() + EXPIRY_CLAIM_LEASE_MS).toISOString();
+  const claimUntil = new Date(now.getTime() + claimLeaseMs(limit)).toISOString();
   return sql.transaction((tx) =>
     tx.query<ExpiredLifecycleRow>(
       `with candidates as (
@@ -587,6 +591,39 @@ async function releaseExpiryClaim(sql: Sql, row: ExpiredLifecycleRow): Promise<v
   );
 }
 
+async function quarantineExpiryRow(
+  sql: Sql,
+  row: ExpiredLifecycleRow,
+  now: Date,
+  errorCode: string,
+): Promise<void> {
+  await sql.query(
+    `update oc_lifecycle
+     set expiry_attempts = expiry_attempts + 1,
+         expiry_retry_at = case
+           when expiry_attempts + 1 >= $5 then null
+           else $3::timestamptz
+         end,
+         expiry_last_error = $4,
+         expiry_dead_lettered_at = case
+           when expiry_attempts + 1 >= $5 then $6::timestamptz
+           else null
+         end,
+         expiry_claim_token = null,
+         expiry_claim_until = null
+     where contract_id = $1 and latest_event_id = $2 and expiry_claim_token = $7`,
+    [
+      row.contract_id,
+      row.latest_event_id,
+      new Date(now.getTime() + EXPIRY_RETRY_MS).toISOString(),
+      errorCode,
+      EXPIRY_MAX_ATTEMPTS,
+      now.toISOString(),
+      row.claim_token,
+    ],
+  );
+}
+
 export async function sweepExpiredOutcomeContracts(
   options: {
     sqlPromise?: Promise<Sql>;
@@ -617,7 +654,10 @@ export async function sweepExpiredOutcomeContracts(
         previous.subject,
       );
       const persisted = await persistOcEvidence(evidence, {}, sqlPromise);
-      if (persisted.transition === "advance") failed += 1;
+      if (persisted.transition !== "advance") {
+        throw new Error(persisted.transition);
+      }
+      failed += 1;
       try {
         await releaseExpiryClaim(sql, row);
       } catch (releaseError) {
@@ -634,31 +674,7 @@ export async function sweepExpiredOutcomeContracts(
       errors += 1;
       const errorCode = expiryErrorCode(error);
       try {
-        await sql.query(
-          `update oc_lifecycle
-           set expiry_attempts = expiry_attempts + 1,
-               expiry_retry_at = case
-                 when expiry_attempts + 1 >= $5 then null
-                 else $3::timestamptz
-               end,
-               expiry_last_error = $4,
-               expiry_dead_lettered_at = case
-                 when expiry_attempts + 1 >= $5 then $6::timestamptz
-                 else null
-               end,
-               expiry_claim_token = null,
-               expiry_claim_until = null
-           where contract_id = $1 and latest_event_id = $2 and expiry_claim_token = $7`,
-          [
-            row.contract_id,
-            row.latest_event_id,
-            new Date(now.getTime() + EXPIRY_RETRY_MS).toISOString(),
-            errorCode,
-            EXPIRY_MAX_ATTEMPTS,
-            now.toISOString(),
-            row.claim_token,
-          ],
-        );
+        await quarantineExpiryRow(sql, row, now, errorCode);
       } catch (quarantineError) {
         console.warn(
           JSON.stringify({
