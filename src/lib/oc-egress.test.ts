@@ -183,6 +183,31 @@ test("drainer retries auth failures and honors Retry-After", async () => {
   assert.equal(new Date(String(rateRow?.available_at)).toISOString(), "2026-08-21T20:04:00.000Z");
 });
 
+test("drainer retries 403 but treats 409 and 413 as terminal", async () => {
+  const cases = [
+    { status: 403, expected: "pending" },
+    { status: 409, expected: "dead_letter" },
+    { status: 413, expected: "dead_letter" },
+  ] as const;
+  const sql = await getSql();
+
+  for (const [index, item] of cases.entries()) {
+    const id = `contract-http-${item.status}-${crypto.randomUUID()}`;
+    await createContract(id, "2026-08-25T19:00:00.000Z");
+    const evidence = await enqueueOpened(id, `2026-08-21T22:0${index}:00.000Z`);
+    await drainOcEvidenceOutbox({
+      env: stagingEnv({ FLOK_OC_DRAIN_BATCH_SIZE: "100" }),
+      now: () => new Date(`2026-08-21T22:0${index}:30.000Z`),
+      fetcher: async () => Response.json({ error: `http_${item.status}` }, { status: item.status }),
+    });
+    const rows = await sql.query<{ status: string }>(
+      "select status from oc_evidence_outbox where event_id = $1",
+      [evidence.event_id],
+    );
+    assert.equal(rows[0]?.status, item.expected);
+  }
+});
+
 test("subject_not_found is retryable then distinctly dead-lettered and requeueable", async () => {
   const id = `contract-subject-${crypto.randomUUID()}`;
   await createContract(id, "2026-08-25T19:00:00.000Z");
