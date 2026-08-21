@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test, { beforeEach } from "node:test";
 import { dbSource, getSql } from "./db.ts";
 import {
+  claimLeaseMs,
   drainOcEvidenceOutbox,
   readOcEgressConfig,
   readOcOutboxStatus,
@@ -40,6 +41,16 @@ async function createContract(id: string, deadline: string) {
   );
 }
 
+const PINNED_OUTBOX_AVAILABLE_AT = "2026-08-21T18:00:00.000Z";
+
+async function pinOutboxAvailable(eventId: string) {
+  const sql = await getSql();
+  await sql.query("update oc_evidence_outbox set available_at = $2 where event_id = $1", [
+    eventId,
+    PINNED_OUTBOX_AVAILABLE_AT,
+  ]);
+}
+
 async function enqueueOpened(contractId: string, occurredAt: string) {
   const evidence = await createOcEvidence({
     handle: "growthops",
@@ -51,6 +62,7 @@ async function enqueueOpened(contractId: string, occurredAt: string) {
     idempotency_key: "open-1",
   });
   assert.equal((await persistOcEvidence(evidence)).transition, "advance");
+  await pinOutboxAvailable(evidence.event_id);
   return evidence;
 }
 
@@ -65,6 +77,7 @@ async function enqueueAwarded(contractId: string, occurredAt: string) {
     idempotency_key: "award-1",
   });
   assert.equal((await persistOcEvidence(evidence)).transition, "advance");
+  await pinOutboxAvailable(evidence.event_id);
   return evidence;
 }
 
@@ -107,6 +120,14 @@ test("staging egress requires explicit mode, URL, and secret", () => {
     null,
   );
   assert.equal(readOcEgressConfig(stagingEnv({ FLOK_OC_DRAIN_BATCH_SIZE: "100" }))?.batchSize, 5);
+});
+
+test("claim leases scale with batch size like claimOutbox", () => {
+  assert.equal(claimLeaseMs(1), 5 * 60 * 1000);
+  assert.equal(claimLeaseMs(5), 5 * 60 * 1000);
+  assert.equal(claimLeaseMs(24), 5 * 60 * 1000);
+  assert.equal(claimLeaseMs(25), 25 * 10_000 + 60_000);
+  assert.equal(claimLeaseMs(100), 100 * 10_000 + 60_000);
 });
 
 test("drainer sends v2 with bearer auth and marks the row sent", async () => {
@@ -312,8 +333,8 @@ test("drainer orders equal-time terminal evidence by event id", async () => {
       ],
     );
     await sql.query(
-      "insert into oc_evidence_outbox (event_id, payload, deadline_at) values ($1, $2::jsonb, $3)",
-      [item.event_id, JSON.stringify(item), deadline],
+      "insert into oc_evidence_outbox (event_id, payload, deadline_at, available_at) values ($1, $2::jsonb, $3, $4)",
+      [item.event_id, JSON.stringify(item), deadline, PINNED_OUTBOX_AVAILABLE_AT],
     );
   }
 
@@ -661,4 +682,53 @@ test("expiry sweeper enqueues OC_FAILED for overdue open contracts", async () =>
     now: () => new Date("2026-08-23T22:00:00.000Z"),
   });
   assert.deepEqual(noMoreRetries, { scanned: 0, failed: 0, errors: 0 });
+});
+
+test("expiry sweeper quarantines non-advance persist results", async () => {
+  const id = `contract-expiry-invalid-${crypto.randomUUID()}`;
+  await createContract(id, "2026-08-25T19:00:00.000Z");
+  const opened = await enqueueOpened(id, "2026-08-21T19:00:00.000Z");
+  const sql = await getSql();
+  await sql.query("update outcome_contracts set deadline = $2 where id = $1", [
+    id,
+    "2026-08-22T19:00:00.000Z",
+  ]);
+  await sql.query(
+    `update oc_evidence_events
+     set occurred_at = $2::timestamptz,
+         payload = jsonb_set(payload, '{occurred_at}', to_jsonb($3::text))
+     where event_id = $1`,
+    [opened.event_id, "2026-08-24T19:00:00.000Z", "2026-08-24T19:00:00.000Z"],
+  );
+  await sql.query("update oc_lifecycle set current_occurred_at = $2 where contract_id = $1", [
+    id,
+    "2026-08-24T19:00:00.000Z",
+  ]);
+
+  const result = await sweepExpiredOutcomeContracts({
+    now: () => new Date("2026-08-23T19:00:00.000Z"),
+    limit: 100,
+  });
+  assert.deepEqual(result, { scanned: 1, failed: 0, errors: 1 });
+
+  const quarantined = await sql.query<{
+    current_type: string;
+    expiry_retry_at: unknown;
+    expiry_last_error: string;
+    expiry_attempts: number;
+    expiry_claim_token: string | null;
+  }>(
+    `select current_type, expiry_retry_at, expiry_last_error, expiry_attempts, expiry_claim_token
+     from oc_lifecycle
+     where contract_id = $1`,
+    [id],
+  );
+  assert.equal(quarantined[0]?.current_type, "OC_OPENED");
+  assert.equal(
+    new Date(String(quarantined[0]?.expiry_retry_at)).toISOString(),
+    "2026-08-23T20:00:00.000Z",
+  );
+  assert.equal(quarantined[0]?.expiry_last_error, "invalid");
+  assert.equal(quarantined[0]?.expiry_attempts, 1);
+  assert.equal(quarantined[0]?.expiry_claim_token, null);
 });
