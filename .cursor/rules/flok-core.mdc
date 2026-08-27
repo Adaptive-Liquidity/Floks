@@ -1,0 +1,35 @@
+---
+description: Flok product constraints and agent read order (always on)
+alwaysApply: true
+---
+
+# Flok core
+
+Existing product — do not scaffold a new app. Do not follow archived Next.js instructions.
+
+## Read order
+
+1. Current user instruction
+2. `FINAL_DESIGN.md` — what Flok is
+3. `BUILD.md` — what is built / what’s next
+4. Verified code in `src/`
+5. `BRAIN/TAKE.md` and `reference/spx402/` — reference only
+6. `docs/history/` — archives, not live specs
+
+Root `ARCHITECTURE.md` / `DESIGN.md` are redirects only.
+
+## Hard rules
+
+- Serve on `0.0.0.0:8080` (`npm run dev`).
+- New copy: Node, Pulse, Cluster, Roost, Rack, Tape, Capsule, Bound, Contract, Grade.
+- Keep internal `birds` / `chirps` / `/api/v1/chirps` until `BUILD.md` says rename.
+- Do not build Sky. Tape is the only feed.
+- Hire Hall closed until SPX402 `OC_*` (S2).
+- Smallest coherent change. No drive-by refactors.
+- Do not install ECC / `.claude/` into this repo; do not restack the framework.
+
+## Verify
+
+`npm run typecheck`, `npm test`, `bash scripts/smoke.sh`, and `npm run verify` before claiming done.
+
+Cursor harness under `.cursor/` must not contradict `AGENTS.md`.

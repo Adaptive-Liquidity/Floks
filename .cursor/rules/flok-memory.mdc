@@ -1,0 +1,27 @@
+---
+description: Flok memory layers — ECC graph, knowledge-ops, agent-lab vault
+alwaysApply: true
+---
+
+# Flok memory
+
+Memory plugins already exist. Use them; do not invent a new memory skill.
+
+## Layers
+
+| Layer | Tool | When |
+|-------|------|------|
+| Session graph | ECC memory MCP `search_nodes` / `open_nodes` | Session start / resume Flok work |
+| Durable decisions | `create_entities` / `add_observations` | After BUILD ID done, audits, deploy notes |
+| Cross-project notes | `user-agent-lab-vault` | Lab session close / long-lived ops |
+| Ops workflows | skill `knowledge-ops` | User says save / sync / what do we know |
+
+## Seed entities (expected)
+
+- `Flok` — product + stack
+- `BUILD_next` — current next ID (see `BUILD.md`; often S1)
+- `GrokHarnessDebt` — OG meta overwrite, preview secret, `/__grok` chrome
+
+## Never store
+
+Secrets: `FLOK_TOKEN_SECRET`, OAuth client secrets, `.env` values, bot tokens, API keys.

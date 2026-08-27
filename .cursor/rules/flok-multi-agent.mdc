@@ -1,0 +1,51 @@
+---
+description: Flok multi-agent Task routing and ownership (always on)
+alwaysApply: true
+---
+
+# Flok multi-agent
+
+Lead agent owns planning, commits, and PRs. Parallelize only independent streams. Prefer existing skills `multi-agent` / `swarm` for orchestration patterns — do not paste their full text here.
+
+## Model routing
+
+Use the cheapest capable model. Keep routine hands-on work on the Composer parent; reserve expensive thinking models for architecture, independent verification, and high-stakes review.
+
+| Role / task | `subagent_type` | `model` | Why |
+|---|---|---|---|
+| Lead routine implementation | parent / `inherit` | `inherit` | The parent uses Composer for efficient routine coding. |
+| Broad map / scout | `explore` | `composer-2.5-fast` | Cheap, fast repository discovery. |
+| Ambiguous design / Grade API | `architect` | `claude-opus-5-thinking-high` | Strongest fit for architecture and trade-offs. |
+| Backend / API / tokens / Grade read | `backend-engineer` | `gpt-5.6-sol-medium` | Strong systems and difficult backend reasoning. |
+| Frontend / OG / tiles | `frontend-engineer` | `kimi-k2.7-code` | Strong UI implementation without architecture-model cost. |
+| Verifier after change | `verifier` | `claude-opus-5-thinking-high` | Independent, high-quality verification; must differ from the implementer. |
+| Security: secrets / OG / auth | `security-auditor` | `claude-opus-5-thinking-high` | High-stakes trust-boundary review. |
+| High-risk adversarial challenge | `red-team` | `claude-fable-5-thinking-high` | Independent challenge with a distinct reasoning model. |
+| Large-volume repository analysis | `repo-analyst` | `gemini-3.1-pro` | Broad-context analysis at lower cost than Opus. |
+| External docs and prior art | `researcher` | `gemini-3.1-pro` | Strong research synthesis and broad context. |
+
+Do not spend Opus, Sol, or Fable on trivial work. A verifier must use a different model from the implementation agent.
+
+## Parallel Composer workers
+
+After scout/architect settle ownership, fan out volume implementation with multiple Task workers:
+
+- `model: inherit` (Composer lead) or `composer-2.5-fast` when latency matters.
+- Each worker gets a **non-overlapping file ownership list** and a **single acceptance criterion**.
+- Prefer **2–4** parallel workers for independent slices (e.g. smoke assert, docs, small UI, API helper) — not one mega-agent.
+- Do **not** spawn parallel workers that edit the same file.
+- Specialists still run at phase boundaries: `architect` before ambiguous design; `security-auditor` / `verifier` after — do not replace those with Composer.
+- Lead merges worker results; owns commits and PRs.
+
+## Wave recipes
+
+1. **Grok debt / harness fix:** `explore` (`composer-2.5-fast`) → implement on parent (`inherit`, Composer) → `security-auditor` (`claude-opus-5-thinking-high`) → `verifier` (`claude-opus-5-thinking-high`, different from implementer).
+2. **S1 Grade:** `architect` (`claude-opus-5-thinking-high`) → `backend-engineer` (`gpt-5.6-sol-medium`) ∥ `frontend-engineer` (`kimi-k2.7-code`) → `verifier` (`claude-opus-5-thinking-high`) → `flok-ship`.
+3. **Implementation waves:** after map, fan out N Composer (`inherit`) workers by file matrix, then `verifier`.
+
+## Ownership
+
+- One file-ownership matrix per parallel wave; no two workers edit the same file.
+- Subagent prompts are self-contained: objective, files, constraints, acceptance criteria.
+- Never merge a PR without explicit user approval.
+- Do not treat BRAIN or `reference/spx402/` as the product spec.

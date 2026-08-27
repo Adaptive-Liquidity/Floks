@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": "node .cursor/hooks/session-context.mjs"
+      }
+    ],
+    "stop": [
+      {
+        "command": "node .cursor/hooks/stop-verify-reminder.mjs"
+      }
+    ],
+    "subagentStart": [
+      {
+        "command": "node .cursor/hooks/subagent-brief.mjs",
+        "matcher": "Task"
+      }
+    ]
+  }
+}

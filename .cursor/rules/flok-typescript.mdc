@@ -1,0 +1,13 @@
+---
+description: Flok TypeScript conventions in src/
+globs: src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Flok TypeScript
+
+- Strict TypeScript. No `any` in shipped `src/` (generated `routeTree.gen.ts` excluded).
+- Prefer existing patterns in neighboring files over new abstractions.
+- Domain data access is raw SQL via `src/lib/db.ts` / `src/lib/queries.ts` — Kysely is for Better Auth only.
+- Public UI copy: Node, Pulse, Cluster, Roost, Rack, Tape — not bird/chirp/Sky in new strings.
+- Components stay focused; no drive-by refactors outside the task.
